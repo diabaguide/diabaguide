@@ -1,0 +1,2066 @@
+{
+  "Chargement…": {
+    "en": "Loading…",
+    "zh": "加载中…"
+  },
+  "Langue": {
+    "en": "Language",
+    "zh": "语言"
+  },
+  "Vos adresses professionnelles en Chine": {
+    "en": "Your business addresses in China",
+    "zh": "您的中国商务地址指南"
+  },
+  "Fournisseurs en gros, hôtels, restaurants, transporteurs et transitaires à Guangzhou et Shenzhen, pour préparer vos déplacements d’affaires.": {
+    "en": "Wholesale suppliers, hotels, restaurants, carriers and freight forwarders in Guangzhou and Shenzhen to help you plan your business trips.",
+    "zh": "查找广州和深圳的批发供应商、酒店、餐厅、运输商和货运代理，轻松规划商务行程。"
+  },
+  "Marché de gros, Guangzhou": {
+    "en": "Wholesale market, Guangzhou",
+    "zh": "广州批发市场"
+  },
+  "Des adresses relues et vérifiées par l’équipe Diaba": {
+    "en": "Addresses reviewed and verified by the Diaba team",
+    "zh": "由 Diaba 团队审核和核实的地址"
+  },
+  "L’adresse en chinois, prête à montrer au chauffeur": {
+    "en": "Chinese addresses ready to show your driver",
+    "zh": "可直接向司机出示的中文地址"
+  },
+  "Vos fiches favorites, même sans connexion": {
+    "en": "Your saved listings, even offline",
+    "zh": "离线也可查看收藏的信息"
+  },
+  "Créer mon compte": {
+    "en": "Create my account",
+    "zh": "创建账户"
+  },
+  "Se connecter": {
+    "en": "Sign in",
+    "zh": "登录"
+  },
+  "Un compte est nécessaire pour consulter les adresses. Version de démonstration.": {
+    "en": "An account is required to view addresses. Demo version.",
+    "zh": "查看地址需要登录。演示版本。"
+  },
+  "Saisissez votre nom.": {
+    "en": "Enter your name.",
+    "zh": "请输入姓名。"
+  },
+  "Saisissez une adresse e-mail complète, par exemple nom@exemple.com.": {
+    "en": "Enter a complete email address, such as name@example.com.",
+    "zh": "请输入完整的电子邮箱地址，如 name@example.com。"
+  },
+  "Le mot de passe doit contenir au moins 8 caractères.": {
+    "en": "The password must contain at least 8 characters.",
+    "zh": "密码至少需要 8 个字符。"
+  },
+  "Acceptez les conditions pour créer votre compte.": {
+    "en": "Accept the terms to create your account.",
+    "zh": "请同意条款以创建账户。"
+  },
+  "Compte créé. Vérifiez votre boîte e-mail pour confirmer votre inscription, puis connectez-vous.": {
+    "en": "Account created. Check your email to confirm your registration, then sign in.",
+    "zh": "账户已创建。请查收邮件确认注册，然后登录。"
+  },
+  "information": {
+    "en": "item",
+    "zh": "项信息"
+  },
+  "s sont": {
+    "en": " need",
+    "zh": "需要"
+  },
+  "est": {
+    "en": "needs",
+    "zh": "需要"
+  },
+  "à corriger avant de continuer.": {
+    "en": "to be corrected before continuing.",
+    "zh": "需要修改后才能继续。"
+  },
+  "Un compte est nécessaire pour consulter les adresses et en proposer. Les champs marqués * sont obligatoires.": {
+    "en": "An account is required to view and suggest addresses. Fields marked * are required.",
+    "zh": "查看或推荐地址需要账户。带 * 的字段为必填项。"
+  },
+  "Nom complet": {
+    "en": "Full name",
+    "zh": "姓名"
+  },
+  "Adresse e-mail": {
+    "en": "Email address",
+    "zh": "电子邮箱"
+  },
+  "Mot de passe": {
+    "en": "Password",
+    "zh": "密码"
+  },
+  "Au moins 8 caractères.": {
+    "en": "At least 8 characters.",
+    "zh": "至少 8 个字符。"
+  },
+  "J’accepte les conditions d’utilisation et la politique de confidentialité de Diaba Guide.": {
+    "en": "I accept the Diaba Guide terms of use and privacy policy.",
+    "zh": "我同意 Diaba Guide 使用条款和隐私政策。"
+  },
+  "Création…": {
+    "en": "Creating…",
+    "zh": "创建中…"
+  },
+  "Déjà inscrit ?": {
+    "en": "Already registered?",
+    "zh": "已有账户？"
+  },
+  "Votre compte est créé": {
+    "en": "Your account has been created",
+    "zh": "账户已创建"
+  },
+  "Bienvenue sur Diaba Guide. Vous pouvez maintenant consulter les adresses de Guangzhou et de Shenzhen.": {
+    "en": "Welcome to Diaba Guide. You can now explore addresses in Guangzhou and Shenzhen.",
+    "zh": "欢迎使用 Diaba Guide。现在您可以查看广州和深圳的地址。"
+  },
+  "Découvrir les adresses": {
+    "en": "Explore addresses",
+    "zh": "浏览地址"
+  },
+  "Vérifiez votre adresse e-mail et votre mot de passe.": {
+    "en": "Check your email address and password.",
+    "zh": "请检查邮箱和密码。"
+  },
+  "Connexion impossible.": {
+    "en": "Unable to sign in.",
+    "zh": "无法登录。"
+  },
+  "E-mail ou mot de passe incorrect.": {
+    "en": "Incorrect email or password.",
+    "zh": "邮箱或密码错误。"
+  },
+  "Un compte existe déjà pour cette adresse e-mail.": {
+    "en": "An account already exists for this email address.",
+    "zh": "该邮箱已注册。"
+  },
+  "Adresse e-mail non confirmée. Vérifiez votre boîte de réception.": {
+    "en": "Email address not confirmed. Check your inbox.",
+    "zh": "邮箱尚未验证。请查收邮件。"
+  },
+  "Adresse e-mail invalide.": {
+    "en": "Invalid email address.",
+    "zh": "邮箱地址无效。"
+  },
+  "Trop de tentatives. Réessayez dans quelques minutes.": {
+    "en": "Too many attempts. Try again in a few minutes.",
+    "zh": "尝试次数过多。请稍后重试。"
+  },
+  "Supabase non configuré.": {
+    "en": "The connection service is not configured.",
+    "zh": "连接服务尚未配置。"
+  },
+  "Une fiche vous a été partagée": {
+    "en": "A listing has been shared with you",
+    "zh": "有人向您分享了一条信息"
+  },
+  "Connectez-vous pour la consulter. Un compte est nécessaire.": {
+    "en": "Sign in to view it. An account is required.",
+    "zh": "请登录后查看。需要账户。"
+  },
+  "Mot de passe oublié ?": {
+    "en": "Forgot password?",
+    "zh": "忘记密码？"
+  },
+  "Connexion…": {
+    "en": "Signing in…",
+    "zh": "登录中…"
+  },
+  "Se connecter et ouvrir la fiche": {
+    "en": "Sign in and open the listing",
+    "zh": "登录并查看信息"
+  },
+  "Pas encore de compte ?": {
+    "en": "Don't have an account?",
+    "zh": "还没有账户？"
+  },
+  "Démo : toute adresse valide est acceptée ; une adresse contenant « equipe » ouvre l’espace équipe.": {
+    "en": "Demo: any valid email address is accepted; an address containing “equipe” opens the team area.",
+    "zh": "演示：接受任何有效邮箱；包含“equipe”的地址可进入团队空间。"
+  },
+  "Mot de passe oublié": {
+    "en": "Forgot password",
+    "zh": "忘记密码"
+  },
+  "Saisissez l’adresse e-mail de votre compte. Nous vous enverrons un lien pour choisir un nouveau mot de passe.": {
+    "en": "Enter your account email. We will send you a link to choose a new password.",
+    "zh": "请输入账户邮箱，我们将发送重置密码的链接。"
+  },
+  "Envoi…": {
+    "en": "Sending…",
+    "zh": "发送中…"
+  },
+  "Envoyer le lien": {
+    "en": "Send link",
+    "zh": "发送链接"
+  },
+  "Lien envoyé": {
+    "en": "Link sent",
+    "zh": "链接已发送"
+  },
+  "Si un compte existe pour cette adresse, vous recevrez un e-mail dans quelques minutes. Pensez à vérifier vos courriers indésirables.": {
+    "en": "If an account exists for this address, you will receive an email shortly. Check your spam folder too.",
+    "zh": "如果该邮箱存在账户，您将在几分钟内收到邮件。请同时检查垃圾邮件。"
+  },
+  "Retour à la connexion": {
+    "en": "Back to sign in",
+    "zh": "返回登录"
+  },
+  "Les deux mots de passe ne correspondent pas.": {
+    "en": "The passwords do not match.",
+    "zh": "两次输入的密码不一致。"
+  },
+  "Nouveau mot de passe": {
+    "en": "New password",
+    "zh": "新密码"
+  },
+  "Mot de passe modifié": {
+    "en": "Password changed",
+    "zh": "密码已修改"
+  },
+  "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.": {
+    "en": "You can now sign in with your new password.",
+    "zh": "现在可以使用新密码登录。"
+  },
+  "Ce lien de réinitialisation est invalide ou a expiré.": {
+    "en": "This reset link is invalid or has expired.",
+    "zh": "此重置链接无效或已过期。"
+  },
+  "Demander un nouveau lien": {
+    "en": "Request a new link",
+    "zh": "获取新链接"
+  },
+  "Vérification du lien…": {
+    "en": "Checking the link…",
+    "zh": "正在验证链接…"
+  },
+  "Choisissez un nouveau mot de passe pour votre compte.": {
+    "en": "Choose a new password for your account.",
+    "zh": "请设置新的账户密码。"
+  },
+  "Confirmer le mot de passe": {
+    "en": "Confirm password",
+    "zh": "确认密码"
+  },
+  "Enregistrement…": {
+    "en": "Saving…",
+    "zh": "保存中…"
+  },
+  "Enregistrer le mot de passe": {
+    "en": "Save password",
+    "zh": "保存密码"
+  },
+  "Accueil": {
+    "en": "Home",
+    "zh": "首页"
+  },
+  "Explorer": {
+    "en": "Explore",
+    "zh": "探索"
+  },
+  "Favoris": {
+    "en": "Favorites",
+    "zh": "收藏"
+  },
+  "Contributions": {
+    "en": "Contributions",
+    "zh": "我的推荐"
+  },
+  "Profil": {
+    "en": "Profile",
+    "zh": "个人资料"
+  },
+  "Navigation principale": {
+    "en": "Main navigation",
+    "zh": "主导航"
+  },
+  "Bonjour": {
+    "en": "Hello",
+    "zh": "您好"
+  },
+  "Ville": {
+    "en": "City",
+    "zh": "城市"
+  },
+  "Rechercher un produit ou un service": {
+    "en": "Search for a product or service",
+    "zh": "搜索产品或服务"
+  },
+  "Quel produit ou service cherchez-vous ?": {
+    "en": "What product or service are you looking for?",
+    "zh": "您在寻找什么产品或服务？"
+  },
+  "Installer Diaba Guide": {
+    "en": "Install Diaba Guide",
+    "zh": "安装 Diaba Guide"
+  },
+  "Ajoutez le site à l’écran d’accueil de votre téléphone.": {
+    "en": "Add the site to your phone's home screen.",
+    "zh": "将网站添加到手机主屏幕。"
+  },
+  "Sur iPhone : Partager > Sur l’écran d’accueil. Sur Android : menu du navigateur > Installer l’application.": {
+    "en": "On iPhone: Share > Add to Home Screen. On Android: browser menu > Install app.",
+    "zh": "iPhone：分享 > 添加到主屏幕。Android：浏览器菜单 > 安装应用。"
+  },
+  "Installer": {
+    "en": "Install",
+    "zh": "安装"
+  },
+  "Fermer la proposition d’installation": {
+    "en": "Dismiss installation suggestion",
+    "zh": "关闭安装提示"
+  },
+  "Catégories": {
+    "en": "Categories",
+    "zh": "类别"
+  },
+  "Que cherchez-vous ?": {
+    "en": "What are you looking for?",
+    "zh": "您在寻找什么？"
+  },
+  "Achats en gros": {
+    "en": "Wholesale",
+    "zh": "批发采购"
+  },
+  "Hôtels": {
+    "en": "Hotels",
+    "zh": "酒店"
+  },
+  "Restaurants": {
+    "en": "Restaurants",
+    "zh": "餐厅"
+  },
+  "Transporteurs": {
+    "en": "Carriers",
+    "zh": "运输商"
+  },
+  "Transitaires": {
+    "en": "Freight forwarders",
+    "zh": "货运代理"
+  },
+  "Sélection Diaba ·": {
+    "en": "Diaba picks ·",
+    "zh": "Diaba 精选 ·"
+  },
+  "À proximité": {
+    "en": "Nearby",
+    "zh": "附近"
+  },
+  "Votre position n’est demandée que si vous activez la recherche à proximité. Vous pouvez aussi choisir un quartier à la main.": {
+    "en": "Your location is requested only when you enable nearby search. You can also choose a district manually.",
+    "zh": "只有启用附近搜索时才会请求您的位置。您也可以手动选择区域。"
+  },
+  "Activer la recherche à proximité": {
+    "en": "Enable nearby search",
+    "zh": "启用附近搜索"
+  },
+  "Choisir un quartier manuellement": {
+    "en": "Choose a district manually",
+    "zh": "手动选择区域"
+  },
+  "Près de vous": {
+    "en": "Near you",
+    "zh": "您附近"
+  },
+  "Trouver les adresses autour de vous": {
+    "en": "Find addresses near you",
+    "zh": "查找您附近的地址"
+  },
+  "Diaba Guide utilise votre position uniquement pour calculer les distances. Vous pouvez refuser : la sélection manuelle reste disponible.": {
+    "en": "Diaba Guide uses your location only to calculate distances. You may decline and choose an area manually.",
+    "zh": "Diaba Guide 仅使用您的位置计算距离。您可以拒绝并手动选择区域。"
+  },
+  "Localisation…": {
+    "en": "Locating…",
+    "zh": "定位中…"
+  },
+  "Autoriser la localisation": {
+    "en": "Allow location access",
+    "zh": "允许定位"
+  },
+  "Ou choisissez un quartier ·": {
+    "en": "Or choose a district ·",
+    "zh": "或选择区域 ·"
+  },
+  "Aucun quartier n’est encore renseigné pour cette ville.": {
+    "en": "No districts have been added for this city yet.",
+    "zh": "该城市尚未添加区域。"
+  },
+  "Voir les adresses de ce quartier": {
+    "en": "View addresses in this district",
+    "zh": "查看此区域的地址"
+  },
+  "Ma position": {
+    "en": "My location",
+    "zh": "我的位置"
+  },
+  "Recherche": {
+    "en": "Search",
+    "zh": "搜索"
+  },
+  "Retour à l’accueil": {
+    "en": "Back to home",
+    "zh": "返回首页"
+  },
+  "Affichage": {
+    "en": "View",
+    "zh": "显示方式"
+  },
+  "Liste": {
+    "en": "List",
+    "zh": "列表"
+  },
+  "Carte": {
+    "en": "Map",
+    "zh": "地图"
+  },
+  "Filtres": {
+    "en": "Filters",
+    "zh": "筛选"
+  },
+  "Toute la ville": {
+    "en": "Entire city",
+    "zh": "全市"
+  },
+  "Connexion impossible": {
+    "en": "Connection unavailable",
+    "zh": "无法连接"
+  },
+  "Vérifiez votre connexion internet, puis réessayez. Vos fiches téléchargées restent consultables.": {
+    "en": "Check your internet connection and try again. Downloaded listings remain available.",
+    "zh": "请检查网络连接后重试。已下载的信息仍可查看。"
+  },
+  "Réessayer": {
+    "en": "Try again",
+    "zh": "重试"
+  },
+  "Voir mes fiches hors connexion": {
+    "en": "View my offline listings",
+    "zh": "查看离线信息"
+  },
+  "Recherche en cours…": {
+    "en": "Searching…",
+    "zh": "搜索中…"
+  },
+  "Position indisponible": {
+    "en": "Location unavailable",
+    "zh": "位置不可用"
+  },
+  "Les distances ne sont pas affichées.": {
+    "en": "Distances are not displayed.",
+    "zh": "无法显示距离。"
+  },
+  "Choisir un quartier": {
+    "en": "Choose a district",
+    "zh": "选择区域"
+  },
+  "adresse": {
+    "en": "address",
+    "zh": "个地址"
+  },
+  "Aucune adresse": {
+    "en": "No addresses found",
+    "zh": "未找到地址"
+  },
+  "Essayez un autre mot, changez de ville ou retirez un filtre.": {
+    "en": "Try another search term, change city or remove a filter.",
+    "zh": "请尝试其他关键词、更换城市或取消筛选。"
+  },
+  "Modifier la recherche": {
+    "en": "Change search",
+    "zh": "修改搜索"
+  },
+  "Afficher les résultats en liste": {
+    "en": "Show results as a list",
+    "zh": "以列表显示结果"
+  },
+  "Carte illustrative des résultats": {
+    "en": "Illustrative results map",
+    "zh": "结果示意地图"
+  },
+  "Carte illustrative": {
+    "en": "Illustrative map",
+    "zh": "示意地图"
+  },
+  "Adresse": {
+    "en": "Address",
+    "zh": "地址"
+  },
+  "sur": {
+    "en": "of",
+    "zh": "共"
+  },
+  "· Vérifiée le": {
+    "en": "· Verified on",
+    "zh": "· 核实日期"
+  },
+  "Ouvrir la fiche": {
+    "en": "Open listing",
+    "zh": "查看详情"
+  },
+  "Réinitialiser": {
+    "en": "Reset",
+    "zh": "重置"
+  },
+  "Produit ou service": {
+    "en": "Product or service",
+    "zh": "产品或服务"
+  },
+  "Proximité": {
+    "en": "Distance",
+    "zh": "距离"
+  },
+  "Moins de 2 km": {
+    "en": "Within 2 km",
+    "zh": "2 公里以内"
+  },
+  "Moins de 5 km": {
+    "en": "Within 5 km",
+    "zh": "5 公里以内"
+  },
+  "Moins de 10 km": {
+    "en": "Within 10 km",
+    "zh": "10 公里以内"
+  },
+  "Le rayon s’applique quand la position ou un quartier est choisi.": {
+    "en": "The radius applies when a location or district is selected.",
+    "zh": "选择位置或区域后，距离范围筛选才会生效。"
+  },
+  "Fret vers le Sénégal": {
+    "en": "Freight to Senegal",
+    "zh": "运往塞内加尔的货运"
+  },
+  "Disponible pour les transporteurs et les transitaires.": {
+    "en": "Available for carriers and freight forwarders.",
+    "zh": "适用于运输商和货运代理。"
+  },
+  "Aérien": {
+    "en": "Air",
+    "zh": "空运"
+  },
+  "Maritime": {
+    "en": "Sea",
+    "zh": "海运"
+  },
+  "Les deux": {
+    "en": "Both",
+    "zh": "两者"
+  },
+  "Afficher les résultats": {
+    "en": "Show results",
+    "zh": "显示结果"
+  },
+  "Photo": {
+    "en": "Photo",
+    "zh": "照片"
+  },
+  "Photos": {
+    "en": "Photos",
+    "zh": "照片"
+  },
+  "Vérifié par Diaba": {
+    "en": "Verified by Diaba",
+    "zh": "Diaba 已核实"
+  },
+  "Dernière vérification :": {
+    "en": "Last verified:",
+    "zh": "最近核实日期："
+  },
+  "Non renseigné": {
+    "en": "Not provided",
+    "zh": "未提供"
+  },
+  "Données de démonstration : noms, adresses et numéros fictifs.": {
+    "en": "Demo data: names, addresses and phone numbers are fictional.",
+    "zh": "演示数据：名称、地址和电话号码均为虚构。"
+  },
+  "Retour aux résultats": {
+    "en": "Back to results",
+    "zh": "返回结果"
+  },
+  "Favori ajouté": {
+    "en": "Added to favorites",
+    "zh": "已收藏"
+  },
+  "Ajouter aux favoris": {
+    "en": "Add to favorites",
+    "zh": "添加到收藏"
+  },
+  "Retiré de vos favoris.": {
+    "en": "Removed from your favorites.",
+    "zh": "已从收藏中移除。"
+  },
+  "Ajouté à vos favoris.": {
+    "en": "Added to your favorites.",
+    "zh": "已添加到收藏。"
+  },
+  "Fiche retirée de la consultation hors connexion.": {
+    "en": "Listing removed from offline access.",
+    "zh": "已移除此条离线信息。"
+  },
+  "Fiche téléchargée : elle sera consultable hors connexion.": {
+    "en": "Listing downloaded: it will be available offline.",
+    "zh": "信息已下载，可离线查看。"
+  },
+  "Fiche téléchargée": {
+    "en": "Listing downloaded",
+    "zh": "已下载"
+  },
+  "Télécharger la fiche": {
+    "en": "Download listing",
+    "zh": "下载信息"
+  },
+  "Partager": {
+    "en": "Share",
+    "zh": "分享"
+  },
+  "Proposer une correction": {
+    "en": "Suggest a correction",
+    "zh": "提出更正"
+  },
+  "Lien copié. La personne qui le reçoit devra se connecter pour consulter la fiche.": {
+    "en": "Link copied. The recipient must sign in to view the listing.",
+    "zh": "链接已复制。接收者需要登录才能查看。"
+  },
+  "Ouvrir l’itinéraire": {
+    "en": "Open directions",
+    "zh": "查看路线"
+  },
+  "Produits proposés": {
+    "en": "Products available",
+    "zh": "供应产品"
+  },
+  "Services": {
+    "en": "Services",
+    "zh": "服务"
+  },
+  "Spécialités": {
+    "en": "Specialties",
+    "zh": "特色"
+  },
+  "Contacter le fournisseur": {
+    "en": "Contact supplier",
+    "zh": "联系供应商"
+  },
+  "Contacter pour réserver": {
+    "en": "Contact to book",
+    "zh": "联系预订"
+  },
+  "Contacter le restaurant": {
+    "en": "Contact restaurant",
+    "zh": "联系餐厅"
+  },
+  "Contacter le transporteur": {
+    "en": "Contact carrier",
+    "zh": "联系运输商"
+  },
+  "Contacter le transitaire": {
+    "en": "Contact freight forwarder",
+    "zh": "联系货运代理"
+  },
+  "Contacter": {
+    "en": "Contact",
+    "zh": "联系"
+  },
+  "Détails": {
+    "en": "Details",
+    "zh": "详情"
+  },
+  "Minimum de commande": {
+    "en": "Minimum order",
+    "zh": "最低订购量"
+  },
+  "Type de cuisine": {
+    "en": "Cuisine",
+    "zh": "菜系"
+  },
+  "Horaires": {
+    "en": "Opening hours",
+    "zh": "营业时间"
+  },
+  "Mention halal": {
+    "en": "Halal information",
+    "zh": "清真信息"
+  },
+  "Fret aérien": {
+    "en": "Air freight",
+    "zh": "空运"
+  },
+  "Fret maritime": {
+    "en": "Sea freight",
+    "zh": "海运"
+  },
+  "Marchandises acceptées": {
+    "en": "Accepted goods",
+    "zh": "可承运货物"
+  },
+  "Desserte du Sénégal": {
+    "en": "Senegal destinations",
+    "zh": "塞内加尔目的地"
+  },
+  "Adresse en chinois": {
+    "en": "Chinese address",
+    "zh": "中文地址"
+  },
+  "Adresse chinoise copiée.": {
+    "en": "Chinese address copied.",
+    "zh": "中文地址已复制。"
+  },
+  "Copie impossible : sélectionnez le texte.": {
+    "en": "Unable to copy: select the text manually.",
+    "zh": "无法复制，请手动选择文字。"
+  },
+  "Copier l’adresse": {
+    "en": "Copy address",
+    "zh": "复制地址"
+  },
+  "Montrer au chauffeur": {
+    "en": "Show driver",
+    "zh": "出示给司机"
+  },
+  "Accès": {
+    "en": "Getting there",
+    "zh": "如何到达"
+  },
+  "Entrée exacte": {
+    "en": "Exact entrance",
+    "zh": "具体入口"
+  },
+  "Repères utiles": {
+    "en": "Useful landmarks",
+    "zh": "参考地标"
+  },
+  "Métro et gare": {
+    "en": "Metro and train station",
+    "zh": "地铁与火车站"
+  },
+  "Coordonnées": {
+    "en": "Contact details",
+    "zh": "联系方式"
+  },
+  "Téléphone": {
+    "en": "Phone",
+    "zh": "电话"
+  },
+  "Appeler": {
+    "en": "Call",
+    "zh": "拨打电话"
+  },
+  "Identifiant WeChat": {
+    "en": "WeChat ID",
+    "zh": "微信号"
+  },
+  "Identifiant WeChat copié.": {
+    "en": "WeChat ID copied.",
+    "zh": "微信号已复制。"
+  },
+  "Copie impossible.": {
+    "en": "Unable to copy.",
+    "zh": "无法复制。"
+  },
+  "Copier": {
+    "en": "Copy",
+    "zh": "复制"
+  },
+  "Afficher le QR code WeChat": {
+    "en": "Show WeChat QR code",
+    "zh": "显示微信二维码"
+  },
+  "QR code WeChat": {
+    "en": "WeChat QR code",
+    "zh": "微信二维码"
+  },
+  "QR code de démonstration": {
+    "en": "Demo QR code",
+    "zh": "演示二维码"
+  },
+  "Signaler un problème": {
+    "en": "Report a problem",
+    "zh": "报告问题"
+  },
+  "Retour à la fiche": {
+    "en": "Back to listing",
+    "zh": "返回详情"
+  },
+  "Montrez cet écran au chauffeur": {
+    "en": "Show this screen to your driver",
+    "zh": "请将此页面出示给司机"
+  },
+  "NOM": {
+    "en": "NAME",
+    "zh": "名称"
+  },
+  "ADRESSE": {
+    "en": "ADDRESS",
+    "zh": "地址"
+  },
+  "Adresse copiée": {
+    "en": "Address copied",
+    "zh": "地址已复制"
+  },
+  "Contact": {
+    "en": "Contact",
+    "zh": "联系"
+  },
+  "Appelez ou contactez directement ce prestataire pour connaître ses disponibilités et ses conditions.": {
+    "en": "Call or contact this provider directly to check availability and terms.",
+    "zh": "请直接联系商家，了解供应情况和交易条件。"
+  },
+  "Identifiant copié": {
+    "en": "ID copied",
+    "zh": "账号已复制"
+  },
+  "Copier l’identifiant": {
+    "en": "Copy ID",
+    "zh": "复制账号"
+  },
+  "Afficher le QR code": {
+    "en": "Show QR code",
+    "zh": "显示二维码"
+  },
+  "Diaba Guide ne gère ni réservation, ni commande, ni paiement. Tout se règle directement avec le prestataire.": {
+    "en": "Diaba Guide does not handle bookings, orders or payments. Arrange everything directly with the provider.",
+    "zh": "Diaba Guide 不处理预订、订单或付款。请直接与商家协商。"
+  },
+  "Correction ou signalement": {
+    "en": "Correction or report",
+    "zh": "更正或举报"
+  },
+  "Merci. Votre retour est transmis à l’équipe Diaba.": {
+    "en": "Thank you. Your feedback has been sent to the Diaba team.",
+    "zh": "谢谢。您的反馈已发送给 Diaba 团队。"
+  },
+  "Votre retour est transmis à l’équipe Diaba, qui le vérifie avant toute modification de la fiche.": {
+    "en": "Your feedback is sent to the Diaba team for review before any listing changes.",
+    "zh": "您的反馈将由 Diaba 团队审核，确认后才会修改信息。"
+  },
+  "Que souhaitez-vous faire ?": {
+    "en": "What would you like to do?",
+    "zh": "您想做什么？"
+  },
+  "Adresse, téléphone, produits, horaires…": {
+    "en": "Address, phone, products, opening hours…",
+    "zh": "地址、电话、产品、营业时间…"
+  },
+  "Adresse fermée, contact injoignable, contenu inapproprié…": {
+    "en": "Closed business, unreachable contact, inappropriate content…",
+    "zh": "商家关闭、无法联系、内容不当…"
+  },
+  "Concerne": {
+    "en": "Regarding",
+    "zh": "涉及内容"
+  },
+  "Adresse ou accès": {
+    "en": "Address or directions",
+    "zh": "地址或路线"
+  },
+  "Téléphone ou WeChat": {
+    "en": "Phone or WeChat",
+    "zh": "电话或微信"
+  },
+  "Autre": {
+    "en": "Other",
+    "zh": "其他"
+  },
+  "Précisez ce qui doit être corrigé ou ce que vous avez constaté.": {
+    "en": "Describe what needs correcting or what you observed.",
+    "zh": "请说明需要更正的内容或您发现的问题。"
+  },
+  "Envoyer à Diaba": {
+    "en": "Send to Diaba",
+    "zh": "发送给 Diaba"
+  },
+  "Aucun favori pour le moment": {
+    "en": "No favorites yet",
+    "zh": "暂无收藏"
+  },
+  "Touchez « Ajouter aux favoris » sur une fiche pour la retrouver ici. Vous pouvez aussi la télécharger pour la consulter sans connexion.": {
+    "en": "Tap “Add to favorites” on a listing to find it here. You can also download it for offline access.",
+    "zh": "点击详情中的“添加到收藏”即可在此查看，也可下载以供离线使用。"
+  },
+  "Explorer les adresses": {
+    "en": "Explore addresses",
+    "zh": "浏览地址"
+  },
+  "Vous êtes hors connexion": {
+    "en": "You are offline",
+    "zh": "当前离线"
+  },
+  "Seules les informations téléchargées sont disponibles. La recherche et la carte reviendront avec le réseau.": {
+    "en": "Only downloaded information is available. Search and maps will return when you reconnect.",
+    "zh": "目前仅可查看已下载的信息。联网后可恢复搜索和地图功能。"
+  },
+  "Dernière synchronisation :": {
+    "en": "Last synced:",
+    "zh": "最近同步："
+  },
+  "Filtre": {
+    "en": "Filter",
+    "zh": "筛选"
+  },
+  "Tous (": {
+    "en": "All (",
+    "zh": "全部（"
+  },
+  "Disponibles hors connexion (": {
+    "en": "Available offline (",
+    "zh": "可离线使用（"
+  },
+  "Favori": {
+    "en": "Favorite",
+    "zh": "已收藏"
+  },
+  "Téléchargée le": {
+    "en": "Downloaded on",
+    "zh": "下载日期"
+  },
+  "Non disponible hors connexion": {
+    "en": "Not available offline",
+    "zh": "不可离线使用"
+  },
+  "Retirer du hors connexion": {
+    "en": "Remove offline copy",
+    "zh": "移除离线副本"
+  },
+  "Consulter la fiche": {
+    "en": "View listing",
+    "zh": "查看详情"
+  },
+  "Demander à chaque recherche": {
+    "en": "Ask for each search",
+    "zh": "每次搜索时询问"
+  },
+  "Recommandé": {
+    "en": "Recommended",
+    "zh": "推荐"
+  },
+  "Autoriser pendant l’utilisation": {
+    "en": "Allow while using the app",
+    "zh": "使用期间允许"
+  },
+  "Ne pas utiliser ma position": {
+    "en": "Do not use my location",
+    "zh": "不使用我的位置"
+  },
+  "Choix manuel du quartier": {
+    "en": "Choose district manually",
+    "zh": "手动选择区域"
+  },
+  "Fiches téléchargées": {
+    "en": "Downloaded listings",
+    "zh": "已下载信息"
+  },
+  "fiche(s) disponibles hors connexion": {
+    "en": "listing(s) available offline",
+    "zh": "条信息可离线使用"
+  },
+  "Mes contributions": {
+    "en": "My contributions",
+    "zh": "我的推荐"
+  },
+  "complément demandé": {
+    "en": "request for more information",
+    "zh": "条补充信息请求"
+  },
+  "Espace équipe Diaba": {
+    "en": "Diaba team area",
+    "zh": "Diaba 团队空间"
+  },
+  "Préférences de localisation": {
+    "en": "Location preferences",
+    "zh": "位置设置"
+  },
+  "Se déconnecter": {
+    "en": "Sign out",
+    "zh": "退出登录"
+  },
+  "Diaba Guide · version de démonstration": {
+    "en": "Diaba Guide · demo version",
+    "zh": "Diaba Guide · 演示版本"
+  },
+  "Ces fiches restent consultables sans connexion. Certaines informations peuvent avoir changé depuis le téléchargement.": {
+    "en": "These listings remain available offline. Some information may have changed since you downloaded them.",
+    "zh": "这些信息可离线查看。下载后，部分内容可能已发生变化。"
+  },
+  "Tout mettre à jour": {
+    "en": "Update all",
+    "zh": "全部更新"
+  },
+  "Aucune fiche téléchargée.": {
+    "en": "No downloaded listings.",
+    "zh": "没有已下载的信息。"
+  },
+  "Voir mes favoris": {
+    "en": "View my favorites",
+    "zh": "查看收藏"
+  },
+  "Mettre à jour": {
+    "en": "Update",
+    "zh": "更新"
+  },
+  "Supprimer": {
+    "en": "Delete",
+    "zh": "删除"
+  },
+  "Lieu": {
+    "en": "Place",
+    "zh": "地点"
+  },
+  "Envoi": {
+    "en": "Submit",
+    "zh": "提交"
+  },
+  "Étape": {
+    "en": "Step",
+    "zh": "步骤"
+  },
+  "sur 4 :": {
+    "en": "of 4:",
+    "zh": "/ 4："
+  },
+  "Brouillon automatique": {
+    "en": "Automatically saved draft",
+    "zh": "自动保存草稿"
+  },
+  "Saisissez le nom du prestataire.": {
+    "en": "Enter the provider's name.",
+    "zh": "请输入商家名称。"
+  },
+  "Indiquez au moins un quartier, un marché ou un repère.": {
+    "en": "Enter at least a district, market or landmark.",
+    "zh": "请至少提供区域、市场或地标。"
+  },
+  "Retour": {
+    "en": "Back",
+    "zh": "返回"
+  },
+  "Suivant": {
+    "en": "Next",
+    "zh": "下一步"
+  },
+  "Soumettre à Diaba": {
+    "en": "Submit to Diaba",
+    "zh": "提交给 Diaba"
+  },
+  "Enregistrer le brouillon": {
+    "en": "Save draft",
+    "zh": "保存草稿"
+  },
+  "Proposer une adresse": {
+    "en": "Suggest an address",
+    "zh": "推荐地址"
+  },
+  "Seuls la catégorie, le nom et une indication de localisation sont obligatoires.": {
+    "en": "Only the category, name and location information are required.",
+    "zh": "仅类别、名称和位置说明为必填项。"
+  },
+  "= obligatoire.": {
+    "en": "= required.",
+    "zh": "= 必填。"
+  },
+  "Nom du prestataire": {
+    "en": "Provider name",
+    "zh": "商家名称"
+  },
+  "Nom en chinois (facultatif)": {
+    "en": "Chinese name (optional)",
+    "zh": "中文名称（选填）"
+  },
+  "Indication de localisation": {
+    "en": "Location information",
+    "zh": "位置说明"
+  },
+  "Quartier, marché, rue ou repère : ce que vous savez.": {
+    "en": "District, market, street or landmark: share what you know.",
+    "zh": "提供您知道的区域、市场、街道或地标。"
+  },
+  "Tous les champs de cette étape sont facultatifs. Ne renseignez que ce que vous connaissez.": {
+    "en": "All fields in this step are optional. Only enter what you know.",
+    "zh": "本步骤所有字段均为选填。请仅填写您了解的信息。"
+  },
+  "Produits ou services": {
+    "en": "Products or services",
+    "zh": "产品或服务"
+  },
+  "Par exemple : 100 pièces": {
+    "en": "For example: 100 items",
+    "zh": "例如：100 件"
+  },
+  "Copiez-la depuis une carte de visite si possible.": {
+    "en": "Copy it from a business card if possible.",
+    "zh": "如有名片，请从中复制地址。"
+  },
+  "Facultatif. Des photos et la carte de visite aident l’équipe à vérifier l’adresse.": {
+    "en": "Optional. Photos and a business card help the team verify the address.",
+    "zh": "选填。照片和名片有助于团队核实地址。"
+  },
+  "Photos du lieu (": {
+    "en": "Photos of the place (",
+    "zh": "地点照片（"
+  },
+  "Ajouter une photo": {
+    "en": "Add a photo",
+    "zh": "添加照片"
+  },
+  "Carte de visite": {
+    "en": "Business card",
+    "zh": "名片"
+  },
+  "Recto": {
+    "en": "Front",
+    "zh": "正面"
+  },
+  "Ajouter le recto": {
+    "en": "Add front",
+    "zh": "添加正面"
+  },
+  "Verso": {
+    "en": "Back side",
+    "zh": "背面"
+  },
+  "Ajouter le verso": {
+    "en": "Add back",
+    "zh": "添加背面"
+  },
+  "Relisez votre proposition avant de l’envoyer.": {
+    "en": "Review your suggestion before submitting.",
+    "zh": "提交前请检查推荐信息。"
+  },
+  "Récapitulatif": {
+    "en": "Summary",
+    "zh": "摘要"
+  },
+  "Localisation": {
+    "en": "Location",
+    "zh": "位置"
+  },
+  "Produits": {
+    "en": "Products",
+    "zh": "产品"
+  },
+  "Téléphone et WeChat": {
+    "en": "Phone and WeChat",
+    "zh": "电话和微信"
+  },
+  "Les 3 champs obligatoires sont remplis.": {
+    "en": "All 3 required fields are complete.",
+    "zh": "3 个必填字段均已填写。"
+  },
+  "Il manque des champs obligatoires (nom ou localisation).": {
+    "en": "Required information is missing (name or location).",
+    "zh": "缺少必填信息（名称或位置）。"
+  },
+  "Votre proposition sera examinée par l’équipe Diaba avant publication.": {
+    "en": "The Diaba team will review your suggestion before publishing it.",
+    "zh": "Diaba 团队将在发布前审核您的推荐。"
+  },
+  "Proposition envoyée": {
+    "en": "Suggestion submitted",
+    "zh": "推荐已提交"
+  },
+  "Objectif de traitement : sous 48 heures, à titre indicatif. Vous pourrez suivre l’avancement dans « Contributions ».": {
+    "en": "We aim to review suggestions within 48 hours. Track progress in “Contributions”.",
+    "zh": "我们争取在 48 小时内审核，仅供参考。您可在“我的推荐”中查看进度。"
+  },
+  "Suivre mes contributions": {
+    "en": "Track my contributions",
+    "zh": "查看推荐进度"
+  },
+  "Reprendre le brouillon": {
+    "en": "Resume draft",
+    "zh": "继续编辑草稿"
+  },
+  "Lire le retour": {
+    "en": "Read feedback",
+    "zh": "查看反馈"
+  },
+  "Voir le suivi": {
+    "en": "View progress",
+    "zh": "查看进度"
+  },
+  "Suivi de la proposition": {
+    "en": "Suggestion progress",
+    "zh": "推荐进度"
+  },
+  "Avancement": {
+    "en": "Progress",
+    "zh": "进展"
+  },
+  "À venir": {
+    "en": "Pending",
+    "zh": "待处理"
+  },
+  "Nous avons bien reçu votre proposition. Objectif de traitement : sous 48 heures, à titre indicatif.": {
+    "en": "We have received your suggestion. We aim to review it within 48 hours.",
+    "zh": "已收到您的推荐。我们争取在 48 小时内审核，仅供参考。"
+  },
+  "L’équipe vérifie actuellement les informations. Nous vous écrirons ici si un complément est nécessaire.": {
+    "en": "The team is checking the information. We will contact you here if more details are needed.",
+    "zh": "团队正在核实信息。如需补充，我们将在此通知您。"
+  },
+  "Retour de l’équipe Diaba": {
+    "en": "Feedback from the Diaba team",
+    "zh": "Diaba 团队反馈"
+  },
+  "Compléter les informations": {
+    "en": "Add information",
+    "zh": "补充信息"
+  },
+  "Photo ajoutée": {
+    "en": "Photo added",
+    "zh": "照片已添加"
+  },
+  "Ajouter une photo de la devanture": {
+    "en": "Add a storefront photo",
+    "zh": "添加店面照片"
+  },
+  "Message pour l’équipe (facultatif)": {
+    "en": "Message to the team (optional)",
+    "zh": "给团队的留言（选填）"
+  },
+  "Envoyer le complément": {
+    "en": "Send additional information",
+    "zh": "发送补充信息"
+  },
+  "Voir la fiche publiée": {
+    "en": "View published listing",
+    "zh": "查看已发布信息"
+  },
+  "Voir la fiche existante": {
+    "en": "View existing listing",
+    "zh": "查看现有信息"
+  },
+  "Proposer une autre adresse": {
+    "en": "Suggest another address",
+    "zh": "推荐其他地址"
+  },
+  "Brouillon": {
+    "en": "Draft",
+    "zh": "草稿"
+  },
+  "Soumise": {
+    "en": "Submitted",
+    "zh": "已提交"
+  },
+  "En vérification": {
+    "en": "Under review",
+    "zh": "审核中"
+  },
+  "Complément demandé": {
+    "en": "More information requested",
+    "zh": "待补充信息"
+  },
+  "Publiée": {
+    "en": "Published",
+    "zh": "已发布"
+  },
+  "Refusée": {
+    "en": "Rejected",
+    "zh": "已拒绝"
+  },
+  "Rattachée à une adresse existante": {
+    "en": "Linked to an existing address",
+    "zh": "已关联现有地址"
+  },
+  "Tableau de bord": {
+    "en": "Dashboard",
+    "zh": "概览"
+  },
+  "Propositions": {
+    "en": "Suggestions",
+    "zh": "推荐列表"
+  },
+  "Historique des décisions": {
+    "en": "Decision history",
+    "zh": "审核记录"
+  },
+  "Membres": {
+    "en": "Members",
+    "zh": "成员"
+  },
+  "Villes": {
+    "en": "Cities",
+    "zh": "城市"
+  },
+  "Produits et services": {
+    "en": "Products and services",
+    "zh": "产品与服务"
+  },
+  "GUIDE · ÉQUIPE": {
+    "en": "GUIDE · TEAM",
+    "zh": "指南 · 团队"
+  },
+  "Navigation équipe": {
+    "en": "Team navigation",
+    "zh": "团队导航"
+  },
+  "Vérification": {
+    "en": "Review",
+    "zh": "审核"
+  },
+  "Administrateur": {
+    "en": "Administrator",
+    "zh": "管理员"
+  },
+  "Voyageur": {
+    "en": "Traveler",
+    "zh": "旅行者"
+  },
+  "Équipe": {
+    "en": "Team",
+    "zh": "团队"
+  },
+  "Soumises": {
+    "en": "Submitted",
+    "zh": "已提交"
+  },
+  "À prendre en charge": {
+    "en": "Awaiting review",
+    "zh": "待受理"
+  },
+  "En cours": {
+    "en": "In progress",
+    "zh": "处理中"
+  },
+  "En attente du contributeur": {
+    "en": "Waiting for contributor",
+    "zh": "等待推荐者补充"
+  },
+  "Publiées": {
+    "en": "Published",
+    "zh": "已发布"
+  },
+  "Depuis le début du mois": {
+    "en": "Since the start of the month",
+    "zh": "本月以来"
+  },
+  "Propositions des contributeurs à vérifier avant publication.": {
+    "en": "Contributor suggestions to review before publication.",
+    "zh": "发布前需审核的推荐信息。"
+  },
+  "Voir toutes les propositions": {
+    "en": "View all suggestions",
+    "zh": "查看所有推荐"
+  },
+  "Propositions à traiter en priorité": {
+    "en": "Priority suggestions",
+    "zh": "优先处理的推荐"
+  },
+  "Proposition": {
+    "en": "Suggestion",
+    "zh": "推荐"
+  },
+  "Catégorie et ville": {
+    "en": "Category and city",
+    "zh": "类别和城市"
+  },
+  "Ancienneté": {
+    "en": "Age",
+    "zh": "等待时长"
+  },
+  "· Objectif de 48 h dépassé": {
+    "en": "· 48-hour target exceeded",
+    "zh": "· 已超过 48 小时目标"
+  },
+  "Examiner": {
+    "en": "Review",
+    "zh": "审核"
+  },
+  "Rien à traiter pour le moment.": {
+    "en": "Nothing to review right now.",
+    "zh": "暂无待处理事项。"
+  },
+  "L’objectif de 48 heures est indicatif.": {
+    "en": "The 48-hour target is indicative.",
+    "zh": "48 小时目标仅供参考。"
+  },
+  "Catégorie": {
+    "en": "Category",
+    "zh": "类别"
+  },
+  "Toutes": {
+    "en": "All",
+    "zh": "全部"
+  },
+  "Statut": {
+    "en": "Status",
+    "zh": "状态"
+  },
+  "Tous": {
+    "en": "All",
+    "zh": "全部"
+  },
+  "Nom, téléphone, WeChat…": {
+    "en": "Name, phone, WeChat…",
+    "zh": "名称、电话、微信…"
+  },
+  "Reçue le": {
+    "en": "Received",
+    "zh": "收到日期"
+  },
+  "Doublons": {
+    "en": "Duplicates",
+    "zh": "重复项"
+  },
+  "Doublon possible": {
+    "en": "Possible duplicate",
+    "zh": "可能重复"
+  },
+  "Aucun doublon": {
+    "en": "No duplicates",
+    "zh": "无重复项"
+  },
+  "Aucune proposition ne correspond aux filtres.": {
+    "en": "No suggestions match these filters.",
+    "zh": "没有符合筛选条件的推荐。"
+  },
+  "Même numéro de téléphone": {
+    "en": "Same phone number",
+    "zh": "电话号码相同"
+  },
+  "Nom proche · même quartier ou même ville": {
+    "en": "Similar name · same district or city",
+    "zh": "名称相似 · 同一区域或城市"
+  },
+  "Publier cette adresse ?": {
+    "en": "Publish this address?",
+    "zh": "发布此地址？"
+  },
+  "Confirmer la publication": {
+    "en": "Confirm publication",
+    "zh": "确认发布"
+  },
+  "La fiche": {
+    "en": "The listing",
+    "zh": "此信息"
+  },
+  "deviendra visible par tous les utilisateurs connectés. La date de vérification sera enregistrée dans l’historique.": {
+    "en": "will become visible to all signed-in users. The verification date will be saved in the history.",
+    "zh": "将对所有已登录用户可见。核实日期将记录在审核历史中。"
+  },
+  "Refuser cette proposition ?": {
+    "en": "Reject this suggestion?",
+    "zh": "拒绝此推荐？"
+  },
+  "Confirmer le refus": {
+    "en": "Confirm rejection",
+    "zh": "确认拒绝"
+  },
+  "Motif du refus": {
+    "en": "Reason for rejection",
+    "zh": "拒绝原因"
+  },
+  "Établissement fermé": {
+    "en": "Business closed",
+    "zh": "商家已关闭"
+  },
+  "Informations insuffisantes": {
+    "en": "Insufficient information",
+    "zh": "信息不足"
+  },
+  "Hors périmètre du guide": {
+    "en": "Outside the guide's scope",
+    "zh": "不在指南范围内"
+  },
+  "Contenu inapproprié": {
+    "en": "Inappropriate content",
+    "zh": "内容不当"
+  },
+  "Message au contributeur": {
+    "en": "Message to contributor",
+    "zh": "给推荐者的留言"
+  },
+  "Expliquez brièvement la décision.": {
+    "en": "Briefly explain the decision.",
+    "zh": "请简要说明决定。"
+  },
+  "Demander un complément": {
+    "en": "Request more information",
+    "zh": "请求补充信息"
+  },
+  "Envoyer la demande": {
+    "en": "Send request",
+    "zh": "发送请求"
+  },
+  "Rattacher à une fiche existante ?": {
+    "en": "Link to an existing listing?",
+    "zh": "关联现有信息？"
+  },
+  "Confirmer le rattachement": {
+    "en": "Confirm link",
+    "zh": "确认关联"
+  },
+  "Cette proposition sera fusionnée avec la fiche choisie. Les informations manquantes seront ajoutées à cette fiche.": {
+    "en": "This suggestion will be merged with the selected listing. Missing information will be added.",
+    "zh": "此推荐将合并到所选信息中，并补充缺失内容。"
+  },
+  "Fiche existante": {
+    "en": "Existing listing",
+    "zh": "现有信息"
+  },
+  "Choisir une fiche…": {
+    "en": "Choose a listing…",
+    "zh": "选择信息…"
+  },
+  "Annuler": {
+    "en": "Cancel",
+    "zh": "取消"
+  },
+  "Retour à la liste": {
+    "en": "Back to list",
+    "zh": "返回列表"
+  },
+  "Informations proposées": {
+    "en": "Suggested information",
+    "zh": "推荐的信息"
+  },
+  "Nom commercial": {
+    "en": "Business name",
+    "zh": "商家名称"
+  },
+  "Nom en chinois": {
+    "en": "Chinese name",
+    "zh": "中文名称"
+  },
+  "Localisation indiquée": {
+    "en": "Provided location",
+    "zh": "提供的位置"
+  },
+  "Non renseigné par le contributeur": {
+    "en": "Not provided by contributor",
+    "zh": "推荐者未提供"
+  },
+  "Station de métro proche": {
+    "en": "Nearest metro station",
+    "zh": "附近地铁站"
+  },
+  "À compléter par l’équipe": {
+    "en": "To be completed by the team",
+    "zh": "由团队补充"
+  },
+  "Photos et carte de visite": {
+    "en": "Photos and business card",
+    "zh": "照片和名片"
+  },
+  "Carte : recto": {
+    "en": "Card: front",
+    "zh": "名片：正面"
+  },
+  "Recto non fourni": {
+    "en": "Front not provided",
+    "zh": "未提供正面"
+  },
+  "Carte : verso": {
+    "en": "Card: back",
+    "zh": "名片：背面"
+  },
+  "Verso non fourni": {
+    "en": "Back not provided",
+    "zh": "未提供背面"
+  },
+  "Doublons possibles": {
+    "en": "Possible duplicates",
+    "zh": "可能重复的信息"
+  },
+  "Rechercher une fiche existante": {
+    "en": "Search existing listings",
+    "zh": "搜索现有信息"
+  },
+  "Aucune fiche existante ne correspond.": {
+    "en": "No existing listing matches.",
+    "zh": "没有匹配的现有信息。"
+  },
+  "Rattacher à cette fiche": {
+    "en": "Link to this listing",
+    "zh": "关联此信息"
+  },
+  "Décision": {
+    "en": "Decision",
+    "zh": "审核决定"
+  },
+  "Chaque publication ou refus demande une confirmation.": {
+    "en": "Publishing or rejecting requires confirmation.",
+    "zh": "发布或拒绝均需确认。"
+  },
+  "Modifications enregistrées.": {
+    "en": "Changes saved.",
+    "zh": "修改已保存。"
+  },
+  "Enregistrer les modifications": {
+    "en": "Save changes",
+    "zh": "保存修改"
+  },
+  "Rattacher à une fiche existante": {
+    "en": "Link to an existing listing",
+    "zh": "关联现有信息"
+  },
+  "Publier": {
+    "en": "Publish",
+    "zh": "发布"
+  },
+  "Refuser avec un motif": {
+    "en": "Reject with a reason",
+    "zh": "说明原因并拒绝"
+  },
+  "Toutes les décisions, avec la date de dernière vérification de chaque fiche.": {
+    "en": "All decisions, with the last verification date for each listing.",
+    "zh": "所有审核决定及各条信息的最近核实日期。"
+  },
+  "Date de la décision": {
+    "en": "Decision date",
+    "zh": "决定日期"
+  },
+  "Fiche": {
+    "en": "Listing",
+    "zh": "信息"
+  },
+  "Commentaire ou motif": {
+    "en": "Comment or reason",
+    "zh": "备注或原因"
+  },
+  "Par": {
+    "en": "By",
+    "zh": "操作人"
+  },
+  "Dernière vérification": {
+    "en": "Last verified",
+    "zh": "最近核实"
+  },
+  "Gérez qui accède à l’espace équipe et à l’administration.": {
+    "en": "Manage access to the team and administration areas.",
+    "zh": "管理团队和后台的访问权限。"
+  },
+  "Ajouter un membre": {
+    "en": "Add a member",
+    "zh": "添加成员"
+  },
+  "Si la personne a déjà un compte, son rôle est appliqué immédiatement. Sinon, l’invitation est conservée et le rôle lui est accordé à sa première connexion.": {
+    "en": "If the person already has an account, their role is applied immediately. Otherwise the invitation is saved and the role is assigned on first sign-in.",
+    "zh": "如果对方已有账户，角色立即生效。否则将保存邀请，并在首次登录时分配角色。"
+  },
+  "Rôle": {
+    "en": "Role",
+    "zh": "角色"
+  },
+  "Ajout…": {
+    "en": "Adding…",
+    "zh": "添加中…"
+  },
+  "Ajouter": {
+    "en": "Add",
+    "zh": "添加"
+  },
+  "Invitations en attente (": {
+    "en": "Pending invitations (",
+    "zh": "待接受邀请（"
+  },
+  "E-mail": {
+    "en": "Email",
+    "zh": "邮箱"
+  },
+  "Rôle prévu": {
+    "en": "Assigned role",
+    "zh": "分配角色"
+  },
+  "Pas encore inscrit": {
+    "en": "Not registered yet",
+    "zh": "尚未注册"
+  },
+  "Voir seulement le staff": {
+    "en": "Show staff only",
+    "zh": "仅显示团队成员"
+  },
+  "Voir tous les comptes": {
+    "en": "Show all accounts",
+    "zh": "显示所有账户"
+  },
+  "Aucun compte à afficher.": {
+    "en": "No accounts to display.",
+    "zh": "暂无账户。"
+  },
+  "Personne": {
+    "en": "Person",
+    "zh": "成员"
+  },
+  "Actions": {
+    "en": "Actions",
+    "zh": "操作"
+  },
+  "(vous)": {
+    "en": "(you)",
+    "zh": "（您）"
+  },
+  "Votre propre rôle n’est pas modifiable": {
+    "en": "You cannot change your own role",
+    "zh": "无法修改自己的角色"
+  },
+  "Retirer l’accès ?": {
+    "en": "Remove access?",
+    "zh": "移除访问权限？"
+  },
+  "Confirmer": {
+    "en": "Confirm",
+    "zh": "确认"
+  },
+  "Ajouter à l’équipe": {
+    "en": "Add to team",
+    "zh": "加入团队"
+  },
+  "Nommer admin": {
+    "en": "Make administrator",
+    "zh": "设为管理员"
+  },
+  "Rétrograder en équipe": {
+    "en": "Change to team member",
+    "zh": "改为团队成员"
+  },
+  "Retirer": {
+    "en": "Remove",
+    "zh": "移除"
+  },
+  "Saisissez une adresse e-mail valide.": {
+    "en": "Enter a valid email address.",
+    "zh": "请输入有效邮箱。"
+  },
+  "Action non autorisée : vous n'êtes pas administrateur.": {
+    "en": "Not authorized: you are not an administrator.",
+    "zh": "操作未授权：您不是管理员。"
+  },
+  "Saisissez le nom de la ville.": {
+    "en": "Enter the city name.",
+    "zh": "请输入城市名称。"
+  },
+  "Cette ville existe déjà.": {
+    "en": "This city already exists.",
+    "zh": "此城市已存在。"
+  },
+  "Le quartier a besoin d’un nom, d’une latitude et d’une longitude.": {
+    "en": "The district needs a name, latitude and longitude.",
+    "zh": "区域需要名称、纬度和经度。"
+  },
+  "Les villes et leurs quartiers alimentent la recherche et le calcul des distances.": {
+    "en": "Cities and districts are used for search and distance calculations.",
+    "zh": "城市和区域用于搜索和距离计算。"
+  },
+  "Ajouter une ville": {
+    "en": "Add a city",
+    "zh": "添加城市"
+  },
+  "Nom": {
+    "en": "Name",
+    "zh": "名称"
+  },
+  "Latitude": {
+    "en": "Latitude",
+    "zh": "纬度"
+  },
+  "Longitude": {
+    "en": "Longitude",
+    "zh": "经度"
+  },
+  "L’identifiant est déduit du nom": {
+    "en": "The identifier is generated from the name",
+    "zh": "标识符根据名称生成"
+  },
+  ". Une ville sans quartier reste utilisable, mais la sélection par quartier sera vide.": {
+    "en": ". A city without districts remains available, but district selection will be empty.",
+    "zh": "。未设置区域的城市仍可使用，但区域选择为空。"
+  },
+  "quartier": {
+    "en": "district",
+    "zh": "个区域"
+  },
+  "· utilisée par": {
+    "en": "· used by",
+    "zh": "· 使用于"
+  },
+  "fiche(s) ou proposition(s)": {
+    "en": "listing(s) or suggestion(s)",
+    "zh": "条信息或推荐"
+  },
+  "· désactivée": {
+    "en": "· disabled",
+    "zh": "· 已停用"
+  },
+  "Fermer": {
+    "en": "Close",
+    "zh": "关闭"
+  },
+  "Gérer les quartiers": {
+    "en": "Manage districts",
+    "zh": "管理区域"
+  },
+  "Désactiver": {
+    "en": "Disable",
+    "zh": "停用"
+  },
+  "Réactiver": {
+    "en": "Enable",
+    "zh": "启用"
+  },
+  "Quartier": {
+    "en": "District",
+    "zh": "区域"
+  },
+  "Aucun quartier.": {
+    "en": "No districts.",
+    "zh": "暂无区域。"
+  },
+  "Nom du quartier": {
+    "en": "District name",
+    "zh": "区域名称"
+  },
+  "Saisissez le nom de la catégorie.": {
+    "en": "Enter the category name.",
+    "zh": "请输入类别名称。"
+  },
+  "Cette catégorie existe déjà.": {
+    "en": "This category already exists.",
+    "zh": "此类别已存在。"
+  },
+  "Chaque catégorie définit son icône, son libellé de contact et les blocs affichés sur la fiche.": {
+    "en": "Each category defines its icon, contact button label and listing sections.",
+    "zh": "每个类别定义图标、联系按钮文字和信息展示区块。"
+  },
+  "Ajouter une catégorie": {
+    "en": "Add a category",
+    "zh": "添加类别"
+  },
+  "Pharmacies": {
+    "en": "Pharmacies",
+    "zh": "药店"
+  },
+  "Icône": {
+    "en": "Icon",
+    "zh": "图标"
+  },
+  "Titre de la liste": {
+    "en": "List title",
+    "zh": "列表标题"
+  },
+  "Identifiant déduit du nom": {
+    "en": "Identifier generated from the name",
+    "zh": "根据名称生成的标识符"
+  },
+  ". « Titre de la liste » est l’intitulé affiché au-dessus des produits ou services (ex. « Services », « Spécialités »).": {
+    "en": ". “List title” appears above the products or services (e.g. “Services”, “Specialties”).",
+    "zh": "。“列表标题”显示在产品或服务上方，例如“服务”或“特色”。"
+  },
+  "Modifier": {
+    "en": "Edit",
+    "zh": "编辑"
+  },
+  "Libellé du bouton de contact": {
+    "en": "Contact button label",
+    "zh": "联系按钮文字"
+  },
+  "Titre de la liste produits/services": {
+    "en": "Products/services list title",
+    "zh": "产品或服务列表标题"
+  },
+  "Blocs affichés sur la fiche": {
+    "en": "Sections shown on the listing",
+    "zh": "信息展示区块"
+  },
+  "Propose du fret (active le filtre aérien / maritime dans la recherche)": {
+    "en": "Offers freight (enables air/sea filtering in search)",
+    "zh": "提供货运服务（启用空运和海运筛选）"
+  },
+  "Enregistrer": {
+    "en": "Save",
+    "zh": "保存"
+  },
+  "Saisissez un libellé.": {
+    "en": "Enter a label.",
+    "zh": "请输入名称。"
+  },
+  "Le catalogue proposé aux contributeurs, organisé par catégorie. Le libellé chinois est affiché aux voyageurs.": {
+    "en": "The catalog offered to contributors, organized by category. Chinese labels are shown to travelers.",
+    "zh": "按类别整理、供推荐者选择的目录。中文名称向旅行者显示。"
+  },
+  "Préférez": {
+    "en": "Prefer to",
+    "zh": "建议"
+  },
+  "désactiver": {
+    "en": "disable",
+    "zh": "停用"
+  },
+  "un élément plutôt que le supprimer : les fiches qui l’utilisent continueraient d’afficher son identifiant.": {
+    "en": "an item instead of deleting it: listings using it would keep displaying its identifier.",
+    "zh": "项目而非删除：引用它的信息将继续显示其标识符。"
+  },
+  "Libellé": {
+    "en": "Label",
+    "zh": "名称"
+  },
+  "État": {
+    "en": "State",
+    "zh": "状态"
+  },
+  "Aucun élément pour cette catégorie.": {
+    "en": "No items in this category.",
+    "zh": "此类别暂无项目。"
+  },
+  "Actif": {
+    "en": "Active",
+    "zh": "启用"
+  },
+  "Désactivé": {
+    "en": "Disabled",
+    "zh": "已停用"
+  },
+  "Chaussures en cuir": {
+    "en": "Leather shoes",
+    "zh": "皮鞋"
+  },
+  "Libellé chinois": {
+    "en": "Chinese label",
+    "zh": "中文名称"
+  },
+  "Type de fret (aérien / maritime)": {
+    "en": "Freight type (air / sea)",
+    "zh": "货运类型（空运或海运）"
+  },
+  "Destination au Sénégal": {
+    "en": "Destination in Senegal",
+    "zh": "塞内加尔目的地"
+  },
+  "Cet identifiant existe déjà.": {
+    "en": "This identifier already exists.",
+    "zh": "此标识符已存在。"
+  },
+  "Élément encore utilisé par des fiches : désactivez-le plutôt que de le supprimer.": {
+    "en": "This item is still used by listings: disable it instead of deleting it.",
+    "zh": "此项目仍被信息引用，请停用而非删除。"
+  },
+  "Action réservée aux administrateurs.": {
+    "en": "This action is restricted to administrators.",
+    "zh": "此操作仅限管理员。"
+  },
+  "Photo à fournir : {0}": {
+    "en": "Photo needed: {0}",
+    "zh": "待提供照片：{0}"
+  },
+  "Photo {0}": {
+    "en": "Photo {0}",
+    "zh": "照片 {0}"
+  },
+  "Photo : {0}": {
+    "en": "Photo: {0}",
+    "zh": "照片：{0}"
+  },
+  "Vérifiée le {0}": {
+    "en": "Verified on {0}",
+    "zh": "核实日期：{0}"
+  },
+  "Il y a {0} h": {
+    "en": "{0} hours ago",
+    "zh": "{0} 小时前"
+  },
+  "Il y a {0} jour": {
+    "en": "{0} day ago",
+    "zh": "{0} 天前"
+  },
+  "Il y a {0} jours": {
+    "en": "{0} days ago",
+    "zh": "{0} 天前"
+  },
+  "{0} propositions affichées. Filtrez par ville, catégorie ou statut.": {
+    "en": "{0} suggestions shown. Filter by city, category or status.",
+    "zh": "显示 {0} 条推荐。可按城市、类别或状态筛选。"
+  },
+  "{0} proposition affichée. Filtrez par ville, catégorie ou statut.": {
+    "en": "{0} suggestion shown. Filter by city, category or status.",
+    "zh": "显示 {0} 条推荐。可按城市、类别或状态筛选。"
+  },
+  "Tous les comptes ({0})": {
+    "en": "All accounts ({0})",
+    "zh": "所有账户（{0}）"
+  },
+  "Équipe et administrateurs ({0})": {
+    "en": "Team and administrators ({0})",
+    "zh": "团队和管理员（{0}）"
+  },
+  "Invitation enregistrée pour {0}. Le rôle sera appliqué dès sa première connexion.": {
+    "en": "Invitation saved for {0}. The role will be assigned on first sign-in.",
+    "zh": "已为 {0} 保存邀请。角色将在首次登录时生效。"
+  },
+  "Invitation annulée pour {0}.": {
+    "en": "Invitation canceled for {0}.",
+    "zh": "已取消 {0} 的邀请。"
+  },
+  "{0} a été ajouté comme {1}.": {
+    "en": "{0} was added as {1}.",
+    "zh": "已将 {0} 添加为 {1}。"
+  },
+  "Rôle mis à jour : {0}.": {
+    "en": "Role updated: {0}.",
+    "zh": "角色已更新：{0}。"
+  },
+  "Ville « {0} » ajoutée. Ajoutez-lui des quartiers pour activer la recherche par proximité.": {
+    "en": "City “{0}” added. Add districts to enable nearby search.",
+    "zh": "已添加城市“{0}”。添加区域以启用附近搜索。"
+  },
+  "« {0} » désactivée.": {
+    "en": "“{0}” disabled.",
+    "zh": "已停用“{0}”。"
+  },
+  "« {0} » réactivée.": {
+    "en": "“{0}” enabled.",
+    "zh": "已启用“{0}”。"
+  },
+  "Quartier « {0} » ajouté.": {
+    "en": "District “{0}” added.",
+    "zh": "已添加区域“{0}”。"
+  },
+  "Quartier « {0} » supprimé.": {
+    "en": "District “{0}” deleted.",
+    "zh": "已删除区域“{0}”。"
+  },
+  "Catégorie « {0} » créée. Choisissez ses blocs d’information ci-dessous.": {
+    "en": "Category “{0}” created. Choose its information sections below.",
+    "zh": "已创建类别“{0}”。请在下方选择展示区块。"
+  },
+  "Catégorie « {0} » enregistrée.": {
+    "en": "Category “{0}” saved.",
+    "zh": "已保存类别“{0}”。"
+  },
+  "« {0} » existe déjà dans le catalogue.": {
+    "en": "“{0}” already exists in the catalog.",
+    "zh": "目录中已存在“{0}”。"
+  },
+  "« {0} » ajouté.": {
+    "en": "“{0}” added.",
+    "zh": "已添加“{0}”。"
+  },
+  "« {0} » supprimé du catalogue.": {
+    "en": "“{0}” removed from the catalog.",
+    "zh": "已从目录中移除“{0}”。"
+  },
+  "Modifier {0}": {
+    "en": "Edit {0}",
+    "zh": "编辑 {0}"
+  },
+  "{0} photo(s), carte de visite": {
+    "en": "{0} photo(s), business card",
+    "zh": "{0} 张照片、名片"
+  },
+  "{0} photo(s)": {
+    "en": "{0} photo(s)",
+    "zh": "{0} 张照片"
+  },
+  "pour « {0} »": {
+    "en": "for “{0}”",
+    "zh": "搜索“{0}”"
+  },
+  "{0} · {1} · {2} · reçue le {3}": {
+    "en": "{0} · {1} · {2} · received {3}",
+    "zh": "{0} · {1} · {2} · 收到日期 {3}"
+  }
+}

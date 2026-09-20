@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useStore } from '../../store';
 import { Button, Field, Icon, Select } from '../../ui';
@@ -11,29 +12,32 @@ import {
 const CAT_ICONS: IconName[] = ['box', 'bed', 'utensils', 'truck', 'ship', 'plane', 'train', 'globe', 'pin', 'map', 'phone', 'camera', 'heart', 'compass', 'grid', 'list', 'shield', 'users', 'home', 'route', 'image'];
 
 function Head({ title, sub }: { title: string; sub: string }) {
-  return <header className="admin-head"><div><h1>{title}</h1><div className="muted" style={{ marginTop: 4 }}>{sub}</div></div></header>;
+  const { tr } = useI18n();
+  return <header className="admin-head"><div><h1>{tr(title)}</h1><div className="muted" style={{ marginTop: 4 }}>{tr(sub)}</div></div></header>;
 }
 
 function Msg({ err, ok }: { err: string | null; ok: string | null }) {
+  const { tr } = useI18n();
   return (
     <>
-      {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{err}</span></div>}
-      {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{ok}</span></div>}
+      {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+      {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
     </>
   );
 }
 
-const Card = ({ title, children }: { title: string; children: ReactNode }) => (
+const Card = ({ title, children }: { title: string; children: ReactNode }) => { const { tr } = useI18n(); return ((
   <section className="card stack" style={{ gap: 14 }}>
-    <h2 style={{ fontSize: 17, margin: 0 }}>{title}</h2>
+    <h2 style={{ fontSize: 17, margin: 0 }}>{tr(title)}</h2>
     {children}
   </section>
-);
+)); };
 
 /* ==================================================================== */
 /* Villes et quartiers                                                  */
 /* ==================================================================== */
 export function AdminCities() {
+  const { tr } = useI18n();
   const { s, api } = useStore();
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -104,38 +108,36 @@ export function AdminCities() {
 
   return (
     <>
-      <Head title="Villes" sub="Les villes et leurs quartiers alimentent la recherche et le calcul des distances." />
+      <Head title={tr("Villes")} sub={tr("Les villes et leurs quartiers alimentent la recherche et le calcul des distances.")} />
       <div className="admin-body" style={{ gap: 18 }}>
         <Msg err={err} ok={ok} />
 
-        <Card title="Ajouter une ville">
+        <Card title={tr("Ajouter une ville")}>
           <form onSubmit={addCity} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
-            <div className="grow"><Field id="c-name" label="Nom" value={nf.name} onChange={(v) => setNf({ ...nf, name: v })} req placeholder="Yiwu" /></div>
-            <Field id="c-cn" label="Nom en chinois" value={nf.nameCn} onChange={(v) => setNf({ ...nf, nameCn: v })} placeholder="义乌" />
-            <Field id="c-lat" label="Latitude" value={nf.lat} onChange={(v) => setNf({ ...nf, lat: v })} placeholder="29.30" />
-            <Field id="c-lng" label="Longitude" value={nf.lng} onChange={(v) => setNf({ ...nf, lng: v })} placeholder="120.07" />
-            <Button type="submit" icon="plus" full={false} disabled={busy}>Ajouter</Button>
+            <div className="grow"><Field id="c-name" label={tr("Nom")} value={nf.name} onChange={(v) => setNf({ ...nf, name: v })} req placeholder={tr("Yiwu")} /></div>
+            <Field id="c-cn" label={tr("Nom en chinois")} value={nf.nameCn} onChange={(v) => setNf({ ...nf, nameCn: v })} placeholder={tr("义乌")} />
+            <Field id="c-lat" label={tr("Latitude")} value={nf.lat} onChange={(v) => setNf({ ...nf, lat: v })} placeholder={tr("29.30")} />
+            <Field id="c-lng" label={tr("Longitude")} value={nf.lng} onChange={(v) => setNf({ ...nf, lng: v })} placeholder={tr("120.07")} />
+            <Button type="submit" icon="plus" full={false} disabled={busy}>{tr("Ajouter")}</Button>
           </form>
           <p className="small muted" style={{ margin: 0 }}>
-            L’identifiant est déduit du nom{nf.name && <> : <code>{slugify(nf.name)}</code></>}. Une ville sans quartier reste utilisable, mais la sélection par quartier sera vide.
-          </p>
+            {tr("L’identifiant est déduit du nom")}{nf.name && <> : <code>{tr(slugify(nf.name))}</code></>}{tr(". Une ville sans quartier reste utilisable, mais la sélection par quartier sera vide.")}</p>
         </Card>
 
         {s.cities.map((c) => {
           const quarters = s.districts.filter((x) => x.cityId === c.id);
           return (
-            <Card key={c.id} title={`${c.name}${c.nameCn ? ' · ' + c.nameCn : ''}`}>
+            <Card key={c.id} title={tr(`${c.name}${c.nameCn ? ' · ' + c.nameCn : ''}`)}>
               <div className="row" style={{ gap: 10, flexWrap: 'wrap', justifyContent: 'space-between' }}>
                 <span className="small muted">
-                  <code>{c.id}</code> · {quarters.length} quartier{quarters.length > 1 ? 's' : ''} · utilisée par {usage[c.id] ?? '…'} fiche(s) ou proposition(s)
-                  {!c.active && ' · désactivée'}
+                  <code>{tr(c.id)}</code> · {tr(quarters.length)} {tr(" quartier")}{tr(quarters.length > 1 ? 's' : '')} {tr(" · utilisée par ")}{tr(usage[c.id] ?? '…')} {tr(" fiche(s) ou proposition(s)")}{tr(!c.active && ' · désactivée')}
                 </span>
                 <span className="row" style={{ gap: 8 }}>
                   <Button kind="s" icon="edit" full={false} onClick={() => setOpen(open === c.id ? null : c.id)}>
-                    {open === c.id ? 'Fermer' : 'Gérer les quartiers'}
+                    {tr(open === c.id ? 'Fermer' : 'Gérer les quartiers')}
                   </Button>
                   <Button kind="s" icon={c.active ? 'eye' : 'check'} full={false} onClick={() => toggleCity(c)}>
-                    {c.active ? 'Désactiver' : 'Réactiver'}
+                    {tr(c.active ? 'Désactiver' : 'Réactiver')}
                   </Button>
                 </span>
               </div>
@@ -143,22 +145,22 @@ export function AdminCities() {
               {open === c.id && (
                 <>
                   <div className="table"><table>
-                    <thead><tr><th>Quartier</th><th>Latitude</th><th>Longitude</th><th /></tr></thead>
+                    <thead><tr><th>{tr("Quartier")}</th><th>{tr("Latitude")}</th><th>{tr("Longitude")}</th><th /></tr></thead>
                     <tbody>
-                      {quarters.length === 0 && <tr><td colSpan={4} className="muted">Aucun quartier.</td></tr>}
+                      {quarters.length === 0 && <tr><td colSpan={4} className="muted">{tr("Aucun quartier.")}</td></tr>}
                       {quarters.map((q) => (
                         <tr key={q.id ?? q.name}>
-                          <td><strong>{q.name}</strong></td><td>{q.lat}</td><td>{q.lng}</td>
-                          <td><Button kind="s" icon="trash" full={false} onClick={() => removeDistrict(q)}>Supprimer</Button></td>
+                          <td><strong>{tr(q.name)}</strong></td><td>{tr(q.lat)}</td><td>{tr(q.lng)}</td>
+                          <td><Button kind="s" icon="trash" full={false} onClick={() => removeDistrict(q)}>{tr("Supprimer")}</Button></td>
                         </tr>
                       ))}
                     </tbody>
                   </table></div>
                   <form onSubmit={(e) => addDistrict(c.id, e)} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
-                    <div className="grow"><Field id={`d-n-${c.id}`} label="Nom du quartier" value={df.name} onChange={(v) => setDf({ ...df, name: v })} req /></div>
-                    <Field id={`d-la-${c.id}`} label="Latitude" value={df.lat} onChange={(v) => setDf({ ...df, lat: v })} req />
-                    <Field id={`d-ln-${c.id}`} label="Longitude" value={df.lng} onChange={(v) => setDf({ ...df, lng: v })} req />
-                    <Button type="submit" icon="plus" full={false} disabled={busy}>Ajouter</Button>
+                    <div className="grow"><Field id={`d-n-${c.id}`} label={tr("Nom du quartier")} value={df.name} onChange={(v) => setDf({ ...df, name: v })} req /></div>
+                    <Field id={`d-la-${c.id}`} label={tr("Latitude")} value={df.lat} onChange={(v) => setDf({ ...df, lat: v })} req />
+                    <Field id={`d-ln-${c.id}`} label={tr("Longitude")} value={df.lng} onChange={(v) => setDf({ ...df, lng: v })} req />
+                    <Button type="submit" icon="plus" full={false} disabled={busy}>{tr("Ajouter")}</Button>
                   </form>
                 </>
               )}
@@ -174,6 +176,7 @@ export function AdminCities() {
 /* Catégories                                                           */
 /* ==================================================================== */
 export function AdminCategories() {
+  const { tr } = useI18n();
   const { s, api } = useStore();
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -221,37 +224,34 @@ export function AdminCategories() {
 
   return (
     <>
-      <Head title="Catégories" sub="Chaque catégorie définit son icône, son libellé de contact et les blocs affichés sur la fiche." />
+      <Head title={tr("Catégories")} sub={tr("Chaque catégorie définit son icône, son libellé de contact et les blocs affichés sur la fiche.")} />
       <div className="admin-body" style={{ gap: 18 }}>
         <Msg err={err} ok={ok} />
 
-        <Card title="Ajouter une catégorie">
+        <Card title={tr("Ajouter une catégorie")}>
           <form onSubmit={add} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
-            <div className="grow"><Field id="k-label" label="Nom" value={nf.label} onChange={(v) => setNf({ ...nf, label: v })} req placeholder="Pharmacies" /></div>
-            <Field id="k-cn" label="Nom en chinois" value={nf.labelCn} onChange={(v) => setNf({ ...nf, labelCn: v })} />
-            <Select id="k-icon" label="Icône" value={nf.icon} onChange={(v) => setNf({ ...nf, icon: v as IconName })} options={CAT_ICONS.map((i) => ({ v: i, l: i }))} />
-            <Field id="k-tags" label="Titre de la liste" value={nf.tagsLabel} onChange={(v) => setNf({ ...nf, tagsLabel: v })} />
-            <Button type="submit" icon="plus" full={false} disabled={busy}>Ajouter</Button>
+            <div className="grow"><Field id="k-label" label={tr("Nom")} value={nf.label} onChange={(v) => setNf({ ...nf, label: v })} req placeholder={tr("Pharmacies")} /></div>
+            <Field id="k-cn" label={tr("Nom en chinois")} value={nf.labelCn} onChange={(v) => setNf({ ...nf, labelCn: v })} />
+            <Select id="k-icon" label={tr("Icône")} value={nf.icon} onChange={(v) => setNf({ ...nf, icon: v as IconName })} options={CAT_ICONS.map((i) => ({ v: i, l: i }))} />
+            <Field id="k-tags" label={tr("Titre de la liste")} value={nf.tagsLabel} onChange={(v) => setNf({ ...nf, tagsLabel: v })} />
+            <Button type="submit" icon="plus" full={false} disabled={busy}>{tr("Ajouter")}</Button>
           </form>
           <p className="small muted" style={{ margin: 0 }}>
-            Identifiant déduit du nom{nf.label && <> : <code>{slugify(nf.label)}</code></>}. « Titre de la liste » est l’intitulé affiché
-            au-dessus des produits ou services (ex. « Services », « Spécialités »).
-          </p>
+            {tr("Identifiant déduit du nom")}{nf.label && <> : <code>{tr(slugify(nf.label))}</code></>}{tr(". « Titre de la liste » est l’intitulé affiché au-dessus des produits ou services (ex. « Services », « Spécialités »).")}</p>
         </Card>
 
         {s.categories.map((c) => {
           const e = edit?.id === c.id ? edit : null;
           return (
-            <Card key={c.id} title={`${c.label}${c.labelCn ? ' · ' + c.labelCn : ''}`}>
+            <Card key={c.id} title={tr(`${c.label}${c.labelCn ? ' · ' + c.labelCn : ''}`)}>
               <div className="row" style={{ gap: 10, flexWrap: 'wrap', justifyContent: 'space-between' }}>
                 <span className="row small muted" style={{ gap: 8 }}>
-                  <Icon name={c.icon} size={18} /><code>{c.id}</code> · {usage[c.id] ?? '…'} fiche(s) ou proposition(s)
-                  {!c.active && ' · désactivée'}
+                  <Icon name={c.icon} size={18} /><code>{tr(c.id)}</code> · {tr(usage[c.id] ?? '…')} {tr(" fiche(s) ou proposition(s)")}{tr(!c.active && ' · désactivée')}
                 </span>
                 <span className="row" style={{ gap: 8 }}>
-                  <Button kind="s" icon="edit" full={false} onClick={() => setEdit(e ? null : { ...c })}>{e ? 'Fermer' : 'Modifier'}</Button>
+                  <Button kind="s" icon="edit" full={false} onClick={() => setEdit(e ? null : { ...c })}>{tr(e ? 'Fermer' : 'Modifier')}</Button>
                   <Button kind="s" icon={c.active ? 'eye' : 'check'} full={false} onClick={() => save({ ...c, active: !c.active })}>
-                    {c.active ? 'Désactiver' : 'Réactiver'}
+                    {tr(c.active ? 'Désactiver' : 'Réactiver')}
                   </Button>
                 </span>
               </div>
@@ -259,31 +259,31 @@ export function AdminCategories() {
               {e && (
                 <div className="stack" style={{ gap: 14 }}>
                   <div className="filters" style={{ alignItems: 'flex-end' }}>
-                    <div className="grow"><Field id={`e-l-${c.id}`} label="Nom" value={e.label} onChange={(v) => setEdit({ ...e, label: v })} /></div>
-                    <Field id={`e-cn-${c.id}`} label="Nom en chinois" value={e.labelCn ?? ''} onChange={(v) => setEdit({ ...e, labelCn: v })} />
-                    <Select id={`e-i-${c.id}`} label="Icône" value={e.icon} onChange={(v) => setEdit({ ...e, icon: v as IconName })} options={CAT_ICONS.map((i) => ({ v: i, l: i }))} />
+                    <div className="grow"><Field id={`e-l-${c.id}`} label={tr("Nom")} value={e.label} onChange={(v) => setEdit({ ...e, label: v })} /></div>
+                    <Field id={`e-cn-${c.id}`} label={tr("Nom en chinois")} value={e.labelCn ?? ''} onChange={(v) => setEdit({ ...e, labelCn: v })} />
+                    <Select id={`e-i-${c.id}`} label={tr("Icône")} value={e.icon} onChange={(v) => setEdit({ ...e, icon: v as IconName })} options={CAT_ICONS.map((i) => ({ v: i, l: i }))} />
                   </div>
                   <div className="filters" style={{ alignItems: 'flex-end' }}>
-                    <div className="grow"><Field id={`e-cta-${c.id}`} label="Libellé du bouton de contact" value={e.ctaLabel ?? ''} onChange={(v) => setEdit({ ...e, ctaLabel: v })} /></div>
-                    <div className="grow"><Field id={`e-tl-${c.id}`} label="Titre de la liste produits/services" value={e.tagsLabel} onChange={(v) => setEdit({ ...e, tagsLabel: v })} /></div>
+                    <div className="grow"><Field id={`e-cta-${c.id}`} label={tr("Libellé du bouton de contact")} value={e.ctaLabel ?? ''} onChange={(v) => setEdit({ ...e, ctaLabel: v })} /></div>
+                    <div className="grow"><Field id={`e-tl-${c.id}`} label={tr("Titre de la liste produits/services")} value={e.tagsLabel} onChange={(v) => setEdit({ ...e, tagsLabel: v })} /></div>
                   </div>
                   <fieldset className="stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
-                    <legend style={{ fontWeight: 600, fontSize: 15, padding: 0 }}>Blocs affichés sur la fiche</legend>
+                    <legend style={{ fontWeight: 600, fontSize: 15, padding: 0 }}>{tr("Blocs affichés sur la fiche")}</legend>
                     {FIELD_BLOCKS.map((b) => (
                       <label key={b.id} className="check">
                         <input type="checkbox" checked={e.fields.includes(b.id)}
                           onChange={(ev) => setEdit({ ...e, fields: ev.target.checked ? [...e.fields, b.id] : e.fields.filter((x) => x !== b.id) })} />
-                        <span>{b.label}</span>
+                        <span>{tr(b.label)}</span>
                       </label>
                     ))}
                     <label className="check">
                       <input type="checkbox" checked={e.isFreight} onChange={(ev) => setEdit({ ...e, isFreight: ev.target.checked })} />
-                      <span>Propose du fret (active le filtre aérien / maritime dans la recherche)</span>
+                      <span>{tr("Propose du fret (active le filtre aérien / maritime dans la recherche)")}</span>
                     </label>
                   </fieldset>
                   <div className="row" style={{ gap: 8 }}>
-                    <Button full={false} onClick={() => save(e)} disabled={busy}>Enregistrer</Button>
-                    <Button kind="s" full={false} onClick={() => setEdit(null)}>Annuler</Button>
+                    <Button full={false} onClick={() => save(e)} disabled={busy}>{tr("Enregistrer")}</Button>
+                    <Button kind="s" full={false} onClick={() => setEdit(null)}>{tr("Annuler")}</Button>
                   </div>
                 </div>
               )}
@@ -299,6 +299,7 @@ export function AdminCategories() {
 /* Catalogue produits / services                                        */
 /* ==================================================================== */
 export function AdminProductTags() {
+  const { tr } = useI18n();
   const { s, api } = useStore();
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -343,32 +344,30 @@ export function AdminProductTags() {
 
   return (
     <>
-      <Head title="Produits et services" sub="Le catalogue proposé aux contributeurs, organisé par catégorie. Le libellé chinois est affiché aux voyageurs." />
+      <Head title={tr("Produits et services")} sub={tr("Le catalogue proposé aux contributeurs, organisé par catégorie. Le libellé chinois est affiché aux voyageurs.")} />
       <div className="admin-body" style={{ gap: 18 }}>
         <Msg err={err} ok={ok} />
         <div className="notice"><Icon name="info" size={20} /><span>
-          Préférez <strong>désactiver</strong> un élément plutôt que le supprimer : les fiches qui l’utilisent
-          continueraient d’afficher son identifiant.
-        </span></div>
+          {tr("Préférez ")}<strong>{tr("désactiver")}</strong> {tr(" un élément plutôt que le supprimer : les fiches qui l’utilisent continueraient d’afficher son identifiant.")}</span></div>
 
         {s.categories.map((c) => {
           const tags = s.productTags.filter((t) => t.categoryId === c.id);
           const f = form(c.id);
           return (
-            <Card key={c.id} title={`${c.label} — ${c.tagsLabel}`}>
+            <Card key={c.id} title={tr(`${c.label} — ${c.tagsLabel}`)}>
               <div className="table"><table>
-                <thead><tr><th>Libellé</th><th>中文</th><th>État</th><th>Actions</th></tr></thead>
+                <thead><tr><th>{tr("Libellé")}</th><th>{tr("中文")}</th><th>{tr("État")}</th><th>{tr("Actions")}</th></tr></thead>
                 <tbody>
-                  {tags.length === 0 && <tr><td colSpan={4} className="muted">Aucun élément pour cette catégorie.</td></tr>}
+                  {tags.length === 0 && <tr><td colSpan={4} className="muted">{tr("Aucun élément pour cette catégorie.")}</td></tr>}
                   {tags.map((t) => (
                     <tr key={t.id}>
-                      <td><strong>{t.label}</strong><div className="small muted"><code>{t.id}</code></div></td>
-                      <td className="zh">{t.labelCn ?? <span className="np">Non renseigné</span>}</td>
-                      <td className="small muted">{t.active ? 'Actif' : 'Désactivé'}</td>
+                      <td><strong>{tr(t.label)}</strong><div className="small muted"><code>{tr(t.id)}</code></div></td>
+                      <td className="zh">{t.labelCn ?? <span className="np">{tr("Non renseigné")}</span>}</td>
+                      <td className="small muted">{tr(t.active ? 'Actif' : 'Désactivé')}</td>
                       <td>
                         <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                          <Button kind="s" full={false} onClick={() => toggle(t)}>{t.active ? 'Désactiver' : 'Réactiver'}</Button>
-                          <Button kind="s" icon="trash" full={false} onClick={() => remove(t)}>Supprimer</Button>
+                          <Button kind="s" full={false} onClick={() => toggle(t)}>{tr(t.active ? 'Désactiver' : 'Réactiver')}</Button>
+                          <Button kind="s" icon="trash" full={false} onClick={() => remove(t)}>{tr("Supprimer")}</Button>
                         </span>
                       </td>
                     </tr>
@@ -376,9 +375,9 @@ export function AdminProductTags() {
                 </tbody>
               </table></div>
               <form onSubmit={(e) => add(c.id, e)} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
-                <div className="grow"><Field id={`t-l-${c.id}`} label="Libellé" value={f.label} onChange={(v) => setNf({ ...nf, [c.id]: { ...f, label: v } })} req placeholder="Chaussures en cuir" /></div>
-                <div className="grow"><Field id={`t-cn-${c.id}`} label="Libellé chinois" value={f.labelCn} onChange={(v) => setNf({ ...nf, [c.id]: { ...f, labelCn: v } })} placeholder="皮鞋" /></div>
-                <Button type="submit" icon="plus" full={false} disabled={busy}>Ajouter</Button>
+                <div className="grow"><Field id={`t-l-${c.id}`} label={tr("Libellé")} value={f.label} onChange={(v) => setNf({ ...nf, [c.id]: { ...f, label: v } })} req placeholder={tr("Chaussures en cuir")} /></div>
+                <div className="grow"><Field id={`t-cn-${c.id}`} label={tr("Libellé chinois")} value={f.labelCn} onChange={(v) => setNf({ ...nf, [c.id]: { ...f, labelCn: v } })} placeholder={tr("皮鞋")} /></div>
+                <Button type="submit" icon="plus" full={false} disabled={busy}>{tr("Ajouter")}</Button>
               </form>
             </Card>
           );

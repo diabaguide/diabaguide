@@ -1,3 +1,4 @@
+import { useI18n } from './i18n';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useStore } from './store';
 import { isTeamRole } from './lib/auth';
@@ -15,12 +16,13 @@ import { AdminCities, AdminCategories, AdminProductTags } from './pages/admin/Ta
    L’URL demandée est conservée (?next=) : lien partagé > connexion > fiche. */
 /* Niveau d'accès requis : simple connexion, espace équipe, ou administration. */
 function RequireAuth({ need = 'user' }: { need?: 'user' | 'team' | 'admin' }) {
+  const { tr } = useI18n();
   const { s } = useStore();
   const loc = useLocation();
   // Tant que la session Supabase n'est pas vérifiée, on n'affiche ni ne redirige
   // (évite de rejeter vers /connexion un utilisateur en réalité connecté).
   if (!s.authReady) {
-    return <div className="center-screen" style={{ minHeight: '60vh' }} role="status" aria-live="polite">Chargement…</div>;
+    return <div className="center-screen" style={{ minHeight: '60vh' }} role="status" aria-live="polite">{tr("Chargement…")}</div>;
   }
   if (!s.user) return <Navigate to={`/connexion?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
   if (need === 'team' && !isTeamRole(s.user.role)) return <Navigate to="/accueil" replace />;

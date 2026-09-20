@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useStore } from '../../store';
 import { Button, Field, Icon, Select } from '../../ui';
@@ -10,6 +11,7 @@ import {
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const RoleBadge = ({ role }: { role: Role }) => {
+  const { tr } = useI18n();
   const style: Record<Role, { bg: string; fg: string; icon: Parameters<typeof Icon>[0]['name'] }> = {
     admin: { bg: '#EAE4F5', fg: '#4B3A7A', icon: 'shield' },
     team: { bg: '#E3ECF7', fg: '#1F4A7A', icon: 'users' },
@@ -18,12 +20,13 @@ const RoleBadge = ({ role }: { role: Role }) => {
   const st = style[role];
   return (
     <span className="row" style={{ gap: 6, background: st.bg, color: st.fg, fontWeight: 700, fontSize: 13, padding: '4px 10px', borderRadius: 999, width: 'fit-content' }}>
-      <Icon name={st.icon} size={15} sw={2.2} />{ROLE_LABEL[role]}
+      <Icon name={st.icon} size={15} sw={2.2} />{tr(ROLE_LABEL[role])}
     </span>
   );
 };
 
 export function Members() {
+  const { tr } = useI18n();
   const { s } = useStore();
   const meId = s.user?.id;
 
@@ -83,44 +86,41 @@ export function Members() {
     <>
       <header className="admin-head">
         <div>
-          <h1>Membres</h1>
+          <h1>{tr("Membres")}</h1>
           <div className="muted" style={{ marginTop: 4 }}>
-            Gérez qui accède à l’espace équipe et à l’administration.
-          </div>
+            {tr("Gérez qui accède à l’espace équipe et à l’administration.")}</div>
         </div>
       </header>
 
       <div className="admin-body" style={{ gap: 18 }}>
-        {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{err}</span></div>}
-        {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{ok}</span></div>}
+        {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+        {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
 
         {/* ---- Ajouter un membre ---- */}
         <section className="card stack" style={{ gap: 14 }}>
-          <h2 style={{ fontSize: 17, margin: 0 }}>Ajouter un membre</h2>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Ajouter un membre")}</h2>
           <p className="small muted" style={{ margin: 0 }}>
-            Si la personne a déjà un compte, son rôle est appliqué immédiatement. Sinon,
-            l’invitation est conservée et le rôle lui est accordé à sa première connexion.
-          </p>
+            {tr("Si la personne a déjà un compte, son rôle est appliqué immédiatement. Sinon, l’invitation est conservée et le rôle lui est accordé à sa première connexion.")}</p>
           <form onSubmit={invite} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
-            <div className="grow"><Field id="inv-mail" label="Adresse e-mail" type="email" value={email} onChange={setEmail} placeholder="nom@exemple.com" /></div>
-            <Select id="inv-role" label="Rôle" value={role} onChange={(v) => setRole(v as 'team' | 'admin')}
+            <div className="grow"><Field id="inv-mail" label={tr("Adresse e-mail")} type="email" value={email} onChange={setEmail} placeholder={tr("nom@exemple.com")} /></div>
+            <Select id="inv-role" label={tr("Rôle")} value={role} onChange={(v) => setRole(v as 'team' | 'admin')}
               options={[{ v: 'team', l: 'Équipe' }, { v: 'admin', l: 'Administrateur' }]} />
-            <Button type="submit" icon="plus" full={false} disabled={busy}>{busy ? 'Ajout…' : 'Ajouter'}</Button>
+            <Button type="submit" icon="plus" full={false} disabled={busy}>{tr(busy ? 'Ajout…' : 'Ajouter')}</Button>
           </form>
         </section>
 
         {/* ---- Invitations en attente ---- */}
         {invites.length > 0 && (
           <section className="card stack" style={{ gap: 12 }}>
-            <h2 style={{ fontSize: 17, margin: 0 }}>Invitations en attente ({invites.length})</h2>
+            <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Invitations en attente (")}{tr(invites.length)})</h2>
             <div className="table"><table>
-              <thead><tr><th>E-mail</th><th>Rôle prévu</th><th /></tr></thead>
+              <thead><tr><th>{tr("E-mail")}</th><th>{tr("Rôle prévu")}</th><th /></tr></thead>
               <tbody>
                 {invites.map((i) => (
                   <tr key={i.email}>
-                    <td><strong>{i.email}</strong><div className="small muted">Pas encore inscrit</div></td>
+                    <td><strong>{i.email}</strong><div className="small muted">{tr("Pas encore inscrit")}</div></td>
                     <td><RoleBadge role={i.role} /></td>
-                    <td><Button kind="s" icon="x" full={false} onClick={() => revoke(i.email)}>Annuler</Button></td>
+                    <td><Button kind="s" icon="x" full={false} onClick={() => revoke(i.email)}>{tr("Annuler")}</Button></td>
                   </tr>
                 ))}
               </tbody>
@@ -132,41 +132,41 @@ export function Members() {
         <section className="card stack" style={{ gap: 12 }}>
           <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <h2 style={{ fontSize: 17, margin: 0 }}>
-              {showAll ? `Tous les comptes (${members.length})` : `Équipe et administrateurs (${staff.length})`}
+              {tr(showAll ? `Tous les comptes (${members.length})` : `Équipe et administrateurs (${staff.length})`)}
             </h2>
             <Button kind="s" icon="users" full={false} onClick={() => setShowAll(!showAll)}>
-              {showAll ? 'Voir seulement le staff' : 'Voir tous les comptes'}
+              {tr(showAll ? 'Voir seulement le staff' : 'Voir tous les comptes')}
             </Button>
           </div>
 
-          {loading ? <p className="muted" role="status">Chargement…</p>
-            : shown.length === 0 ? <p className="muted">Aucun compte à afficher.</p> : (
+          {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
+            : shown.length === 0 ? <p className="muted">{tr("Aucun compte à afficher.")}</p> : (
             <div className="table"><table>
-              <thead><tr><th>Personne</th><th>Rôle</th><th>Actions</th></tr></thead>
+              <thead><tr><th>{tr("Personne")}</th><th>{tr("Rôle")}</th><th>{tr("Actions")}</th></tr></thead>
               <tbody>
                 {shown.map((m) => {
                   const isMe = m.id === meId;
                   return (
                     <tr key={m.id}>
                       <td>
-                        <strong>{m.name ?? '—'}{isMe && <span className="muted" style={{ fontWeight: 400 }}> (vous)</span>}</strong>
+                        <strong>{tr(m.name ?? '—')}{isMe && <span className="muted" style={{ fontWeight: 400 }}> {tr(" (vous)")}</span>}</strong>
                         <div className="small muted">{m.email}</div>
                       </td>
                       <td><RoleBadge role={m.role} /></td>
                       <td>
-                        {isMe ? <span className="small muted">Votre propre rôle n’est pas modifiable</span>
+                        {isMe ? <span className="small muted">{tr("Votre propre rôle n’est pas modifiable")}</span>
                           : confirmId === m.id ? (
                             <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                              <span className="small">Retirer l’accès ?</span>
-                              <Button kind="d" full={false} onClick={() => change(m.id, 'traveler')}>Confirmer</Button>
-                              <Button kind="s" full={false} onClick={() => setConfirmId(null)}>Annuler</Button>
+                              <span className="small">{tr("Retirer l’accès ?")}</span>
+                              <Button kind="d" full={false} onClick={() => change(m.id, 'traveler')}>{tr("Confirmer")}</Button>
+                              <Button kind="s" full={false} onClick={() => setConfirmId(null)}>{tr("Annuler")}</Button>
                             </span>
                           ) : (
                             <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                              {m.role === 'traveler' && <Button kind="s" full={false} onClick={() => change(m.id, 'team')}>Ajouter à l’équipe</Button>}
-                              {m.role === 'team' && <Button kind="s" icon="shield" full={false} onClick={() => change(m.id, 'admin')}>Nommer admin</Button>}
-                              {m.role === 'admin' && <Button kind="s" full={false} onClick={() => change(m.id, 'team')}>Rétrograder en équipe</Button>}
-                              {m.role !== 'traveler' && <Button kind="s" icon="x" full={false} onClick={() => setConfirmId(m.id)}>Retirer</Button>}
+                              {m.role === 'traveler' && <Button kind="s" full={false} onClick={() => change(m.id, 'team')}>{tr("Ajouter à l’équipe")}</Button>}
+                              {m.role === 'team' && <Button kind="s" icon="shield" full={false} onClick={() => change(m.id, 'admin')}>{tr("Nommer admin")}</Button>}
+                              {m.role === 'admin' && <Button kind="s" full={false} onClick={() => change(m.id, 'team')}>{tr("Rétrograder en équipe")}</Button>}
+                              {m.role !== 'traveler' && <Button kind="s" icon="x" full={false} onClick={() => setConfirmId(m.id)}>{tr("Retirer")}</Button>}
                             </span>
                           )}
                       </td>

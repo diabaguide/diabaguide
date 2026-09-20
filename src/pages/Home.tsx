@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cityName, type City } from '../data';
@@ -9,6 +10,7 @@ import { ResultCard } from './Search';
 interface InstallEvent extends Event { prompt: () => Promise<void> }
 
 export function Home() {
+  const { tr } = useI18n();
   const { s, d } = useStore();
   const [evt, setEvt] = useState<InstallEvent | null>(null);
   useEffect(() => {
@@ -23,48 +25,48 @@ export function Home() {
       <header className="hero" style={{ padding: '18px 16px 22px', gap: 16, borderRadius: '0 0 26px 26px' }}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <Logo height={30} tail="GUIDE" />
-          <span className="small" style={{ color: '#DCE6FA' }}>Bonjour {s.user?.name.split(' ')[0]}</span>
+          <span className="small" style={{ color: '#DCE6FA' }}>{tr("Bonjour ")}{s.user?.name.split(' ')[0]}</span>
         </div>
-        <div className="seg" role="group" aria-label="Ville">
+        <div className="seg" role="group" aria-label={tr("Ville")}>
           {s.cities.filter((c) => c.active).map((c) => (
-            <button key={c.id} type="button" className={s.city === c.id ? 'on' : ''} aria-pressed={s.city === c.id} onClick={() => d({ t: 'city', v: c.id })}>{s.city === c.id && '✓ '}{c.name}</button>
+            <button key={c.id} type="button" className={s.city === c.id ? 'on' : ''} aria-pressed={s.city === c.id} onClick={() => d({ t: 'city', v: c.id })}>{tr(s.city === c.id && '✓ ')}{c.name}</button>
           ))}
         </div>
-        <Link to={`/recherche?ville=${s.city}`} className="searchfake" aria-label="Rechercher un produit ou un service">
-          <Icon name="search" /><span>Quel produit ou service cherchez-vous ?</span>
+        <Link to={`/recherche?ville=${s.city}`} className="searchfake" aria-label={tr("Rechercher un produit ou un service")}>
+          <Icon name="search" /><span>{tr("Quel produit ou service cherchez-vous ?")}</span>
         </Link>
       </header>
       <main className="main" style={{ gap: 22, paddingTop: 20 }}>
         {!s.installDismissed && (
           <div className="install">
             <Icon name="download" size={22} />
-            <div className="grow"><div style={{ fontWeight: 700, fontSize: 15 }}>Installer Diaba Guide</div><div className="small muted">Ajoutez le site à l’écran d’accueil de votre téléphone.</div></div>
+            <div className="grow"><div style={{ fontWeight: 700, fontSize: 15 }}>{tr("Installer Diaba Guide")}</div><div className="small muted">{tr("Ajoutez le site à l’écran d’accueil de votre téléphone.")}</div></div>
             <button type="button" className="btn btn-s" style={{ minHeight: 44, fontSize: 14, padding: '0 12px' }}
-              onClick={() => (evt ? evt.prompt() : alert('Sur iPhone : Partager > Sur l’écran d’accueil. Sur Android : menu du navigateur > Installer l’application.'))}>Installer</button>
-            <button type="button" className="iconbtn" style={{ border: 0, background: 'transparent', color: 'var(--muted)' }} aria-label="Fermer la proposition d’installation" onClick={() => d({ t: 'dismissInstall' })}><Icon name="x" size={20} /></button>
+              onClick={() => (evt ? evt.prompt() : alert('Sur iPhone : Partager > Sur l’écran d’accueil. Sur Android : menu du navigateur > Installer l’application.'))}>{tr("Installer")}</button>
+            <button type="button" className="iconbtn" style={{ border: 0, background: 'transparent', color: 'var(--muted)' }} aria-label={tr("Fermer la proposition d’installation")} onClick={() => d({ t: 'dismissInstall' })}><Icon name="x" size={20} /></button>
           </div>
         )}
-        <section aria-label="Catégories">
-          <h2 className="display" style={{ fontSize: 19, marginBottom: 12 }}>Que cherchez-vous ?</h2>
+        <section aria-label={tr("Catégories")}>
+          <h2 className="display" style={{ fontSize: 19, marginBottom: 12 }}>{tr("Que cherchez-vous ?")}</h2>
           <div className="cattiles">
             {s.categories.filter((c) => c.active).map((c, i, arr) => (
               <Link key={c.id} to={`/recherche?cat=${c.id}&ville=${s.city}`} className={`cattile ${arr.length % 2 === 1 && i === arr.length - 1 ? 'wide' : ''}`}>
-                <span className="ico"><Icon name={c.icon} size={24} /></span>{c.label}
+                <span className="ico"><Icon name={c.icon} size={24} /></span>{tr(c.label)}
               </Link>
             ))}
           </div>
         </section>
         <section className="stack">
-          <h2 className="display" style={{ fontSize: 19 }}>Sélection Diaba · {cityName(s.city)}</h2>
+          <h2 className="display" style={{ fontSize: 19 }}>{tr("Sélection Diaba · ")}{tr(cityName(s.city))}</h2>
           {featured.map((p) => <ResultCard key={p.id} p={p} />)}
         </section>
         <section className="card sec">
-          <h2 className="display" style={{ fontSize: 19 }}><Icon name="pin" size={22} />À proximité</h2>
-          <p className="muted small" style={{ fontSize: 15 }}>Votre position n’est demandée que si vous activez la recherche à proximité. Vous pouvez aussi choisir un quartier à la main.</p>
-          <Button to="/localisation" icon="pin">Activer la recherche à proximité</Button>
-          <Link className="link center" style={{ justifyContent: 'center' }} to="/localisation">Choisir un quartier manuellement</Link>
+          <h2 className="display" style={{ fontSize: 19 }}><Icon name="pin" size={22} />{tr("À proximité")}</h2>
+          <p className="muted small" style={{ fontSize: 15 }}>{tr("Votre position n’est demandée que si vous activez la recherche à proximité. Vous pouvez aussi choisir un quartier à la main.")}</p>
+          <Button to="/localisation" icon="pin">{tr("Activer la recherche à proximité")}</Button>
+          <Link className="link center" style={{ justifyContent: 'center' }} to="/localisation">{tr("Choisir un quartier manuellement")}</Link>
         </section>
-        <Button to="/contributions/nouvelle/1" kind="s" icon="plus">Proposer une adresse</Button>
+        <Button to="/contributions/nouvelle/1" kind="s" icon="plus">{tr("Proposer une adresse")}</Button>
         <DemoNote />
       </main>
     </Screen>
@@ -72,6 +74,7 @@ export function Home() {
 }
 
 export function Locate() {
+  const { tr } = useI18n();
   const { s } = useStore();
   const nav = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -86,20 +89,20 @@ export function Locate() {
   const manual = () => { setPos(districtPos(chosen)); nav(`/recherche?ville=${s.city}&prox=10`); };
   return (
     <Screen>
-      <TopBar title="Près de vous" back={-1} />
+      <TopBar title={tr("Près de vous")} back={-1} />
       <div className="main" style={{ gap: 20 }}>
         <div className="card center-screen" style={{ padding: '24px 20px', flex: 'none' }}>
           <span className="bigcheck" style={{ width: 72, height: 72, background: 'var(--info-bg)', border: 0, color: 'var(--primary)' }}><Icon name="pin" size={36} /></span>
-          <div className="display" style={{ fontSize: 24 }}>Trouver les adresses autour de vous</div>
-          <div className="muted">Diaba Guide utilise votre position uniquement pour calculer les distances. Vous pouvez refuser : la sélection manuelle reste disponible.</div>
-          <Button icon="check" onClick={allow} disabled={busy}>{busy ? 'Localisation…' : 'Autoriser la localisation'}</Button>
+          <div className="display" style={{ fontSize: 24 }}>{tr("Trouver les adresses autour de vous")}</div>
+          <div className="muted">{tr("Diaba Guide utilise votre position uniquement pour calculer les distances. Vous pouvez refuser : la sélection manuelle reste disponible.")}</div>
+          <Button icon="check" onClick={allow} disabled={busy}>{tr(busy ? 'Localisation…' : 'Autoriser la localisation')}</Button>
         </div>
-        <section className="stack"><h2 className="display" style={{ fontSize: 19 }}>Ou choisissez un quartier · {cityName(s.city)}</h2>
+        <section className="stack"><h2 className="display" style={{ fontSize: 19 }}>{tr("Ou choisissez un quartier · ")}{tr(cityName(s.city))}</h2>
           {quarters.length > 0
-            ? quarters.map((x) => <RadioCard key={x.name} name="q" label={x.name} checked={chosen === x.name} onChange={() => setDistrict(x.name)} />)
-            : <p className="muted">Aucun quartier n’est encore renseigné pour cette ville.</p>}
+            ? quarters.map((x) => <RadioCard key={x.name} name="q" label={tr(x.name)} checked={chosen === x.name} onChange={() => setDistrict(x.name)} />)
+            : <p className="muted">{tr("Aucun quartier n’est encore renseigné pour cette ville.")}</p>}
         </section>
-        {quarters.length > 0 && <Button kind="s" onClick={manual}>Voir les adresses de ce quartier</Button>}
+        {quarters.length > 0 && <Button kind="s" onClick={manual}>{tr("Voir les adresses de ce quartier")}</Button>}
       </div>
     </Screen>
   );
