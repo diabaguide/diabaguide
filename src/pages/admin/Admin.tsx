@@ -5,13 +5,12 @@ import { useStore } from '../../store';
 import { signOut } from '../../lib/auth';
 import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, Tag, TextArea } from '../../ui';
 
-/* Toutes les propositions vues par l’équipe (hors brouillons des voyageurs). */
+/* Toutes les propositions vues par l’équipe (hors brouillons des voyageurs).
+   Pour un compte équipe, `s.proposals` contient déjà toutes les propositions
+   soumises (chargées depuis Supabase via la RLS équipe). */
 function useTeamAll(): Proposal[] {
   const { s } = useStore();
-  return useMemo(() => {
-    const ids = new Set(s.teamQueue.map((p) => p.id));
-    return [...s.teamQueue, ...s.proposals.filter((p) => p.status !== 'Brouillon' && !ids.has(p.id))];
-  }, [s.teamQueue, s.proposals]);
+  return useMemo(() => s.proposals.filter((p) => p.status !== 'Brouillon'), [s.proposals]);
 }
 const ageHours = (p: Proposal) => {
   const m = /(\d+) sept/.exec(p.date);
@@ -144,7 +143,7 @@ type Dlg = null | 'publish' | 'refuse' | 'complement' | 'attach';
 export function AdminVerify() {
   const { id } = useParams();
   const all = useTeamAll();
-  const { s, d } = useStore();
+  const { s, api } = useStore();
   const nav = useNavigate();
   const src = all.find((p) => p.id === id);
   const [p, setP] = useState<Proposal | null>(src ?? null);
@@ -157,7 +156,7 @@ export function AdminVerify() {
   if (!src || !p) return <Navigate to="/equipe/propositions" replace />;
   const set = (patch: Partial<Proposal>) => { setP({ ...p, ...patch }); setSaved(false); };
   const cands = dupCandidates(p, s.providers, dupQ);
-  const decide = (status: Status, note: string) => { d({ t: 'decide', id: p.id, status, note }); nav('/equipe/historique'); };
+  const decide = (status: Status, note: string) => { void api.decide(p.id, status, note); nav('/equipe/historique'); };
   const ready = !!p.name.trim() && !!p.loc.trim();
 
   const dialog = () => {

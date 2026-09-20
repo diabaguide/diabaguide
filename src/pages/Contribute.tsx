@@ -36,10 +36,11 @@ function FilePick({ label, onPick, done }: { label: string; onPick: () => void; 
 export function Wizard() {
   const { step } = useParams();
   const n = Math.min(4, Math.max(1, Number(step) || 1));
-  const { s, d } = useStore();
+  const { s, d, api } = useStore();
   const nav = useNavigate();
   const p = s.draft ?? emptyProposal();
   const [tried, setTried] = useState(false);
+  const [busy, setBusy] = useState(false);
   const set = (patch: Partial<Proposal>) => d({ t: 'draft', p: { ...p, ...patch } });
   const errs = required(p);
   const go = (to: number) => nav(`/contributions/nouvelle/${to}`);
@@ -47,18 +48,18 @@ export function Wizard() {
     if (n === 1) { setTried(true); if (errs.name || errs.loc) return; }
     go(n + 1);
   };
-  const saveDraft = () => { d({ t: 'saveDraft', p }); nav('/contributions'); };
-  const submit = () => {
+  const saveDraft = async () => { setBusy(true); await api.saveDraft(p); nav('/contributions'); };
+  const submit = async () => {
     if (errs.name || errs.loc) { setTried(true); go(1); return; }
-    d({ t: 'submit', p }); nav('/contributions/nouvelle/envoyee');
+    setBusy(true); await api.submit(p); nav('/contributions/nouvelle/envoyee');
   };
   const nextBtns: ReactNode = (
     <div className="stack" style={{ marginTop: 6 }}>
       <div className="row">
         {n > 1 && <Button kind="s" icon="chevL" full={false} onClick={() => go(n - 1)}>Retour</Button>}
-        <div className="grow">{n < 4 ? <Button onClick={next}>Suivant</Button> : <Button icon="send" onClick={submit}>Soumettre à Diaba</Button>}</div>
+        <div className="grow">{n < 4 ? <Button onClick={next}>Suivant</Button> : <Button icon="send" onClick={submit} disabled={busy}>{busy ? 'Envoi…' : 'Soumettre à Diaba'}</Button>}</div>
       </div>
-      <Button kind="t" onClick={saveDraft}>Enregistrer le brouillon</Button>
+      <Button kind="t" onClick={saveDraft} disabled={busy}>Enregistrer le brouillon</Button>
     </div>
   );
 
@@ -185,7 +186,7 @@ export function Contributions() {
 const STEPS: Status[] = ['Soumise', 'En vérification'];
 export function ContributionDetail() {
   const { id } = useParams();
-  const { s, d } = useStore();
+  const { s, d, api } = useStore();
   const p = s.proposals.find((x) => x.id === id);
   const [tel, setTel] = useState('');
   const [note, setNote] = useState('');
@@ -221,7 +222,7 @@ export function ContributionDetail() {
             <Field id="tel2" label="Téléphone" type="tel" value={tel} onChange={setTel} placeholder="+86 …" />
             <button type="button" className="upload" onClick={() => setPhoto(true)}><Icon name={photo ? 'check' : 'camera'} size={26} />{photo ? 'Photo ajoutée' : 'Ajouter une photo de la devanture'}</button>
             <TextArea id="note" label="Message pour l’équipe (facultatif)" value={note} onChange={setNote} />
-            <Button icon="send" onClick={() => d({ t: 'complement', id: p.id, patch: { tel: tel || p.tel, photos: p.photos + (photo ? 1 : 0) } })}>Envoyer le complément</Button>
+            <Button icon="send" onClick={() => api.complement(p.id, { tel: tel || p.tel, photos: p.photos + (photo ? 1 : 0) })}>Envoyer le complément</Button>
           </Section>
         )}
         {p.status === 'Publiée' && <Button to="/adresses/baiyun" icon="eye">Voir la fiche publiée</Button>}
