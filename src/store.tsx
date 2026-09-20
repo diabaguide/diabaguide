@@ -4,13 +4,16 @@ import {
   type City, type Decision, type Provider, type Proposal, type Status,
 } from './data';
 import { fetchProviders } from './lib/providers';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { userFromSession } from './lib/auth';
 
 export type Lang = 'fr' | 'en' | 'zh';
 export type LocPref = 'ask' | 'while' | 'never';
 
-interface User { name: string; email: string; role: 'traveler' | 'team' }
+interface User { id?: string; name: string; email: string; role: 'traveler' | 'team' }
 interface State {
   user: User | null;
+  authReady: boolean; // la session Supabase a-t-elle été vérifiée ?
   lang: Lang;
   city: City;
   locPref: LocPref;
@@ -27,7 +30,7 @@ interface State {
 
 const KEY = 'diaba-guide-state-v1';
 const initial: State = {
-  user: null, lang: 'fr', city: 'Guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'],
+  user: null, authReady: !isSupabaseConfigured, lang: 'fr', city: 'Guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'],
   downloads: { baiyun: '18 sept. 2026', jinyuan: '18 sept. 2026' }, lastSync: '19 sept. 2026, 09:12',
   providers: PROVIDERS, proposals: SEED_PROPOSALS, teamQueue: [...TEAM_QUEUE_EXTRA], decisions: SEED_DECISIONS, draft: null, installDismissed: false,
 };
@@ -35,6 +38,7 @@ const initial: State = {
 type Action =
   | { t: 'login'; user: User }
   | { t: 'logout' }
+  | { t: 'session'; user: User | null } // résultat de la vérification de session Supabase
   | { t: 'lang'; v: Lang }
   | { t: 'city'; v: City }
   | { t: 'locPref'; v: LocPref }
@@ -53,8 +57,9 @@ const TODAY = '20 sept. 2026';
 
 function reducer(s: State, a: Action): State {
   switch (a.t) {
-    case 'login': return { ...s, user: a.user };
-    case 'logout': return { ...s, user: null };
+    case 'login': return { ...s, user: a.user, authReady: true };
+    case 'logout': return { ...s, user: null, authReady: true };
+    case 'session': return { ...s, user: a.user, authReady: true };
     case 'lang': return { ...s, lang: a.v };
     case 'city': return { ...s, city: a.v };
     case 'locPref': return { ...s, locPref: a.v };
@@ -110,7 +115,14 @@ function load(): State {
     const raw = localStorage.getItem(KEY);
     // `providers` n'est jamais restauré depuis localStorage : il est
     // (re)chargé depuis Supabase au démarrage, avec repli statique.
-    if (raw) return { ...initial, ...JSON.parse(raw), providers: PROVIDERS };
+    if (raw) {
+      const parsed = { ...initial, ...JSON.parse(raw), providers: PROVIDERS } as State;
+      // Avec Supabase Auth, la session fait foi : on n'accorde jamais d'accès
+      // depuis un `user` persisté (évite un rôle « équipe » périmé au chargement),
+      // et on attend la vérification de session (authReady=false).
+      if (isSupabaseConfigured) { parsed.user = null; parsed.authReady = false; }
+      return parsed;
+    }
   } catch { /* stockage indisponible */ }
   return initial;
 }
@@ -121,9 +133,11 @@ const C = createContext<Ctx>(null as unknown as Ctx);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [s, d] = useReducer(reducer, undefined, load);
   useEffect(() => {
-    // On ne persiste pas `providers` (rechargé depuis Supabase à chaque démarrage).
+    // On ne persiste pas `providers` (rechargé depuis Supabase au démarrage).
+    // Avec Supabase Auth, `user` non plus : la session Supabase fait foi.
     try {
-      const { providers: _p, ...persist } = s;
+      const { providers: _p, user: _u, authReady: _a, ...rest } = s;
+      const persist = isSupabaseConfigured ? rest : { ...rest, user: s.user };
       localStorage.setItem(KEY, JSON.stringify(persist));
     } catch { /* ignore */ }
   }, [s]);
@@ -132,6 +146,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     let alive = true;
     fetchProviders().then((list) => { if (alive) d({ t: 'setProviders', v: list }); });
     return () => { alive = false; };
+  }, []);
+  // Synchronisation de la session Supabase Auth → `s.user`.
+  useEffect(() => {
+    if (!supabase) return;
+    let alive = true;
+    const hydrate = async (session: Parameters<typeof userFromSession>[0]) => {
+      const u = await userFromSession(session);
+      if (!alive) return;
+      d({ t: 'session', user: u });
+    };
+    supabase.auth.getSession().then(({ data }) => hydrate(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => { void hydrate(session); });
+    return () => { alive = false; sub.subscription.unsubscribe(); };
   }, []);
   const v = useMemo(() => ({ s, d }), [s]);
   return <C.Provider value={v}>{children}</C.Provider>;

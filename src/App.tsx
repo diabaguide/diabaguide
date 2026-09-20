@@ -13,6 +13,11 @@ import { AdminLayout, AdminDashboard, AdminList, AdminVerify, AdminHistory } fro
 function RequireAuth({ team = false }: { team?: boolean }) {
   const { s } = useStore();
   const loc = useLocation();
+  // Tant que la session Supabase n'est pas vérifiée, on n'affiche ni ne redirige
+  // (évite de rejeter vers /connexion un utilisateur en réalité connecté).
+  if (!s.authReady) {
+    return <div className="center-screen" style={{ minHeight: '60vh' }} role="status" aria-live="polite">Chargement…</div>;
+  }
   if (!s.user) return <Navigate to={`/connexion?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
   if (team && s.user.role !== 'team') return <Navigate to="/accueil" replace />;
   return <Outlet />;

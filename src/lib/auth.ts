@@ -1,0 +1,70 @@
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from './supabase';
+
+export type Role = 'traveler' | 'team';
+export interface AuthUser { id: string; name: string; email: string; role: Role }
+
+/** Traduit les messages d'erreur Supabase courants en français. */
+function translate(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes('invalid login credentials')) return 'E-mail ou mot de passe incorrect.';
+  if (m.includes('already registered') || m.includes('already been registered')) return 'Un compte existe déjà pour cette adresse e-mail.';
+  if (m.includes('password should be at least')) return 'Le mot de passe doit contenir au moins 8 caractères.';
+  if (m.includes('email not confirmed')) return 'Adresse e-mail non confirmée. Vérifiez votre boîte de réception.';
+  if (m.includes('unable to validate email') || m.includes('invalid email')) return 'Adresse e-mail invalide.';
+  if (m.includes('rate limit') || m.includes('too many')) return 'Trop de tentatives. Réessayez dans quelques minutes.';
+  return msg;
+}
+
+/** Récupère (ou déduit) le profil d'un utilisateur authentifié. */
+async function profileFor(id: string, email: string, metaName?: string): Promise<AuthUser> {
+  let role: Role = email.toLowerCase().includes('equipe') ? 'team' : 'traveler';
+  let name = metaName ?? email.split('@')[0];
+  try {
+    const { data } = await supabase!.from('profiles').select('name, role').eq('id', id).maybeSingle();
+    if (data) {
+      role = (data.role as Role) ?? role;
+      name = data.name ?? name;
+    }
+  } catch { /* profil pas encore créé (trigger) : on garde les valeurs déduites */ }
+  return { id, name, email, role };
+}
+
+/** Utilisateur courant à partir d'une session Supabase (ou null). */
+export async function userFromSession(session: Session | null): Promise<AuthUser | null> {
+  if (!session?.user) return null;
+  const u = session.user;
+  return profileFor(u.id, u.email ?? '', (u.user_metadata as { name?: string } | null)?.name);
+}
+
+export async function signUp(
+  name: string, email: string, password: string,
+): Promise<{ user?: AuthUser; needsConfirm?: boolean; error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
+  if (error) return { error: translate(error.message) };
+  if (!data.session) return { needsConfirm: true }; // confirmation par e-mail activée
+  return { user: await profileFor(data.user!.id, email, name) };
+}
+
+export async function signIn(
+  email: string, password: string,
+): Promise<{ user?: AuthUser; error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { error: translate(error.message) };
+  return { user: await profileFor(data.user.id, email, (data.user.user_metadata as { name?: string } | null)?.name) };
+}
+
+export async function signOut(): Promise<void> {
+  if (!supabase) return;
+  await supabase.auth.signOut();
+}
+
+export async function sendPasswordReset(email: string): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/mot-de-passe',
+  });
+  return { error: error ? translate(error.message) : undefined };
+}

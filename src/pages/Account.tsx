@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { catLabel, type Provider } from '../data';
 import { useOnline, useStore, type LocPref } from '../store';
+import { signOut } from '../lib/auth';
 import { Button, DemoNote, Icon, Photo, RadioCard, Screen, Tag, TopBar } from '../ui';
 import { LangSwitch } from './Access';
 
@@ -94,7 +95,7 @@ export function Profile() {
         <section className="stack"><h2 className="row" style={{ fontSize: 17 }}><Icon name="pin" size={20} />Préférences de localisation</h2>
           {prefs.map((x) => <RadioCard key={x.v} name="loc" label={x.l} sub={x.sub} checked={s.locPref === x.v} onChange={() => d({ t: 'locPref', v: x.v })} />)}
         </section>
-        <Button kind="s" icon="logout" onClick={() => { d({ t: 'logout' }); nav('/'); }}>Se déconnecter</Button>
+        <Button kind="s" icon="logout" onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}>Se déconnecter</Button>
         <div className="small muted center">Diaba Guide · version de démonstration</div>
       </div>
     </Screen>

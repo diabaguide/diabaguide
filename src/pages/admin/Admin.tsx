@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink, Navigate, Outlet, useNavigate, useParams } from 'react-router-dom';
 import { CATS, STATUSES, catLabel, type Cat, type City, type Provider, type Proposal, type Status } from '../../data';
 import { useStore } from '../../store';
+import { signOut } from '../../lib/auth';
 import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, Tag, TextArea } from '../../ui';
 
 /* Toutes les propositions vues par l’équipe (hors brouillons des voyageurs). */
@@ -41,7 +42,7 @@ export function AdminLayout() {
         <div className="me">
           <span className="avatar">AD</span>
           <div className="grow"><div style={{ fontWeight: 600 }}>{s.user?.name}</div><div className="small" style={{ color: '#DCE6FA' }}>Vérification</div></div>
-          <button type="button" className="iconbtn" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.4)' }} aria-label="Se déconnecter" onClick={() => { d({ t: 'logout' }); nav('/'); }}><Icon name="logout" size={20} /></button>
+          <button type="button" className="iconbtn" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.4)' }} aria-label="Se déconnecter" onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}><Icon name="logout" size={20} /></button>
         </div>
       </aside>
       <div className="admin-main"><Outlet /></div>
