@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { catIcon, catLabel, type Provider } from '../data';
+import { catIcon, catLabel, category, cityName, tagLabel, type Provider } from '../data';
 import { useProviderById, useStore } from '../store';
 import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, Tag, TopBar, Verified } from '../ui';
 
@@ -8,52 +8,40 @@ async function copy(text: string) {
   try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
 }
 const tel = (p: Provider) => 'tel:' + (p.tel ?? '').replace(/\s/g, '');
-const ctaLabel = (p: Provider) => ({ gros: 'Contacter le fournisseur', hotel: 'Contacter pour réserver', resto: 'Contacter le restaurant', transport: 'Contacter le transporteur', transitaire: 'Contacter le transitaire' }[p.cat]);
+const ctaLabel = (p: Provider) => category(p.cat)?.ctaLabel ?? 'Contacter';
 
 function useProvider(): Provider | null {
   const { id } = useParams();
   return useProviderById(id);
 }
 
+/* Le contenu spécifique dépend du gabarit défini sur la catégorie
+   (administrable) : liste produits/services puis blocs optionnels. */
 function Specific({ p }: { p: Provider }) {
-  if (p.cat === 'gros') {
-    return (
-      <Section title="Produits proposés" icon="box">
-        {p.products?.length ? <ul className="list-clean">{p.products.map((x) => <li key={x}><Icon name="check" size={18} sw={2.4} />{x}</li>)}</ul> : <KV k="Produits" />}
-        <KV k="Minimum de commande">{p.moq}</KV>
-        <KV k="Horaires">{p.hours}</KV>
-      </Section>
-    );
-  }
-  if (p.cat === 'hotel') {
-    return (
-      <Section title="Services" icon="bed">
-        {p.services?.length ? <ul className="list-clean">{p.services.map((x) => <li key={x}><Icon name="check" size={18} sw={2.4} />{x}</li>)}</ul> : <KV k="Services" />}
-        <KV k="Réservation">Par contact direct avec l’hôtel</KV>
-        <KV k="Tarifs" />
-      </Section>
-    );
-  }
-  if (p.cat === 'resto') {
-    return (
-      <Section title="Cuisine et horaires" icon="utensils">
-        <KV k="Type de cuisine">{p.cuisine}</KV>
-        <KV k="Horaires">{p.hours}</KV>
-        <KV k="Mention halal">{p.halal}</KV>
-        <KV k="Prix moyen" />
-      </Section>
-    );
-  }
+  const c = category(p.cat);
+  const fields = c?.fields ?? [];
+  // Produits/services : ids du catalogue + éventuel texte libre historique.
+  const listed = [...(p.productTags ?? []).map(tagLabel), ...(p.products ?? []), ...(p.services ?? [])];
+  const has = (f: string) => fields.includes(f as never);
+
   return (
-    <Section title="Fret vers le Sénégal" icon="ship">
-      <div className="row wrap">
-        {p.freight?.includes('air') && <Tag tone="ok" icon="plane">Fret aérien</Tag>}
-        {p.freight?.includes('sea') && <Tag tone="ok" icon="ship">Fret maritime</Tag>}
-        {!p.freight?.length && <span className="np">Non renseigné</span>}
-      </div>
-      <KV k="Marchandises acceptées">{p.goods}</KV>
-      <KV k="Desserte du Sénégal">{p.senegal}</KV>
-      <KV k="Délais et tarifs" />
+    <Section title={c?.tagsLabel ?? 'Détails'} icon={catIcon(p.cat)}>
+      {listed.length
+        ? <ul className="list-clean">{listed.map((x) => <li key={x}><Icon name="check" size={18} sw={2.4} />{x}</li>)}</ul>
+        : <KV k={c?.tagsLabel ?? 'Détails'} />}
+      {has('moq') && <KV k="Minimum de commande">{p.moq}</KV>}
+      {has('cuisine') && <KV k="Type de cuisine">{p.cuisine}</KV>}
+      {has('hours') && <KV k="Horaires">{p.hours}</KV>}
+      {has('halal') && <KV k="Mention halal">{p.halal}</KV>}
+      {has('freight') && (
+        <div className="row wrap">
+          {p.freight?.includes('air') && <Tag tone="ok" icon="plane">Fret aérien</Tag>}
+          {p.freight?.includes('sea') && <Tag tone="ok" icon="ship">Fret maritime</Tag>}
+          {!p.freight?.length && <span className="np">Non renseigné</span>}
+        </div>
+      )}
+      {has('goods') && <KV k="Marchandises acceptées">{p.goods}</KV>}
+      {has('senegal') && <KV k="Desserte du Sénégal">{p.senegal}</KV>}
     </Section>
   );
 }
@@ -82,7 +70,7 @@ export function Fiche() {
       <main className="main" style={{ gap: 18, paddingTop: 14 }}>
         <div className="row">{[2, 3, 4].map((i) => <Photo key={i} label={`Photo ${i}`} h={72} w={72} round={10} />)}</div>
         <div className="stack" style={{ gap: 8 }}>
-          <div className="row wrap"><Tag icon={catIcon(p.cat)}>{catLabel(p.cat)}</Tag><span className="small muted">{p.district}, {p.city}</span></div>
+          <div className="row wrap"><Tag icon={catIcon(p.cat)}>{catLabel(p.cat)}</Tag><span className="small muted">{p.district}, {cityName(p.city)}</span></div>
           <h1 className="display" style={{ fontSize: 31, lineHeight: 1.1 }}>{p.name}</h1>
           <div className="zh" style={{ fontSize: 19, fontWeight: 500 }}>{p.cn}</div>
           <div className="row wrap"><Verified /><span className="small muted">Dernière vérification : {p.verified}</span></div>

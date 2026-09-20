@@ -9,6 +9,7 @@ import { Favorites, Profile, Downloads } from './pages/Account';
 import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contribute';
 import { AdminLayout, AdminDashboard, AdminList, AdminVerify, AdminHistory } from './pages/admin/Admin';
 import { Members } from './pages/admin/Members';
+import { AdminCities, AdminCategories, AdminProductTags } from './pages/admin/Taxonomies';
 
 /* Compte obligatoire : toute page de contenu redirige vers la connexion.
    L’URL demandée est conservée (?next=) : lien partagé > connexion > fiche. */
@@ -64,6 +65,9 @@ export default function App() {
           {/* Administration : réservée au rôle admin */}
           <Route element={<RequireAuth need="admin" />}>
             <Route path="/equipe/membres" element={<Members />} />
+            <Route path="/equipe/villes" element={<AdminCities />} />
+            <Route path="/equipe/categories" element={<AdminCategories />} />
+            <Route path="/equipe/produits" element={<AdminProductTags />} />
           </Route>
         </Route>
       </Route>

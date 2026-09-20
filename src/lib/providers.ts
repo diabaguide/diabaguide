@@ -22,6 +22,7 @@ interface ProviderRow {
   tel: string | null;
   wechat: string | null;
   products: string[] | null;
+  product_tags: string[] | null;
   moq: string | null;
   services: string[] | null;
   cuisine: string | null;
@@ -56,6 +57,7 @@ function rowToProvider(r: ProviderRow): Provider {
     tel: undef(r.tel),
     wechat: undef(r.wechat),
     products: undef(r.products),
+    productTags: r.product_tags ?? [],
     moq: undef(r.moq),
     services: undef(r.services),
     cuisine: undef(r.cuisine),

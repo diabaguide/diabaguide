@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { CATS, catIcon, catLabel, isFreight, type Cat, type City, type Freight, type Provider } from '../data';
+import { catIcon, catLabel, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
 import { Button, Chip, DemoNote, Field, Icon, Photo, Screen } from '../ui';
@@ -42,7 +42,8 @@ function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provide
   if (q.cat) list = list.filter((x) => x.p.cat === q.cat);
   if (term) {
     list = list.filter(({ p }) =>
-      [p.name, p.cn, p.district, p.desc, ...(p.products ?? []), ...(p.services ?? []), p.cuisine ?? '', p.goods ?? ''].join(' ').toLowerCase().includes(term));
+      [p.name, p.cn, p.district, p.desc, ...(p.products ?? []), ...(p.services ?? []),
+        ...(p.productTags ?? []).map(tagLabel), p.cuisine ?? '', p.goods ?? ''].join(' ').toLowerCase().includes(term));
   }
   if (q.fret && q.fret !== 'both') list = list.filter((x) => x.p.freight?.includes(q.fret as Freight));
   if (q.prox && Number(q.prox) > 0) list = list.filter((x) => x.km === null || x.km <= Number(q.prox));
@@ -171,6 +172,7 @@ function MapView({ list, sel, setSel }: { list: { p: Provider; km: number | null
 /* Feuille de filtres : modifie les mêmes paramètres d’URL, puis revient aux résultats. */
 export function Filters() {
   const { q, sp } = useQuery();
+  const { s } = useStore();
   const nav = useNavigate();
   const [f, setF] = useState({ q: q.q, cat: q.cat, city: q.city, prox: q.prox ?? '0', fret: q.fret ?? 'both' });
   const apply = () => {
@@ -202,10 +204,10 @@ export function Filters() {
       <div className="main" style={{ gap: 20 }}>
         <Field id="prod" label="Produit ou service" value={f.q} onChange={(v) => setF({ ...f, q: v })} />
         <section className="stack"><h2 style={{ fontSize: 17 }}>Catégorie</h2>
-          {radios<string>('cat', f.cat ?? '', [{ v: '', l: 'Toutes' }, ...CATS.map((c) => ({ v: c.id as string, l: c.label }))], (v) => setF({ ...f, cat: (v || null) as Cat | null }))}
+          {radios<string>('cat', f.cat ?? '', [{ v: '', l: 'Toutes' }, ...s.categories.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => setF({ ...f, cat: (v || null) as Cat | null }))}
         </section>
         <section className="stack"><h2 style={{ fontSize: 17 }}>Ville</h2>
-          {radios<City>('ville', f.city, [{ v: 'Guangzhou', l: 'Guangzhou' }, { v: 'Shenzhen', l: 'Shenzhen' }], (v) => setF({ ...f, city: v }))}
+          {radios<City>('ville', f.city, s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name })), (v) => setF({ ...f, city: v }))}
         </section>
         <section className="stack"><h2 style={{ fontSize: 17 }}>Proximité</h2>
           {radios('prox', f.prox, [{ v: '2', l: 'Moins de 2 km' }, { v: '5', l: 'Moins de 5 km' }, { v: '10', l: 'Moins de 10 km' }, { v: '0', l: 'Toute la ville' }], (v) => setF({ ...f, prox: v }))}

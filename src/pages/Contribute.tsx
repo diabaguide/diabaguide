@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { CATS, catIcon, type Cat, type City, type Proposal, type Status } from '../data';
+import { catLabel, cityName, type Cat, type City, type Proposal, type Status } from '../data';
 import { emptyProposal, useStore } from '../store';
 import { Button, DemoNote, Field, Icon, KV, Photo, RadioCard, Screen, Section, StatusBadge, TextArea, TopBar, Select } from '../ui';
 
@@ -72,11 +72,11 @@ export function Wizard() {
           <>
             <div className="small muted">Seuls la catégorie, le nom et une indication de localisation sont obligatoires. <span className="req">*</span> = obligatoire.</div>
             <section className="stack"><h2 style={{ fontSize: 16 }}>Catégorie <span className="req" aria-hidden="true">*</span></h2>
-              {CATS.map((c) => <RadioCard key={c.id} name="cat" label={c.label} icon={c.icon} checked={p.cat === c.id} onChange={() => set({ cat: c.id as Cat })} />)}
+              {s.categories.filter((c) => c.active).map((c) => <RadioCard key={c.id} name="cat" label={c.label} icon={c.icon} checked={p.cat === c.id} onChange={() => set({ cat: c.id as Cat })} />)}
             </section>
             <Field id="nom" label="Nom du prestataire" value={p.name} onChange={(v) => set({ name: v })} req error={tried ? errs.name : null} />
             <Field id="nomcn" label="Nom en chinois (facultatif)" value={p.cn} onChange={(v) => set({ cn: v })} />
-            <Select id="ville" label="Ville" value={p.city} onChange={(v) => set({ city: v as City })} options={[{ v: 'Guangzhou', l: 'Guangzhou' }, { v: 'Shenzhen', l: 'Shenzhen' }]} />
+            <Select id="ville" label="Ville" value={p.city} onChange={(v) => set({ city: v as City })} options={s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }))} />
             <Field id="loc" label="Indication de localisation" value={p.loc} onChange={(v) => set({ loc: v })} req hint="Quartier, marché, rue ou repère : ce que vous savez." error={tried ? errs.loc : null} />
           </>
         )}
@@ -112,8 +112,8 @@ export function Wizard() {
             <div className="muted small" style={{ fontSize: 15 }}>Relisez votre proposition avant de l’envoyer.</div>
             <Section title="Récapitulatif">
               {[
-                ['Catégorie', CATS.find((c) => c.id === p.cat)!.label, 1], ['Nom', [p.name, p.cn].filter(Boolean).join(' · '), 1],
-                ['Localisation', [p.city, p.loc].filter(Boolean).join(' · '), 1], ['Produits', p.products, 2], ['Minimum de commande', p.moq, 2],
+                ['Catégorie', catLabel(p.cat), 1], ['Nom', [p.name, p.cn].filter(Boolean).join(' · '), 1],
+                ['Localisation', [cityName(p.city), p.loc].filter(Boolean).join(' · '), 1], ['Produits', p.products, 2], ['Minimum de commande', p.moq, 2],
                 ['Téléphone et WeChat', [p.tel, p.wechat].filter(Boolean).join(' · '), 2],
                 ['Photos', `${p.photos} photo(s)${p.cardFront || p.cardBack ? ', carte de visite' : ''}`, 3],
               ].map(([k, v, to]) => (
@@ -165,7 +165,7 @@ export function Contributions() {
           const act = draft ? 'Reprendre le brouillon' : p.feedback ? 'Lire le retour' : 'Voir le suivi';
           const inner = (
             <>
-              <div><div style={{ fontWeight: 700, fontSize: 17 }}>{p.name}</div><div className="small muted"><span className="zh">{p.cn}</span> · {p.city}</div></div>
+              <div><div style={{ fontWeight: 700, fontSize: 17 }}>{p.name}</div><div className="small muted"><span className="zh">{p.cn}</span> · {cityName(p.city)}</div></div>
               <div><StatusBadge status={p.status} /></div>
               <div className="row small muted" style={{ justifyContent: 'space-between' }}><span>{p.date}</span><span className="row" style={{ gap: 4, color: 'var(--primary)', fontWeight: 700 }}>{act}<Icon name="chevR" size={18} sw={2.4} /></span></div>
             </>
@@ -201,7 +201,7 @@ export function ContributionDetail() {
       <div className="main">
         <div className="stack" style={{ gap: 8 }}>
           <h2 className="display" style={{ fontSize: 28 }}>{p.name}</h2>
-          <div className="muted"><span className="zh">{p.cn}</span> · {catIcon(p.cat) && CATS.find((c) => c.id === p.cat)!.label} · {p.city}</div>
+          <div className="muted"><span className="zh">{p.cn}</span> · {catLabel(p.cat)} · {cityName(p.city)}</div>
           <div><StatusBadge status={p.status} big /></div>
         </div>
         <Section title="Avancement">

@@ -1,4 +1,4 @@
-import { DISTRICTS, type City } from './data';
+import { allDistricts } from './data';
 
 /* Position de l’utilisateur : gardée pour la session seulement (jamais persistée).
    Demandée uniquement quand l’utilisateur active la recherche à proximité. */
@@ -24,11 +24,8 @@ export function requestPosition(): Promise<Pos> {
 }
 
 export function districtPos(name: string): Pos | null {
-  for (const c of Object.keys(DISTRICTS) as City[]) {
-    const d = DISTRICTS[c].find((x) => x.name === name);
-    if (d) return { lat: d.lat, lng: d.lng, label: d.name };
-  }
-  return null;
+  const d = allDistricts().find((x) => x.name === name);
+  return d ? { lat: d.lat, lng: d.lng, label: d.name } : null;
 }
 
 export function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {

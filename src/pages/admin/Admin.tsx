@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink, Navigate, Outlet, useNavigate, useParams } from 'react-router-dom';
-import { CATS, STATUSES, catLabel, type Cat, type City, type Provider, type Proposal, type Status } from '../../data';
+import { STATUSES, catLabel, cityName, type Cat, type City, type Provider, type Proposal, type Status } from '../../data';
 import { useStore } from '../../store';
 import { signOut } from '../../lib/auth';
 import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, Tag, TextArea } from '../../ui';
@@ -32,7 +32,12 @@ export function AdminLayout() {
   const items: [string, string, Parameters<typeof Icon>[0]['name'], boolean][] = [
     ['/equipe', 'Tableau de bord', 'grid', true], ['/equipe/propositions', 'Propositions', 'inbox', false], ['/equipe/historique', 'Historique des décisions', 'history', false],
     // Administration : réservée au rôle admin.
-    ...(isAdmin ? [['/equipe/membres', 'Membres', 'users', false] as [string, string, Parameters<typeof Icon>[0]['name'], boolean]] : []),
+    ...(isAdmin ? ([
+      ['/equipe/membres', 'Membres', 'users', false],
+      ['/equipe/villes', 'Villes', 'pin', false],
+      ['/equipe/categories', 'Catégories', 'grid', false],
+      ['/equipe/produits', 'Produits et services', 'list', false],
+    ] as [string, string, Parameters<typeof Icon>[0]['name'], boolean][]) : []),
   ];
   return (
     <div className="admin">
@@ -83,7 +88,7 @@ export function AdminDashboard() {
                 return (
                   <tr key={p.id}>
                     <td><strong>{p.name}</strong><div className="small muted zh">{p.cn}</div></td>
-                    <td>{catLabel(p.cat)} · {p.city}</td>
+                    <td>{catLabel(p.cat)} · {cityName(p.city)}</td>
                     <td>{h > 48 ? <span className="warntext"><Icon name="clock" size={16} sw={2.2} />{ageLabel(h)} · Objectif de 48 h dépassé</span> : <span className="row" style={{ gap: 6 }}><Icon name="clock" size={16} />{ageLabel(h)}</span>}</td>
                     <td><Link className="link" to={`/equipe/propositions/${p.id}`}>Examiner<Icon name="chevR" size={18} sw={2.4} /></Link></td>
                   </tr>
@@ -114,8 +119,8 @@ export function AdminList() {
       <Head title="Propositions" sub={`${rows.length} proposition${rows.length > 1 ? 's' : ''} affichée${rows.length > 1 ? 's' : ''}. Filtrez par ville, catégorie ou statut.`} />
       <div className="admin-body">
         <div className="filters">
-          <Select id="fv" label="Ville" value={city} onChange={setCity} options={[{ v: '', l: 'Toutes' }, { v: 'Guangzhou', l: 'Guangzhou' }, { v: 'Shenzhen', l: 'Shenzhen' }]} />
-          <Select id="fc" label="Catégorie" value={cat} onChange={setCat} options={[{ v: '', l: 'Toutes' }, ...CATS.map((c) => ({ v: c.id as Cat, l: c.label }))]} />
+          <Select id="fv" label="Ville" value={city} onChange={setCity} options={[{ v: '', l: 'Toutes' }, ...s.cities.map((c) => ({ v: c.id as City, l: c.name }))]} />
+          <Select id="fc" label="Catégorie" value={cat} onChange={setCat} options={[{ v: '', l: 'Toutes' }, ...s.categories.map((c) => ({ v: c.id as Cat, l: c.label }))]} />
           <Select id="fs" label="Statut" value={st} onChange={setSt} options={[{ v: '', l: 'Tous' }, ...STATUSES.filter((x) => x !== 'Brouillon').map((x) => ({ v: x, l: x }))]} />
           <div className="grow"><Field id="fq" label="Recherche" type="search" value={q} onChange={setQ} placeholder="Nom, téléphone, WeChat…" /></div>
         </div>
@@ -126,7 +131,7 @@ export function AdminList() {
               const dup = dupCandidates(p, s.providers).length > 0;
               return (
                 <tr key={p.id}>
-                  <td><strong>{p.name}</strong><div className="small muted zh">{p.cn}</div></td><td>{catLabel(p.cat)}</td><td>{p.city}</td><td><StatusBadge status={p.status} /></td><td>{p.date}</td>
+                  <td><strong>{p.name}</strong><div className="small muted zh">{p.cn}</div></td><td>{catLabel(p.cat)}</td><td>{cityName(p.city)}</td><td><StatusBadge status={p.status} /></td><td>{p.date}</td>
                   <td><span className="row" style={{ gap: 6, fontWeight: 600, color: dup ? '#8A4310' : 'var(--muted)' }}><Icon name={dup ? 'alert' : 'check'} size={16} sw={2.2} />{dup ? 'Doublon possible' : 'Aucun doublon'}</span></td>
                   <td><Link className="link" to={`/equipe/propositions/${p.id}`}>Examiner<Icon name="chevR" size={18} sw={2.4} /></Link></td>
                 </tr>
@@ -176,7 +181,7 @@ export function AdminVerify() {
         go: () => decide('Rattachée à une adresse existante', `Rattachée à « ${s.providers.find((x) => x.id === target)?.name} ».`),
         body: <>
           <p>Cette proposition sera fusionnée avec la fiche choisie. Les informations manquantes seront ajoutées à cette fiche.</p>
-          <Select id="tgt" label="Fiche existante" req value={target} onChange={setTarget} options={[{ v: '', l: 'Choisir une fiche…' }, ...(cands.length ? cands : s.providers.map((x) => ({ x, why: '' }))).map(({ x }) => ({ v: x.id, l: `${x.name} (${x.city})` }))]} />
+          <Select id="tgt" label="Fiche existante" req value={target} onChange={setTarget} options={[{ v: '', l: 'Choisir une fiche…' }, ...(cands.length ? cands : s.providers.map((x) => ({ x, why: '' }))).map(({ x }) => ({ v: x.id, l: `${x.name} (${cityName(x.city)})` }))]} />
         </>, disabled: !target },
     }[dlg];
     return (
@@ -195,15 +200,15 @@ export function AdminVerify() {
 
   return (
     <>
-      <Head title={p.name} sub={`${p.cn} · ${catLabel(p.cat)} · ${p.city} · reçue le ${src.date}`}
+      <Head title={p.name} sub={`${p.cn} · ${catLabel(p.cat)} · ${cityName(p.city)} · reçue le ${src.date}`}
         right={<div className="row"><StatusBadge status={src.status} big /><Button to="/equipe/propositions" kind="s" icon="chevL" full={false}>Retour à la liste</Button></div>} />
       <div className="admin-body">
         <div className="split">
           <div className="stack" style={{ gap: 20 }}>
             <Section title="Informations proposées" icon="edit">
               <div className="form2">
-                <Select id="c" label="Catégorie" req value={p.cat} onChange={(v) => set({ cat: v })} options={CATS.map((c) => ({ v: c.id as Cat, l: c.label }))} />
-                <Select id="v" label="Ville" req value={p.city} onChange={(v) => set({ city: v })} options={[{ v: 'Guangzhou' as City, l: 'Guangzhou' }, { v: 'Shenzhen' as City, l: 'Shenzhen' }]} />
+                <Select id="c" label="Catégorie" req value={p.cat} onChange={(v) => set({ cat: v })} options={s.categories.map((c) => ({ v: c.id as Cat, l: c.label }))} />
+                <Select id="v" label="Ville" req value={p.city} onChange={(v) => set({ city: v })} options={s.cities.map((c) => ({ v: c.id as City, l: c.name }))} />
                 <Field id="n" label="Nom commercial" req value={p.name} onChange={(v) => set({ name: v })} />
                 <Field id="ncn" label="Nom en chinois" value={p.cn} onChange={(v) => set({ cn: v })} />
                 <Field id="q" label="Localisation indiquée" req value={p.loc} onChange={(v) => set({ loc: v })} />

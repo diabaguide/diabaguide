@@ -15,7 +15,7 @@ const frDateTime = (dt = new Date()) =>
 /* ------------------------------------------------------------------ */
 interface ProposalRow {
   id: string; name: string; cn: string; cat: Cat; city: City; loc: string;
-  products: string; moq: string; tel: string; wechat: string; addr_cn: string;
+  products: string; product_tags: string[] | null; moq: string; tel: string; wechat: string; addr_cn: string;
   photos: number; card_front: boolean; card_back: boolean;
   status: Status; date: string; feedback: string | null; author: string;
 }
@@ -23,7 +23,7 @@ interface ProposalRow {
 function rowToProposal(r: ProposalRow): Proposal {
   return {
     id: r.id, name: r.name, cn: r.cn, cat: r.cat, city: r.city, loc: r.loc,
-    products: r.products, moq: r.moq, tel: r.tel, wechat: r.wechat, addrCn: r.addr_cn,
+    products: r.products, productTags: r.product_tags ?? [], moq: r.moq, tel: r.tel, wechat: r.wechat, addrCn: r.addr_cn,
     photos: r.photos, cardFront: r.card_front, cardBack: r.card_back,
     status: r.status, date: r.date, feedback: r.feedback ?? undefined, author: r.author,
   };
@@ -34,7 +34,7 @@ function rowToProposal(r: ProposalRow): Proposal {
 function proposalToRow(p: Proposal) {
   return {
     id: p.id, name: p.name, cn: p.cn, cat: p.cat, city: p.city, loc: p.loc,
-    products: p.products, moq: p.moq, tel: p.tel, wechat: p.wechat, addr_cn: p.addrCn,
+    products: p.products, product_tags: p.productTags ?? [], moq: p.moq, tel: p.tel, wechat: p.wechat, addr_cn: p.addrCn,
     photos: p.photos, card_front: p.cardFront, card_back: p.cardBack,
     status: p.status, date: p.date, feedback: p.feedback ?? null, author: p.author,
   };

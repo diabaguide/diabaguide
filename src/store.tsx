@@ -1,8 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
 import {
-  PROVIDERS, SEED_DECISIONS, SEED_PROPOSALS, TEAM_QUEUE_EXTRA, emptyProposal,
-  type City, type Decision, type Provider, type Proposal, type Status,
+  PROVIDERS, SEED_DECISIONS, SEED_PROPOSALS, STATIC_CATEGORIES, STATIC_CITIES, STATIC_DISTRICTS,
+  TEAM_QUEUE_EXTRA, emptyProposal, setTaxonomies,
+  type Category, type City, type CityRef, type Decision, type District, type ProductTag,
+  type Provider, type Proposal, type Status,
 } from './data';
+import { fetchTaxonomies } from './lib/taxonomies';
 import { fetchProviders } from './lib/providers';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { isTeamRole, userFromSession, type Role } from './lib/auth';
@@ -24,6 +27,11 @@ interface State {
   downloads: Record<string, string>; // id -> date de téléchargement
   lastSync: string;
   providers: Provider[]; // adresses (Supabase, avec repli statique)
+  // Taxonomies administrables (Supabase, avec repli statique)
+  categories: Category[];
+  cities: CityRef[];
+  districts: District[];
+  productTags: ProductTag[];
   // Propositions pertinentes pour l'utilisateur courant : ses propres
   // propositions (voyageur) ou toutes les propositions soumises (équipe).
   proposals: Proposal[];
@@ -34,9 +42,10 @@ interface State {
 
 const KEY = 'diaba-guide-state-v1';
 const initial: State = {
-  user: null, authReady: !isSupabaseConfigured, lang: 'fr', city: 'Guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'],
+  user: null, authReady: !isSupabaseConfigured, lang: 'fr', city: 'guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'],
   downloads: { baiyun: '18 sept. 2026', jinyuan: '18 sept. 2026' }, lastSync: '19 sept. 2026, 09:12',
   providers: PROVIDERS,
+  categories: STATIC_CATEGORIES, cities: STATIC_CITIES, districts: STATIC_DISTRICTS, productTags: [],
   // Avec Supabase, propositions et décisions sont chargées depuis la base.
   proposals: isSupabaseConfigured ? [] : [...SEED_PROPOSALS, ...TEAM_QUEUE_EXTRA],
   decisions: isSupabaseConfigured ? [] : SEED_DECISIONS,
@@ -59,6 +68,7 @@ type Action =
   | { t: 'complement'; id: string; patch: Partial<Proposal> }
   | { t: 'decide'; id: string; status: Status; note: string }
   | { t: 'setProviders'; v: Provider[] }
+  | { t: 'setTaxonomies'; categories: Category[]; cities: CityRef[]; districts: District[]; productTags: ProductTag[] }
   | { t: 'setProposals'; v: Proposal[] }
   | { t: 'setDecisions'; v: Decision[] }
   | { t: 'dismissInstall' };
@@ -114,6 +124,7 @@ function reducer(s: State, a: Action): State {
       return { ...s, proposals: s.proposals.map(upd), decisions: [dec, ...s.decisions] };
     }
     case 'setProviders': return { ...s, providers: a.v };
+    case 'setTaxonomies': return { ...s, categories: a.categories, cities: a.cities, districts: a.districts, productTags: a.productTags };
     case 'setProposals': return { ...s, proposals: a.v };
     case 'setDecisions': return { ...s, decisions: a.v };
     case 'dismissInstall': return { ...s, installDismissed: true };
@@ -127,6 +138,8 @@ function load(): State {
     // (re)chargé depuis Supabase au démarrage, avec repli statique.
     if (raw) {
       const parsed = { ...initial, ...JSON.parse(raw), providers: PROVIDERS } as State;
+      // Les identifiants de ville sont passés en minuscules (« Guangzhou » -> « guangzhou »).
+      if (parsed.city) parsed.city = String(parsed.city).toLowerCase();
       // Avec Supabase : la session fait foi (pas d'accès depuis un `user`
       // persisté), on attend la vérification de session, et propositions /
       // décisions sont rechargées depuis la base (jamais depuis localStorage).
@@ -142,6 +155,8 @@ interface ContribApi {
   submit: (p: Proposal) => Promise<void>;
   complement: (id: string, patch: Partial<Proposal>) => Promise<void>;
   decide: (id: string, status: Status, note: string) => Promise<void>;
+  /** Recharge les taxonomies après une modification dans l'administration. */
+  reloadTaxonomies: () => Promise<void>;
 }
 interface Ctx { s: State; d: React.Dispatch<Action>; api: ContribApi }
 const C = createContext<Ctx>(null as unknown as Ctx);
@@ -168,6 +183,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     fetchProviders().then((list) => { if (alive) d({ t: 'setProviders', v: list }); });
+    return () => { alive = false; };
+  }, []);
+
+  // Taxonomies (villes, quartiers, catégories, produits) : état + registre
+  // module utilisé par les helpers appelés en profondeur (catLabel, etc.).
+  useEffect(() => {
+    let alive = true;
+    fetchTaxonomies().then((t) => {
+      if (!alive) return;
+      setTaxonomies(t);
+      d({ t: 'setTaxonomies', categories: t.categories, cities: t.cities, districts: t.districts, productTags: t.tags });
+    });
     return () => { alive = false; };
   }, []);
 
@@ -228,6 +255,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const [proposals, decisions] = await Promise.all([fetchAllProposals(), fetchDecisions()]);
       d({ t: 'setProposals', v: proposals });
       d({ t: 'setDecisions', v: decisions });
+    },
+    reloadTaxonomies: async () => {
+      const t = await fetchTaxonomies();
+      setTaxonomies(t);
+      d({ t: 'setTaxonomies', categories: t.categories, cities: t.cities, districts: t.districts, productTags: t.tags });
     },
   }), []);
 

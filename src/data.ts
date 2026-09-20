@@ -2,34 +2,70 @@ import type { IconName } from './icons';
 
 /* Toutes les données ci-dessous sont FICTIVES (démonstration). */
 
-export type Cat = 'gros' | 'hotel' | 'resto' | 'transport' | 'transitaire';
-export type City = 'Guangzhou' | 'Shenzhen';
+/* Villes et catégories sont désormais administrables : leurs identifiants
+   ne sont plus un type fermé. Les valeurs ci-dessous servent de repli
+   (Supabase non configuré) et le registre est alimenté par le store. */
+export type Cat = string;
+export type City = string;
 export type Freight = 'air' | 'sea';
 
-export const CATS: { id: Cat; label: string; icon: IconName }[] = [
-  { id: 'gros', label: 'Achats en gros', icon: 'box' },
-  { id: 'hotel', label: 'Hôtels', icon: 'bed' },
-  { id: 'resto', label: 'Restaurants', icon: 'utensils' },
-  { id: 'transport', label: 'Transporteurs', icon: 'truck' },
-  { id: 'transitaire', label: 'Transitaires', icon: 'ship' },
+/** Blocs optionnels affichables sur une fiche, selon la catégorie. */
+export type FieldBlock = 'moq' | 'hours' | 'cuisine' | 'halal' | 'freight' | 'goods' | 'senegal';
+export const FIELD_BLOCKS: { id: FieldBlock; label: string }[] = [
+  { id: 'moq', label: 'Minimum de commande' },
+  { id: 'hours', label: 'Horaires' },
+  { id: 'cuisine', label: 'Type de cuisine' },
+  { id: 'halal', label: 'Halal' },
+  { id: 'freight', label: 'Type de fret (aérien / maritime)' },
+  { id: 'goods', label: 'Marchandises acceptées' },
+  { id: 'senegal', label: 'Destination au Sénégal' },
 ];
-export const catLabel = (c: Cat) => CATS.find((x) => x.id === c)!.label;
-export const catIcon = (c: Cat) => CATS.find((x) => x.id === c)!.icon;
-export const isFreight = (c: Cat) => c === 'transport' || c === 'transitaire';
 
-export const DISTRICTS: Record<City, { name: string; lat: number; lng: number }[]> = {
-  Guangzhou: [
-    { name: 'Baiyun', lat: 23.16, lng: 113.27 },
-    { name: 'Haizhu', lat: 23.09, lng: 113.32 },
-    { name: 'Liwan', lat: 23.12, lng: 113.24 },
-    { name: 'Yuexiu', lat: 23.13, lng: 113.27 },
-    { name: 'Tianhe', lat: 23.13, lng: 113.36 },
-  ],
-  Shenzhen: [
-    { name: 'Futian', lat: 22.54, lng: 114.06 },
-    { name: 'Nanshan', lat: 22.53, lng: 113.93 },
-  ],
-};
+export interface Category {
+  id: Cat; label: string; labelCn?: string; icon: IconName; ctaLabel?: string;
+  tagsLabel: string; fields: FieldBlock[]; isFreight: boolean; active: boolean; sort: number;
+}
+export interface CityRef { id: City; name: string; nameCn?: string; lat?: number; lng?: number; active: boolean; sort: number }
+export interface District { id?: string; cityId: City; name: string; lat: number; lng: number; active: boolean; sort: number }
+export interface ProductTag { id: string; categoryId: Cat; label: string; labelCn?: string; active: boolean; sort: number }
+
+export const STATIC_CATEGORIES: Category[] = [
+  { id: 'gros', label: 'Achats en gros', labelCn: '批发', icon: 'box', ctaLabel: 'Contacter le fournisseur', tagsLabel: 'Produits proposés', fields: ['moq', 'hours'], isFreight: false, active: true, sort: 1 },
+  { id: 'hotel', label: 'Hôtels', labelCn: '酒店', icon: 'bed', ctaLabel: 'Contacter pour réserver', tagsLabel: 'Services', fields: [], isFreight: false, active: true, sort: 2 },
+  { id: 'resto', label: 'Restaurants', labelCn: '餐厅', icon: 'utensils', ctaLabel: 'Contacter le restaurant', tagsLabel: 'Spécialités', fields: ['cuisine', 'hours', 'halal'], isFreight: false, active: true, sort: 3 },
+  { id: 'transport', label: 'Transporteurs', labelCn: '运输', icon: 'truck', ctaLabel: 'Contacter le transporteur', tagsLabel: 'Services', fields: ['freight', 'goods', 'senegal'], isFreight: true, active: true, sort: 4 },
+  { id: 'transitaire', label: 'Transitaires', labelCn: '货代', icon: 'ship', ctaLabel: 'Contacter le transitaire', tagsLabel: 'Services', fields: ['freight', 'goods', 'senegal'], isFreight: true, active: true, sort: 5 },
+];
+export const STATIC_CITIES: CityRef[] = [
+  { id: 'guangzhou', name: 'Guangzhou', nameCn: '广州', lat: 23.13, lng: 113.27, active: true, sort: 1 },
+  { id: 'shenzhen', name: 'Shenzhen', nameCn: '深圳', lat: 22.54, lng: 114.06, active: true, sort: 2 },
+];
+export const STATIC_DISTRICTS: District[] = [
+  { cityId: 'guangzhou', name: 'Baiyun', lat: 23.16, lng: 113.27, active: true, sort: 1 },
+  { cityId: 'guangzhou', name: 'Haizhu', lat: 23.09, lng: 113.32, active: true, sort: 2 },
+  { cityId: 'guangzhou', name: 'Liwan', lat: 23.12, lng: 113.24, active: true, sort: 3 },
+  { cityId: 'guangzhou', name: 'Yuexiu', lat: 23.13, lng: 113.27, active: true, sort: 4 },
+  { cityId: 'guangzhou', name: 'Tianhe', lat: 23.13, lng: 113.36, active: true, sort: 5 },
+  { cityId: 'shenzhen', name: 'Futian', lat: 22.54, lng: 114.06, active: true, sort: 1 },
+  { cityId: 'shenzhen', name: 'Nanshan', lat: 22.53, lng: 113.93, active: true, sort: 2 },
+];
+
+/* Registre alimenté par le store au chargement des taxonomies. Il permet aux
+   helpers appelés en profondeur (catLabel, districtPos…) de rester des
+   fonctions simples : le re-rendu est déclenché par l'état du store. */
+interface Registry { categories: Category[]; cities: CityRef[]; districts: District[]; tags: ProductTag[] }
+let REG: Registry = { categories: STATIC_CATEGORIES, cities: STATIC_CITIES, districts: STATIC_DISTRICTS, tags: [] };
+export const setTaxonomies = (t: Partial<Registry>) => { REG = { ...REG, ...t }; };
+
+export const catLabel = (c: Cat) => REG.categories.find((x) => x.id === c)?.label ?? c;
+export const catIcon = (c: Cat): IconName => REG.categories.find((x) => x.id === c)?.icon ?? 'box';
+export const category = (c: Cat) => REG.categories.find((x) => x.id === c) ?? null;
+export const isFreight = (c: Cat) => REG.categories.find((x) => x.id === c)?.isFreight ?? false;
+export const cityName = (c: City) => REG.cities.find((x) => x.id === c)?.name ?? c;
+export const districtsOf = (city: City) => REG.districts.filter((d) => d.cityId === city && d.active);
+export const allDistricts = () => REG.districts;
+export const tagLabel = (id: string) => REG.tags.find((t) => t.id === id)?.label ?? id;
+export const tagsOf = (cat: Cat) => REG.tags.filter((t) => t.categoryId === cat && t.active);
 
 export interface Provider {
   id: string;
@@ -50,7 +86,8 @@ export interface Provider {
   metro?: string;
   tel?: string;
   wechat?: string;
-  products?: string[];
+  products?: string[];      // texte libre (« Autre »)
+  productTags?: string[];   // ids du catalogue produits/services
   moq?: string;
   services?: string[];
   cuisine?: string;
@@ -63,7 +100,7 @@ export interface Provider {
 
 export const PROVIDERS: Provider[] = [
   {
-    id: 'baiyun', name: 'Baiyun Textile Trading', cn: '白云纺织贸易有限公司', cat: 'gros', city: 'Guangzhou', district: 'Baiyun',
+    id: 'baiyun', name: 'Baiyun Textile Trading', cn: '白云纺织贸易有限公司', cat: 'gros', city: 'guangzhou', district: 'Baiyun',
     lat: 23.17, lng: 113.26, featured: true, verified: '12 sept. 2026',
     desc: 'Grossiste en tissus et textiles pour la confection : wax, bazin, coton imprimé et dentelle. Vente en gros, sur présentation au stand.',
     addrCn: '广东省广州市白云区示例路88号 三楼312档', addrFr: '88, route Shili (adresse fictive), 3e étage, stand 312, district de Baiyun, Guangzhou',
@@ -74,21 +111,21 @@ export const PROVIDERS: Provider[] = [
     products: ['Tissus wax et imprimés', 'Bazin riche', 'Coton et popeline', 'Dentelle et broderie'], moq: '50 pièces par référence',
   },
   {
-    id: 'zhongda', name: 'Zhongda Fabric Market, stand 217', cn: '中大布匹市场217档', cat: 'gros', city: 'Guangzhou', district: 'Haizhu',
+    id: 'zhongda', name: 'Zhongda Fabric Market, stand 217', cn: '中大布匹市场217档', cat: 'gros', city: 'guangzhou', district: 'Haizhu',
     lat: 23.08, lng: 113.34, verified: '3 sept. 2026',
     desc: 'Stand de tissus au marché de gros de Zhongda : tissus d’ameublement et étoffes au mètre.',
     addrCn: '广东省广州市海珠区示例路217号', addrFr: '217, route de l’Exemple (adresse fictive), district de Haizhu, Guangzhou',
     tel: '+86 134 0000 0000', products: ['Tissus au mètre', 'Tissus d’ameublement'],
   },
   {
-    id: 'lihua', name: 'Lihua Lace & Bazin', cn: '丽华蕾丝布行', cat: 'gros', city: 'Guangzhou', district: 'Liwan',
+    id: 'lihua', name: 'Lihua Lace & Bazin', cn: '丽华蕾丝布行', cat: 'gros', city: 'guangzhou', district: 'Liwan',
     lat: 23.11, lng: 113.23, verified: '28 août 2026',
     desc: 'Boutique de dentelles et de bazin, vente en gros et au détail.',
     addrCn: '广东省广州市荔湾区示例街9号', addrFr: '9, rue de l’Exemple (adresse fictive), district de Liwan, Guangzhou',
     wechat: 'lihua_lace_demo', products: ['Dentelle', 'Bazin'],
   },
   {
-    id: 'jinyuan', name: 'Jinyuan Business Hotel', cn: '金源商务酒店', cat: 'hotel', city: 'Guangzhou', district: 'Yuexiu',
+    id: 'jinyuan', name: 'Jinyuan Business Hotel', cn: '金源商务酒店', cat: 'hotel', city: 'guangzhou', district: 'Yuexiu',
     lat: 23.14, lng: 113.26, featured: true, verified: '8 sept. 2026',
     desc: 'Hôtel d’affaires à proximité de la gare de Guangzhou, adapté aux séjours de quelques nuits pour les acheteurs en déplacement.',
     addrCn: '广东省广州市越秀区示例大道26号', addrFr: '26, avenue de l’Exemple (adresse fictive), district de Yuexiu, Guangzhou',
@@ -98,7 +135,7 @@ export const PROVIDERS: Provider[] = [
     services: ['Wi-Fi dans les chambres', 'Petit-déjeuner disponible', 'Bagagerie', 'Chambres pour 1 à 3 personnes'],
   },
   {
-    id: 'alnour', name: 'Lanzhou Al-Nour', cn: '兰州清真拉面馆', cat: 'resto', city: 'Guangzhou', district: 'Yuexiu',
+    id: 'alnour', name: 'Lanzhou Al-Nour', cn: '兰州清真拉面馆', cat: 'resto', city: 'guangzhou', district: 'Yuexiu',
     lat: 23.135, lng: 113.275, verified: '5 sept. 2026',
     desc: 'Restaurant de nouilles tirées à la main, souvent fréquenté par des commerçants africains du quartier.',
     addrCn: '广东省广州市越秀区示例街15号 一楼', addrFr: '15, rue de l’Exemple (adresse fictive), rez-de-chaussée, district de Yuexiu, Guangzhou',
@@ -108,7 +145,7 @@ export const PROVIDERS: Provider[] = [
     cuisine: 'Chinoise, nouilles tirées à la main', hours: '10 h 30 – 22 h 00', halal: 'Indiquée par l’établissement, à confirmer sur place',
   },
   {
-    id: 'sinodakar', name: 'Sino-Dakar Cargo', cn: '中达国际货运代理有限公司', cat: 'transitaire', city: 'Guangzhou', district: 'Baiyun',
+    id: 'sinodakar', name: 'Sino-Dakar Cargo', cn: '中达国际货运代理有限公司', cat: 'transitaire', city: 'guangzhou', district: 'Baiyun',
     lat: 23.155, lng: 113.29, verified: '10 sept. 2026',
     desc: 'Transitaire spécialisé dans l’envoi de marchandises depuis Guangzhou vers l’Afrique de l’Ouest.',
     addrCn: '广东省广州市白云区示例路120号 B座 508室', addrFr: '120, route de l’Exemple (adresse fictive), tour B, bureau 508, district de Baiyun, Guangzhou',
@@ -118,7 +155,7 @@ export const PROVIDERS: Provider[] = [
     freight: ['air', 'sea'], goods: 'Textiles, pièces détachées, appareils électroménagers', senegal: 'Dakar : port et aéroport',
   },
   {
-    id: 'huaqiang', name: 'Huaqiang Digital Parts', cn: '华强数码配件', cat: 'gros', city: 'Shenzhen', district: 'Futian',
+    id: 'huaqiang', name: 'Huaqiang Digital Parts', cn: '华强数码配件', cat: 'gros', city: 'shenzhen', district: 'Futian',
     lat: 22.545, lng: 114.085, featured: true, verified: '9 sept. 2026',
     desc: 'Accessoires et pièces pour téléphones : coques, câbles, chargeurs, écouteurs.',
     addrCn: '深圳市福田区示例路华强北 远望数码城 2楼', addrFr: 'Huaqiangbei, marché Yuanwang, 2e étage (adresse fictive), Futian, Shenzhen',
@@ -146,7 +183,8 @@ export interface Proposal {
   cat: Cat;
   city: City;
   loc: string;
-  products: string;
+  products: string;        // texte libre (« Autre »)
+  productTags: string[];   // ids du catalogue produits/services
   moq: string;
   tel: string;
   wechat: string;
@@ -161,7 +199,7 @@ export interface Proposal {
 }
 
 export const emptyProposal = (): Proposal => ({
-  id: 'draft', name: '', cn: '', cat: 'gros', city: 'Guangzhou', loc: '', products: '', moq: '', tel: '', wechat: '', addrCn: '',
+  id: 'draft', name: '', cn: '', cat: 'gros', city: 'guangzhou', loc: '', products: '', productTags: [], moq: '', tel: '', wechat: '', addrCn: '',
   photos: 0, cardFront: false, cardBack: false, status: 'Brouillon', date: '', author: 'Bacary D.',
 });
 
@@ -170,17 +208,17 @@ const P = (o: Partial<Proposal> & Pick<Proposal, 'id' | 'name' | 'cn' | 'cat' | 
 });
 
 export const SEED_PROPOSALS: Proposal[] = [
-  P({ id: 'p1', name: 'Huaqiang Digital Parts', cn: '华强数码配件', cat: 'gros', city: 'Shenzhen', status: 'Brouillon', date: 'Enregistré le 20 sept.',
+  P({ id: 'p1', name: 'Huaqiang Digital Parts', cn: '华强数码配件', cat: 'gros', city: 'shenzhen', status: 'Brouillon', date: 'Enregistré le 20 sept.',
       loc: 'Huaqiangbei, marché Yuanwang, 2e étage', products: 'Coques de téléphone, câbles, chargeurs, écouteurs.', tel: '+86 130 0000 0000', wechat: 'huaqiang_parts_demo', addrCn: '福田区华强北路 远望数码城 2楼', photos: 2, cardFront: true }),
-  P({ id: 'p2', name: 'Tianhe Sample Hotel', cn: '天河示例酒店', cat: 'hotel', city: 'Guangzhou', status: 'Soumise', date: 'Envoyée le 19 sept.', loc: 'Tianhe, près de la gare Est' }),
-  P({ id: 'p3', name: 'Nanshan Cargo Express', cn: '南山快运', cat: 'transport', city: 'Shenzhen', status: 'En vérification', date: 'Envoyée le 18 sept.', loc: 'Nanshan' }),
-  P({ id: 'p4', name: 'Yuexiu Halal Kitchen', cn: '越秀清真小厨', cat: 'resto', city: 'Guangzhou', status: 'Complément demandé', date: 'Envoyée le 16 sept.', loc: 'Yuexiu',
+  P({ id: 'p2', name: 'Tianhe Sample Hotel', cn: '天河示例酒店', cat: 'hotel', city: 'guangzhou', status: 'Soumise', date: 'Envoyée le 19 sept.', loc: 'Tianhe, près de la gare Est' }),
+  P({ id: 'p3', name: 'Nanshan Cargo Express', cn: '南山快运', cat: 'transport', city: 'shenzhen', status: 'En vérification', date: 'Envoyée le 18 sept.', loc: 'Nanshan' }),
+  P({ id: 'p4', name: 'Yuexiu Halal Kitchen', cn: '越秀清真小厨', cat: 'resto', city: 'guangzhou', status: 'Complément demandé', date: 'Envoyée le 16 sept.', loc: 'Yuexiu',
       feedback: 'Merci pour votre proposition. Pour la publier, il nous manque : un numéro de téléphone joignable et une photo de la devanture ou de l’enseigne.' }),
-  P({ id: 'p5', name: 'Liwan Lace House', cn: '荔湾蕾丝行', cat: 'gros', city: 'Guangzhou', status: 'Publiée', date: 'Publiée le 15 sept.', loc: 'Liwan',
+  P({ id: 'p5', name: 'Liwan Lace House', cn: '荔湾蕾丝行', cat: 'gros', city: 'guangzhou', status: 'Publiée', date: 'Publiée le 15 sept.', loc: 'Liwan',
       feedback: 'Votre proposition est publiée. Merci pour votre contribution.' }),
-  P({ id: 'p6', name: 'Baiyun Textiles Co.', cn: '白云纺织有限公司', cat: 'gros', city: 'Guangzhou', status: 'Rattachée à une adresse existante', date: 'Traitée le 14 sept.', loc: 'Baiyun',
+  P({ id: 'p6', name: 'Baiyun Textiles Co.', cn: '白云纺织有限公司', cat: 'gros', city: 'guangzhou', status: 'Rattachée à une adresse existante', date: 'Traitée le 14 sept.', loc: 'Baiyun',
       feedback: 'Cette adresse existait déjà dans Diaba Guide. Votre proposition a été rattachée à la fiche existante et vos informations l’ont complétée.' }),
-  P({ id: 'p7', name: 'Shekou Guesthouse', cn: '蛇口民宿', cat: 'hotel', city: 'Shenzhen', status: 'Refusée', date: 'Traitée le 11 sept.', loc: 'Shekou',
+  P({ id: 'p7', name: 'Shekou Guesthouse', cn: '蛇口民宿', cat: 'hotel', city: 'shenzhen', status: 'Refusée', date: 'Traitée le 11 sept.', loc: 'Shekou',
       feedback: 'Motif : établissement fermé. Selon nos vérifications, cette adresse n’est plus en activité. Vous pouvez proposer une autre adresse à tout moment.' }),
 ];
 
@@ -193,6 +231,6 @@ export const SEED_DECISIONS: Decision[] = [
 ];
 
 export const TEAM_QUEUE_EXTRA: Proposal[] = [
-  P({ id: 't1', name: 'Panyu Sea Freight', cn: '番禺海运代理', cat: 'transitaire', city: 'Guangzhou', status: 'Soumise', date: '20 sept.', author: 'A. Ndiaye' }),
-  P({ id: 't2', name: 'Futian Phone Cases', cn: '福田手机壳批发', cat: 'gros', city: 'Shenzhen', status: 'En vérification', date: '17 sept.', author: 'M. Sow' }),
+  P({ id: 't1', name: 'Panyu Sea Freight', cn: '番禺海运代理', cat: 'transitaire', city: 'guangzhou', status: 'Soumise', date: '20 sept.', author: 'A. Ndiaye' }),
+  P({ id: 't2', name: 'Futian Phone Cases', cn: '福田手机壳批发', cat: 'gros', city: 'shenzhen', status: 'En vérification', date: '17 sept.', author: 'M. Sow' }),
 ];
