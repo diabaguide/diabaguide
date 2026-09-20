@@ -44,6 +44,21 @@ const newId = () =>
   (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'p' + Date.now());
 
 /* ------------------------------------------------------------------ */
+/* Validation                                                          */
+/* ------------------------------------------------------------------ */
+function validateProposal(p: Proposal): string | null {
+  if (p.name.length > 100) return "Le nom ne doit pas dépasser 100 caractères.";
+  if (p.cn.length > 100) return "Le nom chinois ne doit pas dépasser 100 caractères.";
+  if ((p.tel || '').length > 50) return "Le numéro de téléphone ne doit pas dépasser 50 caractères.";
+  if ((p.wechat || '').length > 50) return "L'identifiant WeChat ne doit pas dépasser 50 caractères.";
+  if (p.loc.length > 1000) return "L'emplacement ne doit pas dépasser 1000 caractères.";
+  if (p.products.length > 1000) return "La description des produits ne doit pas dépasser 1000 caractères.";
+  if (p.moq.length > 1000) return "Le minimum de commande ne doit pas dépasser 1000 caractères.";
+  if (p.addrCn.length > 1000) return "L'adresse complète en chinois ne doit pas dépasser 1000 caractères.";
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
 /* Lectures                                                            */
 /* ------------------------------------------------------------------ */
 /** Propositions du voyageur connecté (RLS : ses propres lignes). */
@@ -74,8 +89,11 @@ export async function fetchDecisions(): Promise<Decision[]> {
 /* Écritures                                                           */
 /* ------------------------------------------------------------------ */
 /** Enregistre (crée ou met à jour) une proposition avec un statut donné. */
-export async function saveProposal(p: Proposal, status: Status, datePrefix: string, author?: string): Promise<Proposal | null> {
-  if (!supabase) return null;
+export async function saveProposal(p: Proposal, status: Status, datePrefix: string, author?: string): Promise<{ data?: Proposal, error?: string }> {
+  const vErr = validateProposal(p);
+  if (vErr) return { error: vErr };
+
+  if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
   const row = proposalToRow({
     ...p,
     id: p.id && p.id !== 'draft' ? p.id : newId(),
@@ -84,8 +102,8 @@ export async function saveProposal(p: Proposal, status: Status, datePrefix: stri
     author: author ?? p.author,
   });
   const { data, error } = await supabase.from('proposals').upsert(row).select().single();
-  if (error) { warn('enregistrement de la proposition', error); return null; }
-  return rowToProposal(data as ProposalRow);
+  if (error) { warn('enregistrement de la proposition', error); return { error: error.message }; }
+  return { data: rowToProposal(data as ProposalRow) };
 }
 
 /** Complément envoyé par l'auteur : passe la proposition en vérification. */
