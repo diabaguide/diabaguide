@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catIcon, catLabel, category, cityName, tagLabel, type Provider } from '../data';
 import { useProviderById, useStore } from '../store';
 import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, Tag, TopBar, Verified } from '../ui';
+import { saveReport } from '../lib/reports';
 
 async function copy(text: string) {
   try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
@@ -194,19 +195,39 @@ export function Report() {
   const [about, setAbout] = useState('adresse');
   const [text, setText] = useState('');
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [apiErr, setApiErr] = useState<string | null>(null);
   if (!p) return <Navigate to="/recherche" replace />;
+
+  const send = async () => {
+    if (!text.trim()) return;
+    setBusy(true);
+    setApiErr(null);
+    const { error } = await saveReport({
+      providerId: p.id,
+      providerName: p.name,
+      type,
+      about,
+      text,
+    });
+    setBusy(false);
+    if (error) { setApiErr(error); return; }
+    setSent(true);
+  };
+
   return (
     <Screen>
       <TopBar title={tr("Correction ou signalement")} back={`/adresses/${p.id}`} />
       <div className="main" style={{ gap: 18 }}>
         {sent ? (
           <>
-            <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr("Merci. Votre retour est transmis à l’équipe Diaba.")}</span></div>
+            <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr("Merci. Votre retour est transmis à l'équipe Diaba.")}</span></div>
             <Button onClick={() => nav(`/adresses/${p.id}`)}>{tr("Retour à la fiche")}</Button>
           </>
         ) : (
           <>
-            <p className="muted">{tr("Votre retour est transmis à l’équipe Diaba, qui le vérifie avant toute modification de la fiche.")}</p>
+            <p className="muted">{tr("Votre retour est transmis à l'équipe Diaba, qui le vérifie avant toute modification de la fiche.")}</p>
+            {apiErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(apiErr)}</span></div>}
             <section className="stack"><h2 style={{ fontSize: 17 }}>{tr("Que souhaitez-vous faire ?")}</h2>
               <RadioCard name="type" label={tr("Proposer une correction")} sub={tr("Adresse, téléphone, produits, horaires…")} icon="edit" checked={type === 'correction'} onChange={() => setType('correction')} />
               <RadioCard name="type" label={tr("Signaler un problème")} sub={tr("Adresse fermée, contact injoignable, contenu inapproprié…")} icon="flag" checked={type === 'signalement'} onChange={() => setType('signalement')} />
@@ -215,7 +236,7 @@ export function Report() {
               {[['adresse', 'Adresse ou accès'], ['contact', 'Téléphone ou WeChat'], ['produits', 'Produits ou services'], ['autre', 'Autre']].map(([v, l]) => <RadioCard key={v} name="about" label={tr(l)} checked={about === v} onChange={() => setAbout(v)} />)}
             </section>
             <div className="field"><label htmlFor="detail">{tr("Détails")}</label><textarea id="detail" rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder={tr("Précisez ce qui doit être corrigé ou ce que vous avez constaté.")} /></div>
-            <Button icon="send" disabled={!text.trim()} onClick={() => setSent(true)}>{tr("Envoyer à Diaba")}</Button>
+            <Button icon="send" disabled={!text.trim() || busy} onClick={send}>{tr(busy ? 'Envoi…' : 'Envoyer à Diaba')}</Button>
           </>
         )}
       </div>

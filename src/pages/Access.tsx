@@ -129,12 +129,21 @@ export function SignupDone() {
   );
 }
 
+/** Valide que `next` est un chemin interne avant utilisation.
+ *  Empêche les open redirects du type ?next=//evil.com ou ?next=http://...  */
+function safeNext(raw: string | null): string | null {
+  if (!raw) return null;
+  // Accepter uniquement les chemins relatifs internes (commence par / mais pas //)
+  if (raw.startsWith('/') && !raw.startsWith('//')) return raw;
+  return null;
+}
+
 export function Login() {
   const { tr } = useI18n();
   const { d } = useStore();
   const nav = useNavigate();
   const [params] = useSearchParams();
-  const next = params.get('next');
+  const next = safeNext(params.get('next'));
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [err, setErr] = useState<string | null>(null);
