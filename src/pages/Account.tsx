@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { catLabel, type Provider } from '../data';
 import { useOnline, useStore, type LocPref } from '../store';
-import { signOut } from '../lib/auth';
+import { isTeamRole, signOut } from '../lib/auth';
 import { Button, DemoNote, Icon, Photo, RadioCard, Screen, Tag, TopBar } from '../ui';
 import { LangSwitch } from './Access';
 
@@ -90,7 +90,7 @@ export function Profile() {
         <section className="card" style={{ padding: 0 }}>
           <Link className="listrow" to="/profil/telechargements"><Icon name="download" /><div className="grow"><div style={{ fontWeight: 600 }}>Fiches téléchargées</div><div className="small muted">{Object.keys(s.downloads).length} fiche(s) disponibles hors connexion</div></div><Icon name="chevR" size={20} /></Link>
           <Link className="listrow" to="/contributions"><Icon name="pen" /><div className="grow"><div style={{ fontWeight: 600 }}>Mes contributions</div><div className="small muted">{s.proposals.filter((p) => p.status === 'Complément demandé').length} complément demandé</div></div><Icon name="chevR" size={20} /></Link>
-          {s.user?.role === 'team' && <Link className="listrow" to="/equipe"><Icon name="shield" /><div className="grow"><div style={{ fontWeight: 600 }}>Espace équipe Diaba</div></div><Icon name="chevR" size={20} /></Link>}
+          {isTeamRole(s.user?.role) && <Link className="listrow" to="/equipe"><Icon name="shield" /><div className="grow"><div style={{ fontWeight: 600 }}>Espace équipe Diaba</div></div><Icon name="chevR" size={20} /></Link>}
         </section>
         <section className="stack"><h2 className="row" style={{ fontSize: 17 }}><Icon name="pin" size={20} />Préférences de localisation</h2>
           {prefs.map((x) => <RadioCard key={x.v} name="loc" label={x.l} sub={x.sub} checked={s.locPref === x.v} onChange={() => d({ t: 'locPref', v: x.v })} />)}

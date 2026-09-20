@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Field, Icon, Logo, Photo, Screen, TopBar } from '../ui';
 import { useStore, type Lang } from '../store';
 import { supabase } from '../lib/supabase';
-import { sendPasswordReset, signIn, signOut, signUp, updatePassword } from '../lib/auth';
+import { isTeamRole, sendPasswordReset, signIn, signOut, signUp, updatePassword } from '../lib/auth';
 
 const LANGS: { v: Lang; l: string }[] = [{ v: 'fr', l: 'Français' }, { v: 'en', l: 'English' }, { v: 'zh', l: '中文' }];
 export function LangSwitch({ dark = false }: { dark?: boolean }) {
@@ -149,7 +149,7 @@ export function Login() {
     setBusy(false);
     if (res.error || !res.user) { setErr(res.error ?? 'Connexion impossible.'); return; }
     // Le store se synchronise via onAuthStateChange ; on navigue selon le rôle.
-    nav(next ?? (res.user.role === 'team' ? '/equipe' : '/accueil'), { replace: true });
+    nav(next ?? (isTeamRole(res.user.role) ? '/equipe' : '/accueil'), { replace: true });
   };
   return (
     <Screen nav={false}>
