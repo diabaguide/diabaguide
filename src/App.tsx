@@ -1,6 +1,6 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useStore } from './store';
-import { Welcome, Signup, SignupDone, Login, Forgot } from './pages/Access';
+import { Welcome, Signup, SignupDone, Login, Forgot, ResetPassword } from './pages/Access';
 import { Home, Locate } from './pages/Home';
 import { Search, Filters } from './pages/Search';
 import { Fiche, Driver, Contact, Report } from './pages/Fiche';
@@ -31,6 +31,7 @@ export default function App() {
       <Route path="/inscription/confirmation" element={<SignupDone />} />
       <Route path="/connexion" element={<Login />} />
       <Route path="/mot-de-passe" element={<Forgot />} />
+      <Route path="/reinitialiser" element={<ResetPassword />} />
 
       <Route element={<RequireAuth />}>
         <Route path="/accueil" element={<Home />} />

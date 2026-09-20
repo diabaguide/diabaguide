@@ -64,7 +64,14 @@ export async function signOut(): Promise<void> {
 export async function sendPasswordReset(email: string): Promise<{ error?: string }> {
   if (!supabase) return {};
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/mot-de-passe',
+    redirectTo: window.location.origin + '/reinitialiser',
   });
+  return { error: error ? translate(error.message) : undefined };
+}
+
+/** Définit un nouveau mot de passe pour la session courante (récupération). */
+export async function updatePassword(password: string): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { error } = await supabase.auth.updateUser({ password });
   return { error: error ? translate(error.message) : undefined };
 }

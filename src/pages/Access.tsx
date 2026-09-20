@@ -1,9 +1,9 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Field, Icon, Logo, Photo, Screen, TopBar } from '../ui';
 import { useStore, type Lang } from '../store';
 import { supabase } from '../lib/supabase';
-import { sendPasswordReset, signIn, signUp } from '../lib/auth';
+import { sendPasswordReset, signIn, signOut, signUp, updatePassword } from '../lib/auth';
 
 const LANGS: { v: Lang; l: string }[] = [{ v: 'fr', l: 'Français' }, { v: 'en', l: 'English' }, { v: 'zh', l: '中文' }];
 export function LangSwitch({ dark = false }: { dark?: boolean }) {
@@ -202,6 +202,74 @@ export function Forgot() {
             </div>
             <Button to="/connexion" kind="s">Retour à la connexion</Button>
           </>
+        )}
+      </div>
+    </Screen>
+  );
+}
+
+/* Page atterrissage du lien de réinitialisation : Supabase ouvre une session
+   de récupération (token dans l'URL) puis on demande le nouveau mot de passe. */
+export function ResetPassword() {
+  const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const [ready, setReady] = useState<boolean | null>(null); // null = en cours de détection
+
+  useEffect(() => {
+    if (!supabase) { setReady(false); return; }
+    let alive = true;
+    supabase.auth.getSession().then(({ data }) => { if (alive) setReady(!!data.session); });
+    const { data: sub } = supabase.auth.onAuthStateChange((e, session) => {
+      if (!alive) return;
+      if (e === 'PASSWORD_RECOVERY' || session) setReady(true);
+    });
+    return () => { alive = false; sub.subscription.unsubscribe(); };
+  }, []);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setErr(null);
+    if (pw.length < 8) { setErr('Le mot de passe doit contenir au moins 8 caractères.'); return; }
+    if (pw !== pw2) { setErr('Les deux mots de passe ne correspondent pas.'); return; }
+    setBusy(true);
+    const res = await updatePassword(pw);
+    setBusy(false);
+    if (res.error) { setErr(res.error); return; }
+    await signOut(); // on ferme la session de récupération : reconnexion avec le nouveau mot de passe
+    setDone(true);
+  };
+
+  return (
+    <Screen nav={false}>
+      <TopBar title="Nouveau mot de passe" back="/connexion" />
+      <div className="main" style={{ gap: 18 }}>
+        {done ? (
+          <>
+            <div role="status" className="card center-screen" style={{ borderColor: 'var(--ok)', padding: '28px 20px', flex: 'none' }}>
+              <span className="bigcheck" style={{ width: 64, height: 64, border: 0 }}><Icon name="check" size={34} sw={2.6} /></span>
+              <div className="display" style={{ fontSize: 24 }}>Mot de passe modifié</div>
+              <div className="muted">Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.</div>
+            </div>
+            <Button to="/connexion">Se connecter</Button>
+          </>
+        ) : ready === false ? (
+          <>
+            <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>Ce lien de réinitialisation est invalide ou a expiré.</span></div>
+            <Button to="/mot-de-passe" kind="s">Demander un nouveau lien</Button>
+          </>
+        ) : ready === null ? (
+          <p className="muted" role="status" aria-live="polite">Vérification du lien…</p>
+        ) : (
+          <form onSubmit={submit} noValidate className="stack" style={{ gap: 18 }}>
+            <p className="muted">Choisissez un nouveau mot de passe pour votre compte.</p>
+            {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{err}</span></div>}
+            <Field id="np" label="Nouveau mot de passe" type="password" value={pw} onChange={setPw} req hint="Au moins 8 caractères." />
+            <Field id="np2" label="Confirmer le mot de passe" type="password" value={pw2} onChange={setPw2} req />
+            <Button type="submit" disabled={busy}>{busy ? 'Enregistrement…' : 'Enregistrer le mot de passe'}</Button>
+          </form>
         )}
       </div>
     </Screen>
