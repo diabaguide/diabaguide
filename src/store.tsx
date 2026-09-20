@@ -5,7 +5,7 @@ import {
 } from './data';
 import { fetchProviders } from './lib/providers';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
-import { userFromSession } from './lib/auth';
+import { isTeamRole, userFromSession, type Role } from './lib/auth';
 import {
   complementProposal, decideProposal, fetchAllProposals, fetchDecisions, fetchMyProposals, saveProposal,
 } from './lib/contributions';
@@ -13,7 +13,7 @@ import {
 export type Lang = 'fr' | 'en' | 'zh';
 export type LocPref = 'ask' | 'while' | 'never';
 
-interface User { id?: string; name: string; email: string; role: 'traveler' | 'team' }
+interface User { id?: string; name: string; email: string; role: Role }
 interface State {
   user: User | null;
   authReady: boolean; // la session Supabase a-t-elle été vérifiée ?
@@ -190,7 +190,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!supabase || !s.user) return;
     let alive = true;
     (async () => {
-      if (s.user!.role === 'team') {
+      if (isTeamRole(s.user!.role)) {
         const [proposals, decisions] = await Promise.all([fetchAllProposals(), fetchDecisions()]);
         if (!alive) return;
         d({ t: 'setProposals', v: proposals });

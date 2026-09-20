@@ -1,8 +1,10 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
-export type Role = 'traveler' | 'team';
+export type Role = 'traveler' | 'team' | 'admin';
 export interface AuthUser { id: string; name: string; email: string; role: Role }
+/** Un admin dispose aussi de tous les droits « équipe ». */
+export const isTeamRole = (r: Role | undefined) => r === 'team' || r === 'admin';
 
 /** Traduit les messages d'erreur Supabase courants en français. */
 function translate(msg: string): string {
@@ -18,7 +20,9 @@ function translate(msg: string): string {
 
 /** Récupère (ou déduit) le profil d'un utilisateur authentifié. */
 async function profileFor(id: string, email: string, metaName?: string): Promise<AuthUser> {
-  let role: Role = email.toLowerCase().includes('equipe') ? 'team' : 'traveler';
+  // Repli volontairement au rôle le plus faible : un privilège ne doit jamais
+  // être déduit de l'e-mail ni accordé parce que la lecture du profil échoue.
+  let role: Role = 'traveler';
   let name = metaName ?? email.split('@')[0];
   try {
     const { data } = await supabase!.from('profiles').select('name, role').eq('id', id).maybeSingle();
@@ -26,7 +30,7 @@ async function profileFor(id: string, email: string, metaName?: string): Promise
       role = (data.role as Role) ?? role;
       name = data.name ?? name;
     }
-  } catch { /* profil pas encore créé (trigger) : on garde les valeurs déduites */ }
+  } catch { /* profil pas encore créé (trigger) : on reste « voyageur » */ }
   return { id, name, email, role };
 }
 

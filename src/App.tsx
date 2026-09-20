@@ -1,5 +1,6 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useStore } from './store';
+import { isTeamRole } from './lib/auth';
 import { Welcome, Signup, SignupDone, Login, Forgot, ResetPassword } from './pages/Access';
 import { Home, Locate } from './pages/Home';
 import { Search, Filters } from './pages/Search';
@@ -7,10 +8,12 @@ import { Fiche, Driver, Contact, Report } from './pages/Fiche';
 import { Favorites, Profile, Downloads } from './pages/Account';
 import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contribute';
 import { AdminLayout, AdminDashboard, AdminList, AdminVerify, AdminHistory } from './pages/admin/Admin';
+import { Members } from './pages/admin/Members';
 
 /* Compte obligatoire : toute page de contenu redirige vers la connexion.
    L’URL demandée est conservée (?next=) : lien partagé > connexion > fiche. */
-function RequireAuth({ team = false }: { team?: boolean }) {
+/* Niveau d'accès requis : simple connexion, espace équipe, ou administration. */
+function RequireAuth({ need = 'user' }: { need?: 'user' | 'team' | 'admin' }) {
   const { s } = useStore();
   const loc = useLocation();
   // Tant que la session Supabase n'est pas vérifiée, on n'affiche ni ne redirige
@@ -19,7 +22,8 @@ function RequireAuth({ team = false }: { team?: boolean }) {
     return <div className="center-screen" style={{ minHeight: '60vh' }} role="status" aria-live="polite">Chargement…</div>;
   }
   if (!s.user) return <Navigate to={`/connexion?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
-  if (team && s.user.role !== 'team') return <Navigate to="/accueil" replace />;
+  if (need === 'team' && !isTeamRole(s.user.role)) return <Navigate to="/accueil" replace />;
+  if (need === 'admin' && s.user.role !== 'admin') return <Navigate to="/equipe" replace />;
   return <Outlet />;
 }
 
@@ -51,12 +55,16 @@ export default function App() {
         <Route path="/profil/telechargements" element={<Downloads />} />
       </Route>
 
-      <Route element={<RequireAuth team />}>
+      <Route element={<RequireAuth need="team" />}>
         <Route element={<AdminLayout />}>
           <Route path="/equipe" element={<AdminDashboard />} />
           <Route path="/equipe/propositions" element={<AdminList />} />
           <Route path="/equipe/propositions/:id" element={<AdminVerify />} />
           <Route path="/equipe/historique" element={<AdminHistory />} />
+          {/* Administration : réservée au rôle admin */}
+          <Route element={<RequireAuth need="admin" />}>
+            <Route path="/equipe/membres" element={<Members />} />
+          </Route>
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

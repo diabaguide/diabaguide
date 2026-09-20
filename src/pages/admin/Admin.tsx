@@ -28,8 +28,11 @@ function dupCandidates(p: Proposal, providers: Provider[], term?: string) {
 export function AdminLayout() {
   const { s, d } = useStore();
   const nav = useNavigate();
+  const isAdmin = s.user?.role === 'admin';
   const items: [string, string, Parameters<typeof Icon>[0]['name'], boolean][] = [
     ['/equipe', 'Tableau de bord', 'grid', true], ['/equipe/propositions', 'Propositions', 'inbox', false], ['/equipe/historique', 'Historique des décisions', 'history', false],
+    // Administration : réservée au rôle admin.
+    ...(isAdmin ? [['/equipe/membres', 'Membres', 'users', false] as [string, string, Parameters<typeof Icon>[0]['name'], boolean]] : []),
   ];
   return (
     <div className="admin">
@@ -39,8 +42,8 @@ export function AdminLayout() {
           {items.map(([to, l, i, end]) => <NavLink key={to} to={to} end={end} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={i} />{l}</NavLink>)}
         </nav>
         <div className="me">
-          <span className="avatar">AD</span>
-          <div className="grow"><div style={{ fontWeight: 600 }}>{s.user?.name}</div><div className="small" style={{ color: '#DCE6FA' }}>Vérification</div></div>
+          <span className="avatar">{(s.user?.name ?? '?').split(/[\s.]+/).map((x) => x[0]?.toUpperCase()).slice(0, 2).join('')}</span>
+          <div className="grow"><div style={{ fontWeight: 600 }}>{s.user?.name}</div><div className="small" style={{ color: '#DCE6FA' }}>{isAdmin ? 'Administrateur' : 'Vérification'}</div></div>
           <button type="button" className="iconbtn" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.4)' }} aria-label="Se déconnecter" onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}><Icon name="logout" size={20} /></button>
         </div>
       </aside>
