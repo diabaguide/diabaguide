@@ -233,13 +233,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const api = useMemo<ContribApi>(() => ({
     saveDraft: async (p) => {
       if (!supabase) { d({ t: 'saveDraft', p }); return; }
-      await saveProposal(p, 'Brouillon', 'Enregistré', sRef.current.user?.name);
+      const { error } = await saveProposal(p, 'Brouillon', 'Enregistré', sRef.current.user?.name);
+      if (error) { if (import.meta.env.DEV) console.warn('[Diaba Guide] Validation :', error); return; }
       d({ t: 'draft', p: null });
       d({ t: 'setProposals', v: await fetchMyProposals() });
     },
     submit: async (p) => {
       if (!supabase) { d({ t: 'submit', p }); return; }
-      await saveProposal(p, 'Soumise', 'Envoyée', sRef.current.user?.name);
+      const { error } = await saveProposal(p, 'Soumise', 'Envoyée', sRef.current.user?.name);
+      if (error) { if (import.meta.env.DEV) console.warn('[Diaba Guide] Validation :', error); return; }
       d({ t: 'draft', p: null });
       d({ t: 'setProposals', v: await fetchMyProposals() });
     },
