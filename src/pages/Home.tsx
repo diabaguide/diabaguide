@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CATS, DISTRICTS, PROVIDERS, type City } from '../data';
+import { CATS, DISTRICTS, type City } from '../data';
 import { districtPos, requestPosition, setPos } from '../geo';
 import { useStore } from '../store';
 import { Button, DemoNote, Icon, Logo, RadioCard, Screen, TopBar } from '../ui';
@@ -16,7 +16,7 @@ export function Home() {
     window.addEventListener('beforeinstallprompt', h);
     return () => window.removeEventListener('beforeinstallprompt', h);
   }, []);
-  const featured = PROVIDERS.filter((p) => p.featured && p.city === s.city);
+  const featured = s.providers.filter((p) => p.featured && p.city === s.city);
 
   return (
     <Screen>

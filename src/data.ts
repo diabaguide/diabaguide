@@ -125,7 +125,6 @@ export const PROVIDERS: Provider[] = [
     tel: '+86 135 0000 0000', products: ['Coques', 'Câbles', 'Chargeurs', 'Écouteurs'],
   },
 ];
-export const providerById = (id: string) => PROVIDERS.find((p) => p.id === id);
 
 export type Status =
   | 'Brouillon' | 'Soumise' | 'En vérification' | 'Complément demandé' | 'Publiée' | 'Rattachée à une adresse existante' | 'Refusée';

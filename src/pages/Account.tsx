@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { catLabel, providerById, type Provider } from '../data';
+import { catLabel, type Provider } from '../data';
 import { useOnline, useStore, type LocPref } from '../store';
 import { Button, DemoNote, Icon, Photo, RadioCard, Screen, Tag, TopBar } from '../ui';
 import { LangSwitch } from './Access';
@@ -9,7 +9,7 @@ export function Favorites() {
   const { s, d } = useStore();
   const online = useOnline();
   const [onlyOff, setOnlyOff] = useState(false);
-  const favs = s.favorites.map(providerById).filter(Boolean) as Provider[];
+  const favs = s.favorites.map((id) => s.providers.find((p) => p.id === id)).filter(Boolean) as Provider[];
   const shown = favs.filter((p) => (onlyOff || !online ? !!s.downloads[p.id] : true));
   const nOff = favs.filter((p) => s.downloads[p.id]).length;
 
@@ -113,7 +113,7 @@ export function Downloads() {
         {ids.length > 0 && <Button icon="refresh" onClick={() => d({ t: 'syncAll' })}>Tout mettre à jour</Button>}
         {ids.length === 0 && <div className="card center">Aucune fiche téléchargée. <Link className="link" to="/favoris">Voir mes favoris</Link></div>}
         {ids.map((id) => {
-          const p = providerById(id);
+          const p = s.providers.find((x) => x.id === id);
           if (!p) return null;
           return (
             <div key={id} className="card stack" style={{ gap: 10 }}>

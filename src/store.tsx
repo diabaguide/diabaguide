@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react';
 import {
-  SEED_DECISIONS, SEED_PROPOSALS, TEAM_QUEUE_EXTRA, emptyProposal,
-  type City, type Decision, type Proposal, type Status,
+  PROVIDERS, SEED_DECISIONS, SEED_PROPOSALS, TEAM_QUEUE_EXTRA, emptyProposal,
+  type City, type Decision, type Provider, type Proposal, type Status,
 } from './data';
+import { fetchProviders } from './lib/providers';
 
 export type Lang = 'fr' | 'en' | 'zh';
 export type LocPref = 'ask' | 'while' | 'never';
@@ -16,6 +17,7 @@ interface State {
   favorites: string[];
   downloads: Record<string, string>; // id -> date de téléchargement
   lastSync: string;
+  providers: Provider[]; // adresses (Supabase, avec repli statique)
   proposals: Proposal[]; // propositions du voyageur
   teamQueue: Proposal[]; // file de l’équipe
   decisions: Decision[];
@@ -27,7 +29,7 @@ const KEY = 'diaba-guide-state-v1';
 const initial: State = {
   user: null, lang: 'fr', city: 'Guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'],
   downloads: { baiyun: '18 sept. 2026', jinyuan: '18 sept. 2026' }, lastSync: '19 sept. 2026, 09:12',
-  proposals: SEED_PROPOSALS, teamQueue: [...TEAM_QUEUE_EXTRA], decisions: SEED_DECISIONS, draft: null, installDismissed: false,
+  providers: PROVIDERS, proposals: SEED_PROPOSALS, teamQueue: [...TEAM_QUEUE_EXTRA], decisions: SEED_DECISIONS, draft: null, installDismissed: false,
 };
 
 type Action =
@@ -44,6 +46,7 @@ type Action =
   | { t: 'submit'; p: Proposal }
   | { t: 'complement'; id: string; patch: Partial<Proposal> }
   | { t: 'decide'; id: string; status: Status; note: string }
+  | { t: 'setProviders'; v: Provider[] }
   | { t: 'dismissInstall' };
 
 const TODAY = '20 sept. 2026';
@@ -97,6 +100,7 @@ function reducer(s: State, a: Action): State {
       };
       return { ...s, proposals: s.proposals.map(upd), teamQueue: s.teamQueue.map(upd), decisions: [dec, ...s.decisions] };
     }
+    case 'setProviders': return { ...s, providers: a.v };
     case 'dismissInstall': return { ...s, installDismissed: true };
   }
 }
@@ -104,7 +108,9 @@ function reducer(s: State, a: Action): State {
 function load(): State {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { ...initial, ...JSON.parse(raw) };
+    // `providers` n'est jamais restauré depuis localStorage : il est
+    // (re)chargé depuis Supabase au démarrage, avec repli statique.
+    if (raw) return { ...initial, ...JSON.parse(raw), providers: PROVIDERS };
   } catch { /* stockage indisponible */ }
   return initial;
 }
@@ -115,12 +121,29 @@ const C = createContext<Ctx>(null as unknown as Ctx);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [s, d] = useReducer(reducer, undefined, load);
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* ignore */ }
+    // On ne persiste pas `providers` (rechargé depuis Supabase à chaque démarrage).
+    try {
+      const { providers: _p, ...persist } = s;
+      localStorage.setItem(KEY, JSON.stringify(persist));
+    } catch { /* ignore */ }
   }, [s]);
+  // Chargement des adresses depuis Supabase au démarrage (repli statique interne).
+  useEffect(() => {
+    let alive = true;
+    fetchProviders().then((list) => { if (alive) d({ t: 'setProviders', v: list }); });
+    return () => { alive = false; };
+  }, []);
   const v = useMemo(() => ({ s, d }), [s]);
   return <C.Provider value={v}>{children}</C.Provider>;
 }
 export const useStore = () => useContext(C);
+
+/** Recherche une adresse par id dans les adresses chargées dans le store. */
+export function useProviderById(id: string | undefined | null): Provider | null {
+  const { s } = useStore();
+  if (!id) return null;
+  return s.providers.find((p) => p.id === id) ?? null;
+}
 
 export function useOnline() {
   const [on, setOn] = useState(navigator.onLine);

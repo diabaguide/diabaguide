@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink, Navigate, Outlet, useNavigate, useParams } from 'react-router-dom';
-import { CATS, PROVIDERS, STATUSES, catLabel, type Cat, type City, type Proposal, type Status } from '../../data';
+import { CATS, STATUSES, catLabel, type Cat, type City, type Provider, type Proposal, type Status } from '../../data';
 import { useStore } from '../../store';
 import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, Tag, TextArea } from '../../ui';
 
@@ -18,10 +18,10 @@ const ageHours = (p: Proposal) => {
 };
 const ageLabel = (h: number) => (h < 24 ? `Il y a ${h} h` : `Il y a ${Math.round(h / 24)} jour${h >= 48 ? 's' : ''}`);
 
-function dupCandidates(p: Proposal, term?: string) {
+function dupCandidates(p: Proposal, providers: Provider[], term?: string) {
   const t = (term ?? p.name.split(' ')[0]).trim().toLowerCase();
   if (!t) return [];
-  return PROVIDERS.filter((x) => `${x.name} ${x.cn} ${x.tel ?? ''} ${x.wechat ?? ''}`.toLowerCase().includes(t))
+  return providers.filter((x) => `${x.name} ${x.cn} ${x.tel ?? ''} ${x.wechat ?? ''}`.toLowerCase().includes(t))
     .map((x) => ({ x, why: p.tel && x.tel === p.tel ? 'Même numéro de téléphone' : 'Nom proche · même quartier ou même ville' }));
 }
 
@@ -99,6 +99,7 @@ export function AdminDashboard() {
 
 export function AdminList() {
   const all = useTeamAll();
+  const { s } = useStore();
   const [city, setCity] = useState<'' | City>('');
   const [cat, setCat] = useState<'' | Cat>('');
   const [st, setSt] = useState<'' | Status>('');
@@ -119,7 +120,7 @@ export function AdminList() {
           <thead><tr><th>Proposition</th><th>Catégorie</th><th>Ville</th><th>Statut</th><th>Reçue le</th><th>Doublons</th><th /></tr></thead>
           <tbody>
             {rows.map((p) => {
-              const dup = dupCandidates(p).length > 0;
+              const dup = dupCandidates(p, s.providers).length > 0;
               return (
                 <tr key={p.id}>
                   <td><strong>{p.name}</strong><div className="small muted zh">{p.cn}</div></td><td>{catLabel(p.cat)}</td><td>{p.city}</td><td><StatusBadge status={p.status} /></td><td>{p.date}</td>
@@ -142,7 +143,7 @@ type Dlg = null | 'publish' | 'refuse' | 'complement' | 'attach';
 export function AdminVerify() {
   const { id } = useParams();
   const all = useTeamAll();
-  const { d } = useStore();
+  const { s, d } = useStore();
   const nav = useNavigate();
   const src = all.find((p) => p.id === id);
   const [p, setP] = useState<Proposal | null>(src ?? null);
@@ -154,7 +155,7 @@ export function AdminVerify() {
   const [saved, setSaved] = useState(false);
   if (!src || !p) return <Navigate to="/equipe/propositions" replace />;
   const set = (patch: Partial<Proposal>) => { setP({ ...p, ...patch }); setSaved(false); };
-  const cands = dupCandidates(p, dupQ);
+  const cands = dupCandidates(p, s.providers, dupQ);
   const decide = (status: Status, note: string) => { d({ t: 'decide', id: p.id, status, note }); nav('/equipe/historique'); };
   const ready = !!p.name.trim() && !!p.loc.trim();
 
@@ -169,10 +170,10 @@ export function AdminVerify() {
       complement: { title: 'Demander un complément', icon: 'alert' as const, ok: 'Envoyer la demande', kind: 'g' as const, go: () => decide('Complément demandé', msg),
         body: <TextArea id="cm" label="Message au contributeur" rows={4} value={msg} onChange={setMsg} />, disabled: !msg.trim() },
       attach: { title: 'Rattacher à une fiche existante ?', icon: 'link' as const, ok: 'Confirmer le rattachement', kind: 'p' as const,
-        go: () => decide('Rattachée à une adresse existante', `Rattachée à « ${PROVIDERS.find((x) => x.id === target)?.name} ».`),
+        go: () => decide('Rattachée à une adresse existante', `Rattachée à « ${s.providers.find((x) => x.id === target)?.name} ».`),
         body: <>
           <p>Cette proposition sera fusionnée avec la fiche choisie. Les informations manquantes seront ajoutées à cette fiche.</p>
-          <Select id="tgt" label="Fiche existante" req value={target} onChange={setTarget} options={[{ v: '', l: 'Choisir une fiche…' }, ...(cands.length ? cands : PROVIDERS.map((x) => ({ x, why: '' }))).map(({ x }) => ({ v: x.id, l: `${x.name} (${x.city})` }))]} />
+          <Select id="tgt" label="Fiche existante" req value={target} onChange={setTarget} options={[{ v: '', l: 'Choisir une fiche…' }, ...(cands.length ? cands : s.providers.map((x) => ({ x, why: '' }))).map(({ x }) => ({ v: x.id, l: `${x.name} (${x.city})` }))]} />
         </>, disabled: !target },
     }[dlg];
     return (

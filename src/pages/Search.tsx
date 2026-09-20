@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { CATS, PROVIDERS, catIcon, catLabel, isFreight, type Cat, type City, type Freight, type Provider } from '../data';
+import { CATS, catIcon, catLabel, isFreight, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
 import { Button, Chip, DemoNote, Field, Icon, Photo, Screen } from '../ui';
@@ -35,10 +35,10 @@ export function useQuery() {
   return { q, sp, setSp };
 }
 
-function filterProviders(q: ReturnType<typeof useQuery>['q']) {
+function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provider[]) {
   const pos = getPos();
   const term = q.q.trim().toLowerCase();
-  let list = PROVIDERS.filter((p) => p.city === q.city).map((p) => ({ p, km: pos ? distanceKm(pos, p) : null }));
+  let list = providers.filter((p) => p.city === q.city).map((p) => ({ p, km: pos ? distanceKm(pos, p) : null }));
   if (q.cat) list = list.filter((x) => x.p.cat === q.cat);
   if (term) {
     list = list.filter(({ p }) =>
@@ -52,13 +52,14 @@ function filterProviders(q: ReturnType<typeof useQuery>['q']) {
 
 export function Search() {
   const { q, sp, setSp } = useQuery();
+  const { s } = useStore();
   const nav = useNavigate();
   const online = useOnline();
   const [loading, setLoading] = useState(true);
   const [sel, setSel] = useState(0);
   const key = sp.toString();
   useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 350); return () => clearTimeout(t); }, [key]);
-  const list = useMemo(() => filterProviders(q), [key]);
+  const list = useMemo(() => filterProviders(q, s.providers), [key, s.providers]);
   const nFilters = [q.cat, q.fret, q.prox].filter(Boolean).length;
   const set = (k: string, v: string | null) => { const n = new URLSearchParams(sp); v ? n.set(k, v) : n.delete(k); setSp(n, { replace: true }); };
 

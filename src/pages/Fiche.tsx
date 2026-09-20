@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { catIcon, catLabel, providerById, type Provider } from '../data';
-import { useStore } from '../store';
+import { catIcon, catLabel, type Provider } from '../data';
+import { useProviderById, useStore } from '../store';
 import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, Tag, TopBar, Verified } from '../ui';
 
 async function copy(text: string) {
@@ -12,7 +12,7 @@ const ctaLabel = (p: Provider) => ({ gros: 'Contacter le fournisseur', hotel: 'C
 
 function useProvider(): Provider | null {
   const { id } = useParams();
-  return (id && providerById(id)) || null;
+  return useProviderById(id);
 }
 
 function Specific({ p }: { p: Provider }) {
