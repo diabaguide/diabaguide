@@ -1,0 +1,11 @@
+{
+  "name": "Diaba Guide",
+  "short_name": "Diaba Guide",
+  "description": "Vos adresses professionnelles en Chine",
+  "start_url": "/accueil",
+  "display": "standalone",
+  "background_color": "#F4F7FC",
+  "theme_color": "#153E9F",
+  "lang": "fr",
+  "icons": [{ "src": "/logo.png", "sizes": "776x204", "type": "image/png" }]
+}
