@@ -2688,5 +2688,10 @@
     "en": "Decision saved: {0}.",
     "zh": "决定已保存：{0}。",
     "ar": "تم حفظ القرار: {0}."
+  },
+  "Rechercher une personne": {
+    "en": "Search for a person",
+    "zh": "搜索成员",
+    "ar": "البحث عن شخص"
   }
 }

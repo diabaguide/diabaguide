@@ -144,7 +144,7 @@ export function AdminCities() {
 
               {open === c.id && (
                 <>
-                  <div className="table"><table>
+                  <div className="table dense"><table>
                     <thead><tr><th>{tr("Quartier")}</th><th>{tr("Latitude")}</th><th>{tr("Longitude")}</th><th /></tr></thead>
                     <tbody>
                       {quarters.length === 0 && <tr><td colSpan={4} className="muted">{tr("Aucun quartier.")}</td></tr>}
@@ -355,7 +355,7 @@ export function AdminProductTags() {
           const f = form(c.id);
           return (
             <Card key={c.id} title={tr(`${c.label} — ${c.tagsLabel}`)}>
-              <div className="table"><table>
+              <div className="table dense"><table>
                 <thead><tr><th>{tr("Libellé")}</th><th>{tr("中文")}</th><th>{tr("État")}</th><th>{tr("Actions")}</th></tr></thead>
                 <tbody>
                   {tags.length === 0 && <tr><td colSpan={4} className="muted">{tr("Aucun élément pour cette catégorie.")}</td></tr>}

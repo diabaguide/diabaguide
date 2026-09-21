@@ -2,6 +2,7 @@ import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useStore } from '../../store';
 import { Button, Field, Icon, Select } from '../../ui';
+import { SortTh, compare, useSort } from './tableSort';
 import type { Role } from '../../lib/auth';
 import {
   fetchInvitations, fetchMembers, inviteMember, revokeInvitation, setMemberRole,
@@ -49,7 +50,11 @@ export function Members() {
   useEffect(() => { void reload(); }, [reload]);
 
   const staff = members.filter((m) => m.role !== 'traveler');
-  const shown = showAll ? members : staff;
+  const { sort, toggle } = useSort<'name' | 'role'>({ k: 'name', dir: 1 });
+  const [pq, setPq] = useState('');
+  const shown = (showAll ? members : staff)
+    .filter((m) => !pq || `${m.name ?? ''} ${m.email}`.toLowerCase().includes(pq.toLowerCase()))
+    .sort((a, b) => compare(sort.k === 'role' ? a.role : (a.name ?? a.email).toLowerCase(), sort.k === 'role' ? b.role : (b.name ?? b.email).toLowerCase(), sort.dir));
 
   const invite = async (e: FormEvent) => {
     e.preventDefault();
@@ -113,7 +118,7 @@ export function Members() {
         {invites.length > 0 && (
           <section className="card stack" style={{ gap: 12 }}>
             <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Invitations en attente (")}{tr(invites.length)})</h2>
-            <div className="table"><table>
+            <div className="table dense"><table>
               <thead><tr><th>{tr("E-mail")}</th><th>{tr("Rôle prévu")}</th><th /></tr></thead>
               <tbody>
                 {invites.map((i) => (
@@ -139,10 +144,11 @@ export function Members() {
             </Button>
           </div>
 
+          <div className="admin-search" style={{ maxWidth: 360 }}><Icon name="search" size={18} /><input type="search" value={pq} onChange={(e) => setPq(e.target.value)} aria-label={tr("Rechercher une personne")} placeholder={tr("Rechercher une personne")} /></div>
           {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
             : shown.length === 0 ? <p className="muted">{tr("Aucun compte à afficher.")}</p> : (
-            <div className="table"><table>
-              <thead><tr><th>{tr("Personne")}</th><th>{tr("Rôle")}</th><th>{tr("Actions")}</th></tr></thead>
+            <div className="table dense"><table>
+              <thead><tr><SortTh k="name" label="Personne" sort={sort} onSort={toggle} /><SortTh k="role" label="Rôle" sort={sort} onSort={toggle} /><th>{tr("Actions")}</th></tr></thead>
               <tbody>
                 {shown.map((m) => {
                   const isMe = m.id === meId;

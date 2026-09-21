@@ -1,11 +1,12 @@
 import { useI18n } from '../../i18n';
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catLabel, cityName, type Cat, type City, type Freight, type Provider } from '../../data';
 import { useStore } from '../../store';
 import { newProviderId, validateProvider } from '../../lib/providers';
 import { Button, DemoNote, Field, Icon, Section, Select, StoredPhoto, TextArea } from '../../ui';
 import { FilePick, MAX_PHOTOS } from '../Contribute';
+import { SortTh, compare, useSort } from './tableSort';
 
 /* Gestion des fiches par l'équipe : ajout, modification, demande de suppression.
    La suppression définitive est validée par l'administrateur (page « Suppressions »). */
@@ -25,25 +26,33 @@ export function FichesList() {
   const [city, setCity] = useState<'' | City>('');
   const [cat, setCat] = useState<'' | Cat>('');
   const isAdmin = s.user?.role === 'admin';
+  const { sort, toggle } = useSort<'name' | 'cat' | 'city' | 'verified'>({ k: 'name', dir: 1 });
   const match = (p: Provider) => (!city || p.city === city) && (!cat || p.cat === cat)
     && (!q || `${p.name} ${p.cn} ${p.tel ?? ''} ${p.wechat ?? ''}`.toLowerCase().includes(q.toLowerCase()));
-  const rows = s.providers.filter(match);
+  const rows = useMemo(() => s.providers.filter(match).sort((a, b) => {
+    const v = (p: Provider) => (sort.k === 'cat' ? catLabel(p.cat) : sort.k === 'city' ? cityName(p.city) : sort.k === 'verified' ? (p.verified ?? '') : p.name).toLowerCase();
+    return compare(v(a), v(b), sort.dir);
+  }), [s.providers, s.categories, s.cities, city, cat, q, sort]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filtered = !!(city || cat || q);
   const pending = s.pendingDeletion.filter(match);
   return (
     <>
       <Head title="Fiches" sub={`${rows.length} fiche${rows.length > 1 ? 's' : ''} publiée${rows.length > 1 ? 's' : ''}. Ajoutez, modifiez ou demandez la suppression d’une fiche.`}
         right={<Button to="/equipe/fiches/nouvelle" icon="plus" full={false}>{tr("Nouvelle fiche")}</Button>} />
       <div className="admin-body">
-        <div className="filters">
+        <div className="filters sticky">
           <Select id="fv" label={tr("Ville")} value={city} onChange={setCity} options={[{ v: '', l: 'Toutes' }, ...s.cities.map((c) => ({ v: c.id as City, l: c.name }))]} />
           <Select id="fc" label={tr("Catégorie")} value={cat} onChange={setCat} options={[{ v: '', l: 'Toutes' }, ...s.categories.map((c) => ({ v: c.id as Cat, l: c.label }))]} />
           <div className="grow"><Field id="fq" label={tr("Recherche")} type="search" value={q} onChange={setQ} placeholder={tr("Nom, téléphone, WeChat…")} /></div>
+          {filtered && <Button kind="s" icon="x" full={false} onClick={() => { setCity(''); setCat(''); setQ(''); }}>{tr("Réinitialiser")}</Button>}
         </div>
-        <div className="table"><table>
-          <thead><tr><th>{tr("Fiche")}</th><th>{tr("Catégorie")}</th><th>{tr("Ville")}</th><th>{tr("Vérifiée le")}</th><th /></tr></thead>
+        <div className="table dense"><table>
+          <thead><tr><th className="thumb" />
+            <SortTh k="name" label="Fiche" sort={sort} onSort={toggle} /><SortTh k="cat" label="Catégorie" sort={sort} onSort={toggle} /><SortTh k="city" label="Ville" sort={sort} onSort={toggle} /><SortTh k="verified" label="Vérifiée le" sort={sort} onSort={toggle} /><th /></tr></thead>
           <tbody>
             {rows.map((p) => (
               <tr key={p.id}>
+                <td className="thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={48} w={48} round={8} /></td>
                 <td><strong>{p.name}</strong><div className="small muted zh">{p.cn}</div></td>
                 <td>{tr(catLabel(p.cat))}</td><td>{tr(cityName(p.city))}</td><td>{p.verified || '—'}</td>
                 <td><Link className="link" to={`/equipe/fiches/${p.id}`}>{tr("Modifier")}<Icon name="chevR" size={18} sw={2.4} /></Link></td>
@@ -51,12 +60,13 @@ export function FichesList() {
             ))}
             {pending.map((p) => (
               <tr key={p.id} style={{ opacity: 0.75 }}>
+                <td className="thumb" />
                 <td><strong>{p.name}</strong><div className="small muted zh">{p.cn}</div></td>
                 <td>{tr(catLabel(p.cat))}</td><td>{tr(cityName(p.city))}</td>
                 <td colSpan={2}><span className="row" style={{ gap: 6, fontWeight: 600, color: '#8A4310' }}><Icon name="clock" size={16} sw={2.2} />{tr(isAdmin ? 'Suppression à valider' : 'Suppression demandée : en attente de l’administrateur')}</span></td>
               </tr>
             ))}
-            {rows.length + pending.length === 0 && <tr><td colSpan={5} className="center muted">{tr("Aucune fiche ne correspond aux filtres.")}</td></tr>}
+            {rows.length + pending.length === 0 && <tr><td colSpan={6} className="center muted">{tr("Aucune fiche ne correspond aux filtres.")}</td></tr>}
           </tbody>
         </table></div>
         <DemoNote />
@@ -119,7 +129,7 @@ export function FicheEdit() {
     <>
       <Head title={isNew ? 'Nouvelle fiche' : p.name} sub={isNew ? 'Renseignez les informations de la nouvelle adresse.' : 'Modifier les informations de la fiche.'}
         right={<Button to="/equipe/fiches" kind="s" icon="chevL" full={false}>{tr("Retour à la liste")}</Button>} />
-      <div className="admin-body" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 24, alignItems: 'start' }}>
+      <div className="admin-body edit-grid">
         <div className="stack" style={{ gap: 20 }}>
           <Section title="Informations" icon="edit">
             {tried && vErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(vErr)}</span></div>}
@@ -181,7 +191,7 @@ export function FicheEdit() {
             {txt('verified', 'Dernière vérification', { hint: 'Date affichée telle quelle, par exemple 21 sept. 2026.' })}
           </Section>
         </div>
-        <div className="stack" style={{ gap: 20 }}>
+        <div className="stack edit-side" style={{ gap: 20 }}>
           <Section title="Actions" icon="check">
             {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
             {saved && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr("Fiche enregistrée.")}</span></div>}
@@ -232,7 +242,7 @@ export function Deletions() {
       <Head title="Suppressions" sub={`${rows.length} demande${rows.length > 1 ? 's' : ''} en attente. Seul l’administrateur peut supprimer définitivement une fiche.`} />
       <div className="admin-body">
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-        <div className="table"><table>
+        <div className="table dense"><table>
           <thead><tr><th>{tr("Fiche")}</th><th>{tr("Demandée par")}</th><th>{tr("Motif")}</th><th /></tr></thead>
           <tbody>
             {rows.map((p) => (
