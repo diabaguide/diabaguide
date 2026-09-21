@@ -115,8 +115,10 @@ export async function updateProposalFields(p: Proposal): Promise<{ error?: strin
   if (vErr) return { error: vErr };
   if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
   const { id: _id, status: _s, date: _d, feedback: _f, author: _a, ...fields } = proposalToRow(p);
-  const { error } = await supabase.from('proposals').update(fields).eq('id', p.id);
+  const { data, error } = await supabase.from('proposals').update(fields).eq('id', p.id).select('id, photo_paths');
   if (error) { warn('enregistrement des modifications', error); return { error: error.message }; }
+  // Sans ligne renvoyée, la base a ignoré la mise à jour (droits insuffisants) sans lever d'erreur.
+  if (!data?.length) return { error: 'Aucune modification enregistrée : la base a refusé la mise à jour (droits insuffisants ?).' };
   return {};
 }
 
