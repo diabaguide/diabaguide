@@ -169,7 +169,7 @@ export function Sent() {
           <span className="bigcheck"><Icon name="send" size={44} sw={2.2} /></span>
           <h1 className="display" style={{ fontSize: 30 }}>{tr("Proposition envoyée")}</h1>
           <p style={{ fontSize: 17 }}>{tr("Votre proposition sera examinée par l’équipe Diaba avant publication.")}</p>
-          <div className="card row small muted" style={{ alignItems: 'flex-start', textAlign: 'left' }}><Icon name="clock" size={20} /><span>{tr("Objectif de traitement : sous 48 heures, à titre indicatif. Vous pourrez suivre l’avancement dans « Contributions ».")}</span></div>
+          <div className="card row small muted" style={{ alignItems: 'flex-start', textAlign: 'start' }}><Icon name="clock" size={20} /><span>{tr("Objectif de traitement : sous 48 heures, à titre indicatif. Vous pourrez suivre l’avancement dans « Contributions ».")}</span></div>
         </div>
         <Button to="/contributions">{tr("Suivre mes contributions")}</Button>
         <Button to="/accueil" kind="s">{tr("Retour à l’accueil")}</Button>
@@ -198,7 +198,7 @@ export function Contributions() {
             </>
           );
           return draft ? (
-            <button key={p.id} type="button" className="card stack" style={{ gap: 8, textAlign: 'left', font: 'inherit', cursor: 'pointer' }}
+            <button key={p.id} type="button" className="card stack" style={{ gap: 8, textAlign: 'start', font: 'inherit', cursor: 'pointer' }}
               onClick={() => { d({ t: 'draft', p }); nav('/contributions/nouvelle/2'); }}>{inner}</button>
           ) : (
             <Link key={p.id} to={`/contributions/${p.id}`} className="card stack" style={{ gap: 8, textDecoration: 'none', color: 'inherit' }}>{inner}</Link>

@@ -5,7 +5,7 @@
   --input-border: #7787A6; --chip-border: #A3B0CB;
   --accent: #153E9F; --page: #E8EDF8; --nav-bg: rgba(255,255,255,.85); --skel: #DDE4F2; --th: #E8EDF8; --card-line: rgba(213,221,236,.55);
   --hero-a: #123794; --hero-b: #2F63D6; --shadow-sm: 0 1px 2px rgba(15,26,48,.04), 0 4px 14px rgba(21,62,159,.06); --shadow-md: 0 2px 4px rgba(15,26,48,.04), 0 12px 28px rgba(21,62,159,.12);
-  --font-body: 'Bricolage Grotesque Variable', 'Noto Sans SC', system-ui, sans-serif;
+  --font-body: 'Bricolage Grotesque Variable', 'Noto Sans SC', 'Noto Sans Arabic', system-ui, sans-serif;
   --font-display: Gloock, 'Noto Serif SC', Georgia, serif;
 }
 * { box-sizing: border-box; }
@@ -14,6 +14,7 @@ a { color: var(--accent); }
 h1, h2, h3, p { margin: 0; }
 :focus-visible { outline: 3px solid var(--gold-fill); outline-offset: 2px; }
 .icon { flex-shrink: 0; }
+[lang='ar'] { font-family: 'Noto Sans Arabic', var(--font-body); }
 [lang='zh'], .zh { font-family: 'Noto Sans SC', var(--font-body); }
 
 /* Coque mobile */
@@ -137,8 +138,8 @@ h1, h2, h3, p { margin: 0; }
 .skeleton i { display: block; background: var(--skel); border-radius: 6px; }
 .map { display: block; width: 100%; border-radius: 18px; border: 1px solid var(--line); background: var(--info-bg); }
 .hero-photo { position: relative; }
-.hero-photo .back { position: absolute; top: 14px; left: 14px; }
-.hero-photo .count { position: absolute; top: 14px; right: 14px; background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); }
+.hero-photo .back { position: absolute; top: 14px; inset-inline-start: 14px; }
+.hero-photo .count { position: absolute; top: 14px; inset-inline-end: 14px; background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); }
 .zhaddr { font-size: 22px; font-weight: 500; line-height: 1.4; }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 details.qr { border: 1.5px solid var(--chip-border); border-radius: 12px; padding: 0 14px; }
@@ -164,8 +165,8 @@ details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 
 .admin { display: flex; min-height: 100vh; background: var(--bg); }
 .admin aside { width: 264px; flex-shrink: 0; background: var(--primary); color: #fff; display: flex; flex-direction: column; gap: 24px; padding: 24px 16px; }
 .admin aside nav { display: flex; flex-direction: column; gap: 6px; }
-.admin aside nav a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; text-decoration: none; color: #fff; font-weight: 500; border-left: 4px solid transparent; }
-.admin aside nav a.active { background: rgba(255, 255, 255, .16); font-weight: 700; border-left-color: var(--gold-fill); }
+.admin aside nav a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; text-decoration: none; color: #fff; font-weight: 500; border-inline-start: 4px solid transparent; }
+.admin aside nav a.active { background: rgba(255, 255, 255, .16); font-weight: 700; border-inline-start-color: var(--gold-fill); }
 .admin .me { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px 6px; border-top: 1px solid rgba(255, 255, 255, .25); }
 .admin .avatar { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: var(--gold-fill); color: #153E9F; font-weight: 700; }
 .admin-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -176,7 +177,7 @@ details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 
 .tile .n { font-family: var(--font-display); font-size: 44px; font-weight: 600; line-height: 1; }
 .table { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
 .table table { width: 100%; border-collapse: collapse; font-size: 15px; }
-.table th { text-align: left; padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--muted); background: var(--th); }
+.table th { text-align: start; padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--muted); background: var(--th); }
 .table td { padding: 12px 14px; border-top: 1px solid var(--line); vertical-align: middle; }
 .filters { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
 .filters .field { min-width: 240px; }
@@ -199,8 +200,8 @@ body { -webkit-font-smoothing: antialiased; }
 
 /* En-tête */
 .hero { position: relative; overflow: hidden; border-radius: 0 0 32px 32px !important; box-shadow: 0 14px 34px rgba(18,55,148,.28); }
-.hero::before { content: ''; position: absolute; width: 260px; height: 260px; right: -90px; top: -110px; border-radius: 50%; background: radial-gradient(circle, rgba(230,188,75,.35), transparent 70%); pointer-events: none; }
-.hero::after { content: ''; position: absolute; width: 220px; height: 220px; left: -100px; bottom: -120px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.14), transparent 70%); pointer-events: none; }
+.hero::before { content: ''; position: absolute; width: 260px; height: 260px; inset-inline-end: -90px; top: -110px; border-radius: 50%; background: radial-gradient(circle, rgba(230,188,75,.35), transparent 70%); pointer-events: none; }
+.hero::after { content: ''; position: absolute; width: 220px; height: 220px; inset-inline-start: -100px; bottom: -120px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.14), transparent 70%); pointer-events: none; }
 .hero > * { position: relative; z-index: 1; }
 .hero .seg { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.28); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 16px; }
 .hero .seg .on { box-shadow: 0 4px 12px rgba(0,0,0,.18); color: #123794; }
@@ -269,3 +270,4 @@ body { -webkit-font-smoothing: antialiased; }
   .warntext { color: #F0A46A; }
   .phone { box-shadow: 0 20px 50px rgba(0,0,0,.6); }
 }
+[dir='rtl'] .icon-dir { transform: scaleX(-1); }

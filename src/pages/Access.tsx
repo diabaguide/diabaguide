@@ -19,7 +19,7 @@ function GoogleButton({ path, onError }: { path: string; onError: (m: string) =>
   );
 }
 
-const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }];
+const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }, { v: 'ar', l: 'العربية', flag: '🇸🇦' }];
 export function LangSwitch({ dark = false }: { dark?: boolean }) {
   const { tr } = useI18n();
   const { s, d } = useStore();

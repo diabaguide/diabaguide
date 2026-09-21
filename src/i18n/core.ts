@@ -1,7 +1,7 @@
 import messages from './messages.json';
-export type Language = 'fr' | 'en' | 'zh';
-export const languageOf = (value: unknown): Language => value === 'en' || value === 'zh' ? value : 'fr';
-const catalog: Record<string, {en:string; zh:string}> = messages;
+export type Language = 'fr' | 'en' | 'zh' | 'ar';
+export const languageOf = (value: unknown): Language => value === 'en' || value === 'zh' || value === 'ar' ? value : 'fr';
+const catalog: Record<string, {en:string; zh:string; ar:string}> = messages;
 const normalize = (s: string) => s.replace(/’/g, "'").replace(/\s+/g, ' ').trim();
 const exact = new Map(Object.entries(catalog).map(([key, value]) => [normalize(key), value]));
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

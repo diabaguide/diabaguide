@@ -46,7 +46,7 @@ export function AdminLayout() {
   return (
     <div className="admin">
       <aside>
-        <div className="stack" style={{ gap: 8 }}><Logo height={44} /><span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: 'var(--gold-fill)', paddingLeft: 4 }}>{tr("GUIDE · ÉQUIPE")}</span></div>
+        <div className="stack" style={{ gap: 8 }}><Logo height={44} /><span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: 'var(--gold-fill)', paddingInlineStart: 4 }}>{tr("GUIDE · ÉQUIPE")}</span></div>
         <nav aria-label={tr("Navigation équipe")}>
           {items.map(([to, l, i, end]) => <NavLink key={to} to={to} end={end} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={i} />{tr(l)}</NavLink>)}
         </nav>

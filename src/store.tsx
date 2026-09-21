@@ -13,7 +13,7 @@ import {
   complementProposal, decideProposal, logProviderEvent, fetchAllProposals, fetchDecisions, fetchMyProposals, saveProposal, updateProposalFields,
 } from './lib/contributions';
 
-export type Lang = 'fr' | 'en' | 'zh';
+export type Lang = 'fr' | 'en' | 'zh' | 'ar';
 export type LocPref = 'ask' | 'while' | 'never';
 
 interface User { id?: string; name: string; email: string; role: Role }

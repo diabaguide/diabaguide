@@ -7,7 +7,7 @@ export function I18nProvider({children}: {children: ReactNode}) {
   const {s} = useStore();
   const lang = languageOf(s.lang);
   const value = useMemo<I18n>(() => ({lang, tr: <T,>(v:T) => translateValue(v,lang), t:(key,values) => translate(key,lang,values)}), [lang]);
-  useEffect(() => { document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang; }, [lang]);
+  useEffect(() => { document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'; }, [lang]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export const useI18n = () => useContext(Context);

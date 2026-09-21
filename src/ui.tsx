@@ -8,7 +8,7 @@ import { STATUS_STYLE, type Status } from './data';
 export function Icon({ name, size = 22, sw = 1.9 }: { name: IconName; size?: number; sw?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round"
-      strokeLinejoin="round" aria-hidden="true" className="icon" dangerouslySetInnerHTML={{ __html: ICONS[name] }} />
+      strokeLinejoin="round" aria-hidden="true" className={name === 'chevL' || name === 'chevR' ? 'icon icon-dir' : 'icon'} dangerouslySetInnerHTML={{ __html: ICONS[name] }} />
   );
 }
 
