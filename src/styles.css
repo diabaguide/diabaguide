@@ -325,3 +325,28 @@ body { -webkit-font-smoothing: antialiased; }
 .edit-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
 .edit-side { position: sticky; top: 85px; }
 @media (max-width: 1000px) { .edit-grid { grid-template-columns: 1fr; } .edit-side { position: static; } }
+
+/* ===== Site voyageurs sur ordinateur (>= 1024 px) ===== */
+.site-header, .site-footer { display: none; }
+@media (min-width: 1024px) {
+  .phone.has-nav { max-width: none; margin: 0; min-height: 100dvh; border-radius: 0; box-shadow: none; overflow: visible; }
+  .phone.has-nav .bottomnav { display: none; }
+  .site-header { display: block; position: sticky; top: 0; z-index: 10; background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+  .site-header-in { display: flex; align-items: center; gap: 32px; max-width: 1240px; margin: 0 auto; padding: 10px 32px; }
+  .site-logo { display: inline-flex; text-decoration: none; }
+  .site-logo .logo-pill { padding: 4px 10px; box-shadow: none; }
+  .site-nav { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .site-nav a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 12px; text-decoration: none; color: var(--muted); font-weight: 500; }
+  .site-nav a:hover { background: var(--info-bg); color: var(--accent); }
+  .site-nav a.active { color: var(--accent); background: var(--info-bg); font-weight: 700; box-shadow: inset 0 -3px 0 var(--gold); }
+  .site-tools { display: flex; align-items: center; gap: 12px; }
+  .site-team { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; font-weight: 600; font-size: 14px; }
+  .site-lang { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--accent); }
+  .site-lang select { border: 0; background: transparent; color: var(--ink); font: inherit; cursor: pointer; }
+  .phone.has-nav .screen { width: 100%; max-width: 1240px; margin-inline: auto; }
+  .phone.has-nav .screen:not(.wide) > * { width: 100%; max-width: 760px; margin-inline: auto; }
+  .phone.has-nav .screen .main { padding-inline: 32px; }
+  .phone.has-nav .screen .topbar { padding-inline: 32px; }
+  .site-footer { display: block; margin-top: 24px; border-top: 1px solid var(--line); background: var(--surface); }
+  .site-footer-in { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; max-width: 1240px; margin: 0 auto; padding: 18px 32px; color: var(--muted); font-size: 14px; }
+}

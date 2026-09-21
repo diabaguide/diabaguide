@@ -4,6 +4,8 @@ import { photoUrl, type PhotoBucket } from './lib/photos';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ICONS, type IconName } from './icons';
 import { STATUS_STYLE, type Status } from './data';
+import { useStore, type Lang } from './store';
+import { isTeamRole } from './lib/auth';
 
 export function Icon({ name, size = 22, sw = 1.9 }: { name: IconName; size?: number; sw?: number }) {
   return (
@@ -173,11 +175,51 @@ export function BottomNav() {
   );
 }
 
-export function Screen({ children, nav = true, className = '' }: { children: ReactNode; nav?: boolean; className?: string }) {
+const LANG_OPTIONS: { v: Lang; l: string }[] = [{ v: 'fr', l: 'Français' }, { v: 'en', l: 'English' }, { v: 'zh', l: '中文' }, { v: 'ar', l: 'العربية' }];
+
+/* Cadre « site web » (à partir de 1024 px) : en-tête horizontal à la place de la barre du bas. */
+export function SiteHeader() {
+  const { tr } = useI18n();
+  const { s, d } = useStore();
   return (
-    <div className="phone">
-      <div className={`screen ${className}`}>{children}</div>
+    <header className="site-header">
+      <div className="site-header-in">
+        <Link to="/accueil" className="site-logo" aria-label={tr("Accueil")}><Logo height={34} /></Link>
+        <nav className="site-nav" aria-label={tr("Navigation principale")}>
+          {NAV.map((n) => (
+            <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={n.icon} size={20} /><span>{tr(n.label)}</span></NavLink>
+          ))}
+        </nav>
+        <div className="site-tools">
+          {isTeamRole(s.user?.role) && <Link to="/equipe" className="site-team"><Icon name="shield" size={18} /><span>{tr("Espace équipe Diaba")}</span></Link>}
+          <label className="site-lang">
+            <span className="sr">{tr("Langue")}</span>
+            <Icon name="globe" size={18} />
+            <select value={s.lang} onChange={(e) => d({ t: 'lang', v: e.target.value as Lang })}>
+              {LANG_OPTIONS.map((o) => <option key={o.v} value={o.v} lang={o.v === 'zh' ? 'zh-Hans' : o.v}>{o.l}</option>)}
+            </select>
+          </label>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export function SiteFooter() {
+  const { tr } = useI18n();
+  return (
+    <footer className="site-footer"><div className="site-footer-in"><span>{tr("Diaba Guide · version de démonstration")}</span><span>{tr("Données de démonstration : noms, adresses et numéros fictifs.")}</span></div></footer>
+  );
+}
+
+/* `wide` : la page profite de toute la largeur sur ordinateur (sinon colonne de lecture centrée). */
+export function Screen({ children, nav = true, className = '', wide = false }: { children: ReactNode; nav?: boolean; className?: string; wide?: boolean }) {
+  return (
+    <div className={`phone${nav ? ' has-nav' : ''}`}>
+      {nav && <SiteHeader />}
+      <div className={`screen ${className}${wide ? ' wide' : ''}`}>{children}</div>
       {nav && <BottomNav />}
+      {nav && <SiteFooter />}
     </div>
   );
 }
