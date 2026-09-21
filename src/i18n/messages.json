@@ -2578,5 +2578,95 @@
     "en": "{0} · {1} · {2} · received {3}",
     "zh": "{0} · {1} · {2} · 收到日期 {3}",
     "ar": "{0} · {1} · {2} · استُلمت في {3}"
+  },
+  "Menu": {
+    "en": "Menu",
+    "zh": "菜单",
+    "ar": "القائمة"
+  },
+  "Réduire le menu": {
+    "en": "Collapse menu",
+    "zh": "收起菜单",
+    "ar": "طيّ القائمة"
+  },
+  "Agrandir le menu": {
+    "en": "Expand menu",
+    "zh": "展开菜单",
+    "ar": "توسيع القائمة"
+  },
+  "Rechercher dans les propositions": {
+    "en": "Search proposals",
+    "zh": "搜索提案",
+    "ar": "البحث في الاقتراحات"
+  },
+  "Actions groupées": {
+    "en": "Bulk actions",
+    "zh": "批量操作",
+    "ar": "إجراءات جماعية"
+  },
+  "Tout sélectionner": {
+    "en": "Select all",
+    "zh": "全选",
+    "ar": "تحديد الكل"
+  },
+  "Sélectionner": {
+    "en": "Select",
+    "zh": "选择",
+    "ar": "تحديد"
+  },
+  "Tout désélectionner": {
+    "en": "Clear selection",
+    "zh": "取消全选",
+    "ar": "إلغاء تحديد الكل"
+  },
+  "Publier la sélection": {
+    "en": "Publish selection",
+    "zh": "发布所选",
+    "ar": "نشر المحدد"
+  },
+  "Refuser la sélection": {
+    "en": "Refuse selection",
+    "zh": "拒绝所选",
+    "ar": "رفض المحدد"
+  },
+  "Ces fiches deviendront visibles par tous les utilisateurs connectés. La date de vérification sera enregistrée dans l’historique.": {
+    "en": "These listings will become visible to all signed-in users. The verification date will be saved in the history.",
+    "zh": "这些信息将对所有已登录用户可见。核实日期将记录在审核历史中。",
+    "ar": "ستصبح هذه البطاقات مرئية لجميع المستخدمين المسجّلين. سيُسجَّل تاريخ التحقق في السجل."
+  },
+  "Certaines décisions n’ont pas pu être enregistrées.": {
+    "en": "Some decisions could not be saved.",
+    "zh": "部分决定未能保存。",
+    "ar": "تعذّر حفظ بعض القرارات."
+  },
+  "Publier {0} adresse(s) ?": {
+    "en": "Publish {0} listing(s)?",
+    "zh": "发布 {0} 条信息？",
+    "ar": "نشر {0} عنوان/عناوين؟"
+  },
+  "{0} proposition(s) avec un doublon possible ou incomplète(s) ne peuvent pas être publiées en lot. Ouvrez-les une par une.": {
+    "en": "{0} proposal(s) with a possible duplicate or missing information cannot be published in bulk. Open them one by one.",
+    "zh": "{0} 条存在疑似重复或信息不完整的提案无法批量发布，请逐条打开处理。",
+    "ar": "لا يمكن نشر {0} اقتراح/اقتراحات مشتبه في تكرارها أو غير مكتملة دفعة واحدة. افتحوها واحداً تلو الآخر."
+  },
+  "Refuser {0} proposition(s) ?": {
+    "en": "Refuse {0} proposal(s)?",
+    "zh": "拒绝 {0} 条提案？",
+    "ar": "رفض {0} اقتراح/اقتراحات؟"
+  },
+  "Demander un complément pour {0} proposition(s)": {
+    "en": "Request more information for {0} proposal(s)",
+    "zh": "为 {0} 条提案请求补充信息",
+    "ar": "طلب استكمال لـ {0} اقتراح/اقتراحات"
+  },
+  "{0} proposition(s) traitée(s).": {
+    "en": "{0} proposal(s) processed.",
+    "zh": "已处理 {0} 条提案。",
+    "ar": "تمت معالجة {0} اقتراح/اقتراحات."
+  },
+  "{0} proposition(s) sélectionnée(s)": {
+    "en": "{0} proposal(s) selected",
+    "zh": "已选择 {0} 条提案",
+    "ar": "تم تحديد {0} اقتراح/اقتراحات"
   }
 }

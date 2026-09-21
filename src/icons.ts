@@ -51,5 +51,6 @@ export const ICONS = {
   edit: "<path d=\"M4 20h4L19 9l-4-4L4 16z\"/>",
   users: "<circle cx=\"9\" cy=\"8\" r=\"3.5\"/><path d=\"M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .7 3.5 2.4 3.5 5.5\"/>",
   sliders: "<path d=\"M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0\"/><circle cx=\"16\" cy=\"6\" r=\"2\"/><circle cx=\"10\" cy=\"12\" r=\"2\"/><circle cx=\"18\" cy=\"18\" r=\"2\"/>",
+  menu: "<path d=\"M4 6h16M4 12h16M4 18h16\"/>",
 } as const;
 export type IconName = keyof typeof ICONS;
