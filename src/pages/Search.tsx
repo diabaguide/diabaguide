@@ -4,13 +4,13 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { catIcon, catLabel, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
-import { Button, Chip, DemoNote, Field, Icon, Photo, Screen } from '../ui';
+import { Button, Chip, DemoNote, Field, Icon, Screen, StoredPhoto } from '../ui';
 
 export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
   const { tr } = useI18n();
   return (
     <Link to={`/adresses/${p.id}`} className="rcard">
-      <Photo label={tr("Photo")} h={104} w={104} round={12} />
+      <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={104} w={104} round={12} />
       <div className="stack grow" style={{ gap: 3 }}>
         <span className="name">{p.name}</span>
         <span className="small muted zh">{p.cn}</span>
@@ -161,7 +161,7 @@ function MapView({ list, sel, setSel }: { list: { p: Provider; km: number | null
         <text x="12" y={H - 10} fontSize="12" fill="#3A4760">{tr("Carte illustrative")}</text>
       </svg>
       <div className="row card" style={{ borderColor: 'var(--primary)', borderWidth: 1.5, padding: 12, alignItems: 'flex-start' }}>
-        <Photo label={tr("Photo")} h={84} w={84} round={12} />
+        <StoredPhoto bucket="fiche-photos" path={cur?.p.photoPaths?.[0]} label={tr("Photo")} h={84} w={84} round={12} />
         <div className="stack grow" style={{ gap: 2 }}>
           <span className="small" style={{ fontWeight: 700, color: 'var(--gold-text)' }}>{tr("Adresse ")}{tr(Math.min(sel, list.length - 1) + 1)} {tr(" sur ")}{tr(list.length)}</span>
           <span style={{ fontWeight: 700, fontSize: 17 }}>{tr(cur.p.name)}</span>

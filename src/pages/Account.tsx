@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { catLabel, type Provider } from '../data';
 import { useOnline, useStore, type LocPref } from '../store';
 import { isTeamRole, signOut } from '../lib/auth';
-import { Button, DemoNote, Icon, Photo, RadioCard, Screen, Tag, TopBar } from '../ui';
+import { Button, DemoNote, Icon, RadioCard, Screen, StoredPhoto, Tag, TopBar } from '../ui';
 import { LangSwitch } from './Access';
 
 export function Favorites() {
@@ -49,7 +49,7 @@ export function Favorites() {
           return (
             <div key={p.id} className="card stack" style={{ padding: 12, gap: 10, opacity: locked ? 0.62 : 1 }}>
               <Link to={`/adresses/${p.id}`} className="row" style={{ textDecoration: 'none', color: 'inherit', alignItems: 'flex-start', gap: 12 }}>
-                <Photo label={tr("Photo")} h={80} w={80} round={12} />
+                <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={80} w={80} round={12} />
                 <div className="stack" style={{ gap: 2 }}><span style={{ fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>{p.name}</span><span className="small muted zh">{p.cn}</span><span className="small">{tr(catLabel(p.cat))} · {tr(p.district)}</span></div>
               </Link>
               <div className="row wrap">
