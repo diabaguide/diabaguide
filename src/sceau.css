@@ -1,0 +1,110 @@
+/* ===== Thème « sceau » : accueil (Welcome, Home) =====
+   Indigo (teinture du bogolan comme du bleu-blanc chinois), papier ivoire,
+   cachet vermillon des marchands. Les jetons sont locaux à .sceau. */
+.sceau {
+  --paper: #F3ECDD; --bg: #F3ECDD; --surface: #FBF6EA; --ink: #14163A; --muted: #5A5C78;
+  --accent: #1A2350; --primary: #1A2350; --primary-light: #34448F; --hero-a: #10163C; --hero-b: #243073;
+  --card-line: rgba(26,35,80,.16); --line: rgba(26,35,80,.2); --info-bg: #E8E1CF; --seal: #D2381F;
+  --gold-text: #7A5A12; --shadow-sm: none; --shadow-md: 0 10px 26px rgba(20,22,58,.14);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .08 0 0 0 0 .09 0 0 0 0 .23 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(70% 40% at 0% 45%, rgba(210,56,31,.06), transparent 70%),
+    var(--paper);
+}
+.sceau .display { letter-spacing: 0; font-weight: 400; }
+
+/* Bandeau : indigo, treillis, perforation */
+.sceau .hero { border-radius: 0 !important; padding: 20px 18px 40px; gap: 16px; box-shadow: none; overflow: visible; }
+.sceau .hero > * { position: relative; z-index: 1; }
+.sceau .hero::before {
+  content: ''; position: absolute; inset: 0; width: auto; height: auto; border-radius: 0; z-index: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' fill='none' stroke='%23E6BC4B' stroke-opacity='.2' stroke-width='1.4'%3E%3Cpath d='M24 8 40 24 24 40 8 24Z'/%3E%3Ccircle cx='24' cy='24' r='1.8' fill='%23E6BC4B' fill-opacity='.32' stroke='none'/%3E%3Cpath d='M0 0h3M0 0v3M48 0h-3M48 0v3M0 48h3M0 48v-3M48 48h-3M48 48v-3'/%3E%3C/svg%3E"),
+    radial-gradient(90% 80% at 100% 0%, rgba(210,56,31,.5), transparent 62%),
+    linear-gradient(165deg, var(--hero-a), var(--hero-b));
+}
+.sceau .hero::after {
+  content: ''; position: absolute; left: 16px; right: 16px; bottom: 14px; top: auto; width: auto; height: 0; border-radius: 0; background: none; z-index: 1;
+  border-top: 2px dashed rgba(230,188,75,.5);
+}
+.sceau .hero .seg { border-radius: 4px; background: rgba(251,243,226,.08); border-color: rgba(230,188,75,.45); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.sceau .hero .seg button { border-radius: 2px; white-space: nowrap; gap: 5px; padding: 0 6px; font-size: 14px; }
+.sceau .hero .seg .on { background: #FBF3E2; color: #10163C; box-shadow: none; }
+.sceau .searchfake { border-radius: 4px; background: #FBF3E2; color: #4a4c6a; box-shadow: 4px 4px 0 rgba(210,56,31,.85); min-height: 56px; }
+.sceau .searchfake:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(210,56,31,.85); }
+.sceau .logo-pill { border-radius: 4px; box-shadow: none; }
+.sceau .hello { font-size: 28px; line-height: 1.05; color: #FBF3E2; }
+.sceau .hero h1.display { font-size: 42px !important; line-height: 1.02; text-wrap: balance; color: #FBF3E2; }
+.sceau .hero .gold-rule { background: var(--seal); width: 64px; height: 4px; }
+.sceau .hero .photo { border-radius: 4px !important; background: repeating-linear-gradient(135deg, rgba(251,243,226,.08) 0 12px, rgba(251,243,226,.16) 12px 24px); color: #FBF3E2; box-shadow: inset 0 0 0 1.5px rgba(230,188,75,.4); }
+
+/* Cachet vermillon */
+.seal {
+  display: inline-grid; grid-template-columns: 1fr 1fr; place-items: center; align-content: center; flex-shrink: 0;
+  width: 62px; height: 62px; padding: 0 4px; border-radius: 6px; color: #FBF3E2; font-weight: 800; font-size: 25px; line-height: 1;
+  font-family: 'Noto Sans SC', var(--font-body);
+  background:
+    radial-gradient(rgba(251,243,226,.5) .7px, transparent .9px) 0 0 / 5px 5px,
+    var(--seal);
+  box-shadow: inset 0 0 0 3px var(--seal), inset 0 0 0 5px rgba(251,243,226,.85);
+  transform: rotate(-8deg); animation: stamp .55s cubic-bezier(.2,.9,.25,1.2) .55s both;
+}
+.sceau .hero > .seal-lg { position: absolute; right: 22px; bottom: 46px; width: 84px; height: 84px; font-size: 34px; z-index: 2; }
+.seal-sm { width: 44px; height: 44px; font-size: 17px; border-radius: 4px; box-shadow: inset 0 0 0 2px var(--seal), inset 0 0 0 3.5px rgba(251,243,226,.85); }
+@keyframes stamp { 0% { opacity: 0; transform: rotate(-16deg) scale(2.1); } 60% { opacity: 1; transform: rotate(-6deg) scale(.93); } 100% { opacity: 1; transform: rotate(-8deg) scale(1); } }
+
+/* Entrée orchestrée du bandeau (le cachet garde sa propre animation) */
+.sceau .hero > :not(.seal) { animation: rise .6s cubic-bezier(.2,.7,.2,1) both; }
+.sceau .hero > :nth-child(2) { animation-delay: .06s; } .sceau .hero > :nth-child(3) { animation-delay: .12s; }
+.sceau .hero > :nth-child(4) { animation-delay: .18s; } .sceau .hero > :nth-child(5) { animation-delay: .24s; } .sceau .hero > :nth-child(6) { animation-delay: .3s; }
+
+/* Titres de section : losange vermillon */
+.sceau h2.display { display: flex; align-items: center; gap: 10px; font-size: 22px !important; }
+.sceau h2.display::before { content: ''; width: 9px; height: 9px; background: var(--seal); transform: rotate(45deg); flex-shrink: 0; }
+
+/* Catégories : onglets d'un registre, décalés */
+.sceau .cattiles { gap: 14px; padding-bottom: 14px; }
+.sceau .cattile {
+  position: relative; align-items: flex-start; justify-content: space-between; text-align: left; gap: 18px; min-height: 124px; padding: 14px;
+  background: var(--surface); border: 1.5px solid var(--card-line); border-radius: 4px; box-shadow: 4px 4px 0 rgba(26,35,80,.12);
+  font-family: var(--font-display); font-size: 19px; line-height: 1.1; color: var(--ink); transition: background .2s, color .2s, transform .2s, box-shadow .2s;
+}
+.sceau .cattile:nth-child(even):not(.wide) { margin-top: 16px; }
+.sceau .cattile .num { position: absolute; top: 12px; right: 14px; font-family: var(--font-body); font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--seal); }
+.sceau .cattile .ico { width: 46px; height: 46px; border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 1.5px var(--card-line); color: var(--accent); transition: all .2s; }
+.sceau .cattile.wide { flex-direction: row; align-items: center; justify-content: flex-start; min-height: 84px; }
+.sceau .cattile:hover, .sceau .cattile:active { background: var(--hero-a); color: #FBF3E2; border-color: var(--hero-a); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--seal); }
+.sceau .cattile:hover .ico { background: transparent; box-shadow: inset 0 0 0 1.5px var(--gold-fill); color: var(--gold-fill); }
+.sceau .cattile:hover .num { color: var(--gold-fill); }
+
+/* Fiches, avantages, boutons */
+.sceau .rcard { border-radius: 4px; background: var(--surface); border: 1.5px solid var(--card-line); box-shadow: 4px 4px 0 rgba(26,35,80,.1); }
+.sceau .rcard:hover, .sceau .rcard:active { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--seal); border-color: var(--hero-a); }
+.sceau .rcard .photo { border-radius: 2px !important; }
+.sceau .rcard .name { font-family: var(--font-display); font-weight: 400; letter-spacing: 0; }
+.sceau .benefit .ico { border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 1.5px var(--card-line); }
+.sceau .install { border-radius: 4px; border: 1.5px dashed var(--seal); background: var(--surface); }
+.sceau .btn { border-radius: 4px; }
+.sceau .btn-p { background: var(--hero-a); box-shadow: 4px 4px 0 var(--seal); }
+.sceau .btn-p:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--seal); }
+.sceau .btn-s { background: transparent; border: 1.5px solid var(--hero-a); box-shadow: none; }
+
+@media (prefers-color-scheme: dark) {
+  .sceau {
+    --paper: #0A0D24; --bg: #0A0D24; --surface: #12173A; --ink: #EFE7D4; --muted: #A9AAC6;
+    --accent: #E9DDB8; --primary: #2A3A86; --primary-light: #5B6FD0; --hero-a: #0A0F2E; --hero-b: #1E2A6B;
+    --card-line: rgba(233,221,184,.16); --line: rgba(233,221,184,.2); --info-bg: #1A2050; --seal: #EE5A3C; --gold-text: #F0CF7A;
+  }
+  .sceau .cattile { box-shadow: 4px 4px 0 rgba(0,0,0,.4); }
+  .sceau .cattile:hover, .sceau .cattile:active { background: var(--seal); color: #fff; border-color: var(--seal); box-shadow: 6px 6px 0 rgba(0,0,0,.5); }
+  .sceau .cattile:hover .num { color: #fff; }
+  .sceau .rcard { box-shadow: 4px 4px 0 rgba(0,0,0,.4); }
+  .sceau .rcard:hover, .sceau .rcard:active { border-color: var(--seal); box-shadow: 6px 6px 0 rgba(0,0,0,.5); }
+  .sceau .btn-p { background: var(--seal); color: #fff; box-shadow: 4px 4px 0 #0A0F2E; }
+  .sceau .btn-p:hover { box-shadow: 5px 5px 0 #0A0F2E; }
+  .sceau .btn-s { border-color: var(--accent); color: var(--accent); }
+  .sceau .searchfake { color: #3d3f5c; }
+}
+
+/* La pastille de légende reste claire : son texte doit rester foncé, même en mode sombre. */
+.sceau .photo-cap { color: #1A2350; }

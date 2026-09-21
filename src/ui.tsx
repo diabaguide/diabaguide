@@ -1,5 +1,6 @@
 import { useI18n } from './i18n';
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { photoUrl } from './lib/photos';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ICONS, type IconName } from './icons';
 import { STATUS_STYLE, type Status } from './data';
@@ -21,10 +22,29 @@ export function Logo({ height = 40, tail }: { height?: number; tail?: string }) 
   );
 }
 
-/* Emplacement photo : remplacer par <img> quand les visuels sont disponibles. */
-export function Photo({ label, h = 120, w, round = 14 }: { label: string; h?: number; w?: number | string; round?: number }) {
+/* Photo privée du bucket Supabase : URL temporaire ; emplacement rayé si absente ou illisible. */
+export function StoredPhoto({ path, label, h, w, round }: { path?: string; label: string; h?: number; w?: number | string; round?: number }) {
+  const [url, setUrl] = useState<string | undefined>();
+  useEffect(() => {
+    let live = true;
+    setUrl(undefined);
+    if (path) photoUrl(path).then((u) => { if (live && u) setUrl(u); });
+    return () => { live = false; };
+  }, [path]);
+  return <Photo label={label} h={h} w={w} round={round} src={url} />;
+}
+
+/* Emplacement photo :remplacer par <img> quand les visuels sont disponibles. */
+export function Photo({ label, h = 120, w, round = 14, src }: { label: string; h?: number; w?: number | string; round?: number; src?: string }) {
   const { tr } = useI18n();
   const small = h < 110;
+  if (src) {
+    return (
+      <div role="img" aria-label={label} className="photo" style={{ height: h, width: w ?? '100%', borderRadius: round, backgroundImage: `url(${src})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        {!small && <span className="photo-cap"><Icon name="image" size={14} />{tr(label)}</span>}
+      </div>
+    );
+  }
   return (
     <div role="img" aria-label={tr(`Photo à fournir : ${label}`)} className="photo" style={{ height: h, width: w ?? '100%', borderRadius: round }}>
       {small ? <Icon name="image" size={26} /> : <span className="photo-cap"><Icon name="image" size={14} />{tr(label)}</span>}

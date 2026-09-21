@@ -37,14 +37,15 @@ export function LangSwitch({ dark = false }: { dark?: boolean }) {
 export function Welcome() {
   const { tr } = useI18n();
   return (
-    <Screen nav={false}>
+    <Screen nav={false} className="sceau">
       <div className="hero">
         <LangSwitch dark />
         <Logo height={56} tail="GUIDE" />
         <div className="gold-rule" />
         <h1 className="display" style={{ fontSize: 34 }}>{tr("Vos adresses professionnelles en Chine")}</h1>
         <p>{tr("Fournisseurs en gros, hôtels, restaurants, transporteurs et transitaires à Guangzhou et Shenzhen, pour préparer vos déplacements d’affaires.")}</p>
-        <Photo label={tr("Marché de gros, Guangzhou")} h={150} round={16} />
+        <Photo label={tr("Marché de gros, Guangzhou")} h={150} round={16} src="/guangzhou.jpg" />
+        <span className="seal seal-lg" aria-hidden="true"><span>指</span><span>南</span></span>
       </div>
       <div className="main" style={{ paddingTop: 26 }}>
         {[['shield', 'Des adresses relues et vérifiées par l’équipe Diaba'], ['pin', 'L’adresse en chinois, prête à montrer au chauffeur'], ['download', 'Vos fiches favorites, même sans connexion']].map(([i, t]) => (

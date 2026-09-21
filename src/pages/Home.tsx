@@ -21,12 +21,13 @@ export function Home() {
   const featured = s.providers.filter((p) => p.featured && p.city === s.city);
 
   return (
-    <Screen>
-      <header className="hero" style={{ padding: '18px 16px 22px', gap: 16, borderRadius: '0 0 26px 26px' }}>
+    <Screen className="sceau">
+      <header className="hero">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <Logo height={30} tail="GUIDE" />
-          <span className="small" style={{ color: '#DCE6FA' }}>{tr("Bonjour ")}{s.user?.name.split(' ')[0]}</span>
+          <span className="seal seal-sm" aria-hidden="true"><span>指</span><span>南</span></span>
         </div>
+        <div className="hello display">{tr("Bonjour ")}{s.user?.name.split(' ')[0]}</div>
         <div className="seg" role="group" aria-label={tr("Ville")}>
           {s.cities.filter((c) => c.active).map((c) => (
             <button key={c.id} type="button" className={s.city === c.id ? 'on' : ''} aria-pressed={s.city === c.id} onClick={() => d({ t: 'city', v: c.id })}>{tr(s.city === c.id && '✓ ')}{c.name}</button>
@@ -51,6 +52,7 @@ export function Home() {
           <div className="cattiles">
             {s.categories.filter((c) => c.active).map((c, i, arr) => (
               <Link key={c.id} to={`/recherche?cat=${c.id}&ville=${s.city}`} className={`cattile ${arr.length % 2 === 1 && i === arr.length - 1 ? 'wide' : ''}`}>
+                <span className="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
                 <span className="ico"><Icon name={c.icon} size={24} /></span>{tr(c.label)}
               </Link>
             ))}

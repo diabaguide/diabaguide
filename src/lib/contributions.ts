@@ -17,6 +17,7 @@ interface ProposalRow {
   id: string; name: string; cn: string; cat: Cat; city: City; loc: string;
   products: string; product_tags: string[] | null; moq: string; tel: string; wechat: string; addr_cn: string;
   photos: number; card_front: boolean; card_back: boolean;
+  photo_paths: string[] | null; card_front_path: string | null; card_back_path: string | null;
   status: Status; date: string; feedback: string | null; author: string;
 }
 
@@ -25,6 +26,7 @@ function rowToProposal(r: ProposalRow): Proposal {
     id: r.id, name: r.name, cn: r.cn, cat: r.cat, city: r.city, loc: r.loc,
     products: r.products, productTags: r.product_tags ?? [], moq: r.moq, tel: r.tel, wechat: r.wechat, addrCn: r.addr_cn,
     photos: r.photos, cardFront: r.card_front, cardBack: r.card_back,
+    photoPaths: r.photo_paths ?? [], cardFrontPath: r.card_front_path ?? undefined, cardBackPath: r.card_back_path ?? undefined,
     status: r.status, date: r.date, feedback: r.feedback ?? undefined, author: r.author,
   };
 }
@@ -36,6 +38,7 @@ function proposalToRow(p: Proposal) {
     id: p.id, name: p.name, cn: p.cn, cat: p.cat, city: p.city, loc: p.loc,
     products: p.products, product_tags: p.productTags ?? [], moq: p.moq, tel: p.tel, wechat: p.wechat, addr_cn: p.addrCn,
     photos: p.photos, card_front: p.cardFront, card_back: p.cardBack,
+    photo_paths: p.photoPaths ?? [], card_front_path: p.cardFrontPath ?? null, card_back_path: p.cardBackPath ?? null,
     status: p.status, date: p.date, feedback: p.feedback ?? null, author: p.author,
   };
 }
@@ -106,12 +109,24 @@ export async function saveProposal(p: Proposal, status: Status, datePrefix: stri
   return { data: rowToProposal(data as ProposalRow) };
 }
 
+/** Corrections faites par l'équipe : met à jour les champs sans toucher au statut ni à l'auteur. */
+export async function updateProposalFields(p: Proposal): Promise<{ error?: string }> {
+  const vErr = validateProposal(p);
+  if (vErr) return { error: vErr };
+  if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
+  const { id: _id, status: _s, date: _d, feedback: _f, author: _a, ...fields } = proposalToRow(p);
+  const { error } = await supabase.from('proposals').update(fields).eq('id', p.id);
+  if (error) { warn('enregistrement des modifications', error); return { error: error.message }; }
+  return {};
+}
+
 /** Complément envoyé par l'auteur : passe la proposition en vérification. */
 export async function complementProposal(id: string, patch: Partial<Proposal>): Promise<void> {
   if (!supabase) return;
   const row: Record<string, unknown> = { status: 'En vérification' as Status, date: frDate('Complément envoyé') };
   if (patch.tel !== undefined) row.tel = patch.tel;
   if (patch.photos !== undefined) row.photos = patch.photos;
+  if (patch.photoPaths !== undefined) row.photo_paths = patch.photoPaths;
   const { error } = await supabase.from('proposals').update(row).eq('id', id);
   if (error) warn('envoi du complément', error);
 }
@@ -135,4 +150,13 @@ function warn(what: string, e: unknown) {
     // eslint-disable-next-line no-console
     console.warn(`[Diaba Guide] Échec : ${what}.`, e);
   }
+}
+
+/** Journalise un événement sur une fiche (demande, refus ou validation de suppression). */
+export async function logProviderEvent(name: string, cn: string, decision: Status, note: string, by: string): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.from('decisions').insert({
+    date: frDateTime(), proposal_name: name, cn, decision, note: note || '—', by, last_check: '—',
+  });
+  if (error) warn('journalisation de l’événement', error);
 }
