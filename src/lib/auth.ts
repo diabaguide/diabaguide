@@ -60,6 +60,16 @@ export async function signIn(
   return { user: await profileFor(data.user.id, email, (data.user.user_metadata as { name?: string } | null)?.name) };
 }
 
+/** Connexion / inscription via Google. Redirige le navigateur vers Google puis vers `path`. */
+export async function signInWithGoogle(path = '/accueil'): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + path },
+  });
+  return { error: error ? translate(error.message) : undefined };
+}
+
 export async function signOut(): Promise<void> {
   if (!supabase) return;
   await supabase.auth.signOut();

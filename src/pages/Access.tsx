@@ -4,7 +4,20 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Field, Icon, Logo, Photo, Screen, TopBar } from '../ui';
 import { useStore, type Lang } from '../store';
 import { supabase } from '../lib/supabase';
-import { isTeamRole, sendPasswordReset, signIn, signOut, signUp, updatePassword } from '../lib/auth';
+import { isTeamRole, sendPasswordReset, signIn, signInWithGoogle, signOut, signUp, updatePassword } from '../lib/auth';
+
+function GoogleButton({ path, onError }: { path: string; onError: (m: string) => void }) {
+  const { tr } = useI18n();
+  if (!supabase) return null;
+  return (
+    <>
+      <Button kind="s" onClick={async () => { const r = await signInWithGoogle(path); if (r.error) onError(r.error); }}>
+        {tr('Continuer avec Google')}
+      </Button>
+      <p className="small muted center" style={{ margin: 0 }}>{tr('ou')}</p>
+    </>
+  );
+}
 
 const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }];
 export function LangSwitch({ dark = false }: { dark?: boolean }) {
@@ -95,6 +108,7 @@ export function Signup() {
         {tried && count > 0 && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(count)} {tr(" information")}{tr(count > 1 ? 's sont' : ' est')} {tr(" à corriger avant de continuer.")}</span></div>}
         {apiErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(apiErr)}</span></div>}
         {info && <div role="status" className="notice"><Icon name="check" size={20} sw={2} /><span>{tr(info)}</span></div>}
+        <GoogleButton path="/accueil" onError={setApiErr} />
         <p className="muted small">{tr("Un compte est nécessaire pour consulter les adresses et en proposer. Les champs marqués * sont obligatoires.")}</p>
         <Field id="nom" label={tr("Nom complet")} value={f.name} onChange={(v) => setF({ ...f, name: v })} req error={tr(show('name'))} />
         <Field id="mail" label={tr("Adresse e-mail")} type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} req error={tr(show('email'))} />
@@ -174,6 +188,7 @@ export function Login() {
           <div className="notice warn"><Icon name="share" size={22} /><div><strong>{tr("Une fiche vous a été partagée")}</strong><div className="small">{tr("Connectez-vous pour la consulter. Un compte est nécessaire.")}</div></div></div>
         )}
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+        <GoogleButton path={next ?? '/accueil'} onError={setErr} />
         <Field id="mail" label={tr("Adresse e-mail")} type="email" value={email} onChange={setEmail} placeholder={tr("nom@exemple.com")} />
         <Field id="mdp" label={tr("Mot de passe")} type="password" value={pw} onChange={setPw} />
         <div style={{ textAlign: 'right' }}><Link className="link" to="/mot-de-passe">{tr("Mot de passe oublié ?")}</Link></div>
