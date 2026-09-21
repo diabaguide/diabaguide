@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ mode }) => {
   // Sécurité : interdire un build de production sans Supabase configuré.
@@ -17,6 +18,35 @@ export default defineConfig(({ mode }) => {
     }
   }
 
-  return { plugins: [react()] };
+  return {
+    plugins: [
+      react(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo.png'],
+        manifest: {
+          name: 'Diaba Guide',
+          short_name: 'Diaba Guide',
+          description: 'Votre guide pour le sourcing en Chine',
+          theme_color: '#153E9F',
+          icons: [
+            {
+              src: 'logo.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: 'logo.png',
+              sizes: '512x512',
+              type: 'image/png'
+            }
+          ]
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        }
+      })
+    ]
+  };
 });
 

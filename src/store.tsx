@@ -137,7 +137,13 @@ function load(): State {
     // `providers` n'est jamais restauré depuis localStorage : il est
     // (re)chargé depuis Supabase au démarrage, avec repli statique.
     if (raw) {
-      const parsed = { ...initial, ...JSON.parse(raw), providers: PROVIDERS } as State;
+      const stored = JSON.parse(raw);
+      const parsed = { ...initial, ...stored } as State;
+      if (!stored.providers || stored.providers.length === 0) parsed.providers = PROVIDERS;
+      if (!stored.categories || stored.categories.length === 0) parsed.categories = STATIC_CATEGORIES;
+      if (!stored.cities || stored.cities.length === 0) parsed.cities = STATIC_CITIES;
+      if (!stored.districts || stored.districts.length === 0) parsed.districts = STATIC_DISTRICTS;
+      
       // Les identifiants de ville sont passés en minuscules (« Guangzhou » -> « guangzhou »).
       if (parsed.city) parsed.city = String(parsed.city).toLowerCase();
       // Avec Supabase : la session fait foi (pas d'accès depuis un `user`
@@ -172,6 +178,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const base = {
         lang: s.lang, city: s.city, locPref: s.locPref, favorites: s.favorites,
         downloads: s.downloads, lastSync: s.lastSync, draft: s.draft, installDismissed: s.installDismissed,
+        providers: s.providers, categories: s.categories, cities: s.cities, districts: s.districts, productTags: s.productTags
       };
       const persist = isSupabaseConfigured ? base
         : { ...base, user: s.user, proposals: s.proposals, decisions: s.decisions };

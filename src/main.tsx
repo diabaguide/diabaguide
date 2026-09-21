@@ -6,6 +6,20 @@ import App from './App';
 import { StoreProvider } from './store';
 import './styles.css';
 
+import { registerSW } from 'virtual:pwa-register';
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    // Demander à l'utilisateur s'il veut recharger pour la nouvelle version
+    if (confirm('Une nouvelle version de Diaba Guide est disponible. Recharger ?')) {
+      updateSW(true);
+    }
+  },
+  onOfflineReady() {
+    console.log('L\'application est prête pour un usage hors-ligne.');
+  },
+});
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <StoreProvider>

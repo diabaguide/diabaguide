@@ -2,15 +2,23 @@ import { useI18n } from './i18n';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useStore } from './store';
 import { isTeamRole } from './lib/auth';
+import { lazy, Suspense } from 'react';
 import { Welcome, Signup, SignupDone, Login, Forgot, ResetPassword } from './pages/Access';
 import { Home, Locate } from './pages/Home';
 import { Search, Filters } from './pages/Search';
 import { Fiche, Driver, Contact, Report } from './pages/Fiche';
 import { Favorites, Profile, Downloads } from './pages/Account';
 import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contribute';
-import { AdminLayout, AdminDashboard, AdminList, AdminVerify, AdminHistory } from './pages/admin/Admin';
-import { Members } from './pages/admin/Members';
-import { AdminCities, AdminCategories, AdminProductTags } from './pages/admin/Taxonomies';
+
+const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
+const AdminDashboard = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminDashboard })));
+const AdminList = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminList })));
+const AdminVerify = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminVerify })));
+const AdminHistory = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminHistory })));
+const Members = lazy(() => import('./pages/admin/Members').then(m => ({ default: m.Members })));
+const AdminCities = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminCities })));
+const AdminCategories = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminCategories })));
+const AdminProductTags = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminProductTags })));
 
 /* Compte obligatoire : toute page de contenu redirige vers la connexion.
    L’URL demandée est conservée (?next=) : lien partagé > connexion > fiche. */
@@ -32,48 +40,50 @@ function RequireAuth({ need = 'user' }: { need?: 'user' | 'team' | 'admin' }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Welcome />} />
-      <Route path="/inscription" element={<Signup />} />
-      <Route path="/inscription/confirmation" element={<SignupDone />} />
-      <Route path="/connexion" element={<Login />} />
-      <Route path="/mot-de-passe" element={<Forgot />} />
-      <Route path="/reinitialiser" element={<ResetPassword />} />
+    <Suspense fallback={<div className="center-screen" style={{ minHeight: '60vh' }} role="status">Chargement…</div>}>
+      <Routes>
+        <Route path="/" element={<Welcome />} />
+        <Route path="/inscription" element={<Signup />} />
+        <Route path="/inscription/confirmation" element={<SignupDone />} />
+        <Route path="/connexion" element={<Login />} />
+        <Route path="/mot-de-passe" element={<Forgot />} />
+        <Route path="/reinitialiser" element={<ResetPassword />} />
 
-      <Route element={<RequireAuth />}>
-        <Route path="/accueil" element={<Home />} />
-        <Route path="/localisation" element={<Locate />} />
-        <Route path="/recherche" element={<Search />} />
-        <Route path="/recherche/filtres" element={<Filters />} />
-        <Route path="/adresses/:id" element={<Fiche />} />
-        <Route path="/adresses/:id/chauffeur" element={<Driver />} />
-        <Route path="/adresses/:id/contact" element={<Contact />} />
-        <Route path="/adresses/:id/signaler" element={<Report />} />
-        <Route path="/favoris" element={<Favorites />} />
-        <Route path="/contributions" element={<Contributions />} />
-        <Route path="/contributions/nouvelle/envoyee" element={<Sent />} />
-        <Route path="/contributions/nouvelle/:step" element={<Wizard />} />
-        <Route path="/contributions/:id" element={<ContributionDetail />} />
-        <Route path="/profil" element={<Profile />} />
-        <Route path="/profil/telechargements" element={<Downloads />} />
-      </Route>
+        <Route element={<RequireAuth />}>
+          <Route path="/accueil" element={<Home />} />
+          <Route path="/localisation" element={<Locate />} />
+          <Route path="/recherche" element={<Search />} />
+          <Route path="/recherche/filtres" element={<Filters />} />
+          <Route path="/adresses/:id" element={<Fiche />} />
+          <Route path="/adresses/:id/chauffeur" element={<Driver />} />
+          <Route path="/adresses/:id/contact" element={<Contact />} />
+          <Route path="/adresses/:id/signaler" element={<Report />} />
+          <Route path="/favoris" element={<Favorites />} />
+          <Route path="/contributions" element={<Contributions />} />
+          <Route path="/contributions/nouvelle/envoyee" element={<Sent />} />
+          <Route path="/contributions/nouvelle/:step" element={<Wizard />} />
+          <Route path="/contributions/:id" element={<ContributionDetail />} />
+          <Route path="/profil" element={<Profile />} />
+          <Route path="/profil/telechargements" element={<Downloads />} />
+        </Route>
 
-      <Route element={<RequireAuth need="team" />}>
-        <Route element={<AdminLayout />}>
-          <Route path="/equipe" element={<AdminDashboard />} />
-          <Route path="/equipe/propositions" element={<AdminList />} />
-          <Route path="/equipe/propositions/:id" element={<AdminVerify />} />
-          <Route path="/equipe/historique" element={<AdminHistory />} />
-          {/* Administration : réservée au rôle admin */}
-          <Route element={<RequireAuth need="admin" />}>
-            <Route path="/equipe/membres" element={<Members />} />
-            <Route path="/equipe/villes" element={<AdminCities />} />
-            <Route path="/equipe/categories" element={<AdminCategories />} />
-            <Route path="/equipe/produits" element={<AdminProductTags />} />
+        <Route element={<RequireAuth need="team" />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/equipe" element={<AdminDashboard />} />
+            <Route path="/equipe/propositions" element={<AdminList />} />
+            <Route path="/equipe/propositions/:id" element={<AdminVerify />} />
+            <Route path="/equipe/historique" element={<AdminHistory />} />
+            {/* Administration : réservée au rôle admin */}
+            <Route element={<RequireAuth need="admin" />}>
+              <Route path="/equipe/membres" element={<Members />} />
+              <Route path="/equipe/villes" element={<AdminCities />} />
+              <Route path="/equipe/categories" element={<AdminCategories />} />
+              <Route path="/equipe/produits" element={<AdminProductTags />} />
+            </Route>
           </Route>
         </Route>
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
