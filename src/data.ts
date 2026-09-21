@@ -96,6 +96,9 @@ export interface Provider {
   freight?: Freight[];
   goods?: string;
   senegal?: string;
+  deletionRequestedAt?: string;  // demande de suppression en attente de l’administrateur
+  deletionRequestedBy?: string;
+  deletionReason?: string;
 }
 
 export const PROVIDERS: Provider[] = [
@@ -164,7 +167,9 @@ export const PROVIDERS: Provider[] = [
 ];
 
 export type Status =
-  | 'Brouillon' | 'Soumise' | 'En vérification' | 'Complément demandé' | 'Publiée' | 'Rattachée à une adresse existante' | 'Refusée';
+  | 'Brouillon' | 'Soumise' | 'En vérification' | 'Complément demandé' | 'Publiée' | 'Rattachée à une adresse existante' | 'Refusée'
+  // Événements du journal liés aux fiches (pas des statuts de proposition).
+  | 'Suppression demandée' | 'Suppression refusée' | 'Fiche supprimée';
 export const STATUSES: Status[] = ['Brouillon', 'Soumise', 'En vérification', 'Complément demandé', 'Publiée', 'Rattachée à une adresse existante', 'Refusée'];
 export const STATUS_STYLE: Record<Status, { icon: IconName; bg: string; fg: string }> = {
   'Brouillon': { icon: 'pen', bg: '#E6EAF3', fg: '#2F3C57' },
@@ -174,6 +179,9 @@ export const STATUS_STYLE: Record<Status, { icon: IconName; bg: string; fg: stri
   'Publiée': { icon: 'check', bg: '#E0F0E6', fg: '#1B6B3E' },
   'Rattachée à une adresse existante': { icon: 'link', bg: '#EAE4F5', fg: '#4B3A7A' },
   'Refusée': { icon: 'x', bg: '#FBE6E3', fg: '#A1261F' },
+  'Suppression demandée': { icon: 'trash', bg: '#FDE9D3', fg: '#8A4310' },
+  'Suppression refusée': { icon: 'shield', bg: '#E0F0E6', fg: '#1B6B3E' },
+  'Fiche supprimée': { icon: 'trash', bg: '#FBE6E3', fg: '#A1261F' },
 };
 
 export interface Proposal {

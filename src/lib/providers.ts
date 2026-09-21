@@ -31,6 +31,9 @@ interface ProviderRow {
   freight: Provider['freight'] | null;
   goods: string | null;
   senegal: string | null;
+  deletion_requested_at: string | null;
+  deletion_requested_by: string | null;
+  deletion_reason: string | null;
 }
 
 const undef = <T,>(v: T | null | undefined): T | undefined => (v == null ? undefined : v);
@@ -66,6 +69,9 @@ function rowToProvider(r: ProviderRow): Provider {
     freight: undef(r.freight),
     goods: undef(r.goods),
     senegal: undef(r.senegal),
+    deletionRequestedAt: undef(r.deletion_requested_at),
+    deletionRequestedBy: undef(r.deletion_requested_by),
+    deletionReason: undef(r.deletion_reason),
   };
 }
 
@@ -96,4 +102,71 @@ export async function fetchProviders(): Promise<Provider[]> {
     }
     return PROVIDERS;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Écritures (équipe) : ajout, modification, demande de suppression    */
+/* ------------------------------------------------------------------ */
+const nul = (v: string | undefined) => (v && v.trim() ? v.trim() : null);
+const arr = (v: string[] | undefined) => (v && v.length ? v : null);
+
+function providerToRow(p: Provider) {
+  return {
+    id: p.id, name: p.name.trim(), cn: p.cn.trim(), cat: p.cat, city: p.city, district: p.district.trim(),
+    lat: p.lat, lng: p.lng, featured: p.featured ?? false, verified: nul(p.verified), description: nul(p.desc),
+    addr_cn: nul(p.addrCn), addr_fr: nul(p.addrFr), entree: nul(p.entree), reperes: nul(p.reperes), metro: nul(p.metro),
+    tel: nul(p.tel), wechat: nul(p.wechat), products: arr(p.products), product_tags: p.productTags ?? [], moq: nul(p.moq),
+    services: arr(p.services), cuisine: nul(p.cuisine), hours: nul(p.hours), halal: nul(p.halal),
+    freight: arr(p.freight), goods: nul(p.goods), senegal: nul(p.senegal),
+  };
+}
+
+/** Identifiant lisible et unique pour une nouvelle fiche. */
+export function newProviderId(name: string): string {
+  const slug = name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+  return `${slug || 'fiche'}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function validateProvider(p: Provider): string | null {
+  if (!p.name.trim()) return 'Saisissez le nom de la fiche.';
+  if (!p.cn.trim()) return 'Saisissez le nom en chinois.';
+  if (!p.district.trim()) return 'Indiquez le quartier ou le district.';
+  if (!Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return 'Latitude et longitude doivent être des nombres.';
+  if (p.name.length > 100 || p.cn.length > 100) return 'Les noms ne doivent pas dépasser 100 caractères.';
+  return null;
+}
+
+/** Crée ou met à jour une fiche (équipe). */
+export async function saveProvider(p: Provider): Promise<{ error?: string }> {
+  const vErr = validateProvider(p);
+  if (vErr) return { error: vErr };
+  if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
+  const { error } = await supabase.from('providers').upsert(providerToRow(p));
+  return error ? { error: error.message } : {};
+}
+
+/** L'équipe demande la suppression : la fiche est masquée aux voyageurs en attendant l'administrateur. */
+export async function requestProviderDeletion(id: string, reason: string, by: string): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
+  const { error } = await supabase.from('providers')
+    .update({ deletion_requested_at: new Date().toISOString(), deletion_requested_by: by, deletion_reason: reason || null })
+    .eq('id', id);
+  return error ? { error: error.message } : {};
+}
+
+/** Administrateur : refuse la suppression, la fiche redevient visible. */
+export async function cancelProviderDeletion(id: string): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
+  const { error } = await supabase.from('providers')
+    .update({ deletion_requested_at: null, deletion_requested_by: null, deletion_reason: null }).eq('id', id);
+  return error ? { error: error.message } : {};
+}
+
+/** Administrateur : suppression définitive. */
+export async function deleteProvider(id: string): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
+  const { error, count } = await supabase.from('providers').delete({ count: 'exact' }).eq('id', id);
+  if (error) return { error: error.message };
+  if (!count) return { error: 'Suppression refusée : réservée à l\'administrateur.' };
+  return {};
 }

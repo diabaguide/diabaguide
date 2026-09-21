@@ -6,11 +6,11 @@ import {
   type Provider, type Proposal, type Status,
 } from './data';
 import { fetchTaxonomies } from './lib/taxonomies';
-import { fetchProviders } from './lib/providers';
+import { cancelProviderDeletion, deleteProvider, fetchProviders, requestProviderDeletion, saveProvider as saveProviderRow } from './lib/providers';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { isTeamRole, userFromSession, type Role } from './lib/auth';
 import {
-  complementProposal, decideProposal, fetchAllProposals, fetchDecisions, fetchMyProposals, saveProposal,
+  complementProposal, decideProposal, logProviderEvent, fetchAllProposals, fetchDecisions, fetchMyProposals, saveProposal, updateProposalFields,
 } from './lib/contributions';
 
 export type Lang = 'fr' | 'en' | 'zh';
@@ -27,6 +27,7 @@ interface State {
   downloads: Record<string, string>; // id -> date de téléchargement
   lastSync: string;
   providers: Provider[]; // adresses (Supabase, avec repli statique)
+  pendingDeletion: Provider[]; // fiches dont la suppression attend l'administrateur (masquées aux voyageurs)
   // Taxonomies administrables (Supabase, avec repli statique)
   categories: Category[];
   cities: CityRef[];
@@ -44,7 +45,7 @@ const KEY = 'diaba-guide-state-v1';
 const initial: State = {
   user: null, authReady: !isSupabaseConfigured, lang: 'fr', city: 'guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'],
   downloads: { baiyun: '18 sept. 2026', jinyuan: '18 sept. 2026' }, lastSync: '19 sept. 2026, 09:12',
-  providers: PROVIDERS,
+  providers: PROVIDERS, pendingDeletion: [],
   categories: STATIC_CATEGORIES, cities: STATIC_CITIES, districts: STATIC_DISTRICTS, productTags: [],
   // Avec Supabase, propositions et décisions sont chargées depuis la base.
   proposals: isSupabaseConfigured ? [] : [...SEED_PROPOSALS, ...TEAM_QUEUE_EXTRA],
@@ -67,7 +68,13 @@ type Action =
   | { t: 'submit'; p: Proposal }
   | { t: 'complement'; id: string; patch: Partial<Proposal> }
   | { t: 'decide'; id: string; status: Status; note: string }
+  | { t: 'edit'; p: Proposal }
   | { t: 'setProviders'; v: Provider[] }
+  | { t: 'localProvider'; p: Provider }
+  | { t: 'localDeletion'; id: string; reason: string; by: string }
+  | { t: 'localRestore'; id: string }
+  | { t: 'localDelete'; id: string }
+  | { t: 'localLog'; dec: Decision }
   | { t: 'setTaxonomies'; categories: Category[]; cities: CityRef[]; districts: District[]; productTags: ProductTag[] }
   | { t: 'setProposals'; v: Proposal[] }
   | { t: 'setDecisions'; v: Decision[] }
@@ -114,6 +121,7 @@ function reducer(s: State, a: Action): State {
       const upd = (p: Proposal) => (p.id === a.id ? { ...p, ...a.patch, status: 'En vérification' as Status, date: 'Complément envoyé le 20 sept.' } : p);
       return { ...s, proposals: s.proposals.map(upd) };
     }
+    case 'edit': return { ...s, proposals: s.proposals.map((x) => (x.id === a.p.id ? { ...x, ...a.p, status: x.status, date: x.date, feedback: x.feedback, author: x.author } : x)) };
     case 'decide': {
       const target = s.proposals.find((p) => p.id === a.id);
       const upd = (p: Proposal) => (p.id === a.id ? { ...p, status: a.status, feedback: a.note || p.feedback, date: 'Traitée le 20 sept.' } : p);
@@ -123,7 +131,18 @@ function reducer(s: State, a: Action): State {
       };
       return { ...s, proposals: s.proposals.map(upd), decisions: [dec, ...s.decisions] };
     }
-    case 'setProviders': return { ...s, providers: a.v };
+    case 'setProviders': return { ...s, providers: a.v.filter((x) => !x.deletionRequestedAt), pendingDeletion: a.v.filter((x) => x.deletionRequestedAt) };
+    case 'localProvider': return { ...s, providers: s.providers.some((x) => x.id === a.p.id) ? s.providers.map((x) => (x.id === a.p.id ? a.p : x)) : [a.p, ...s.providers] };
+    case 'localDeletion': {
+      const t = s.providers.find((x) => x.id === a.id);
+      return t ? { ...s, providers: s.providers.filter((x) => x.id !== a.id), pendingDeletion: [{ ...t, deletionRequestedAt: new Date().toISOString(), deletionRequestedBy: a.by, deletionReason: a.reason }, ...s.pendingDeletion] } : s;
+    }
+    case 'localRestore': {
+      const t = s.pendingDeletion.find((x) => x.id === a.id);
+      return t ? { ...s, pendingDeletion: s.pendingDeletion.filter((x) => x.id !== a.id), providers: [{ ...t, deletionRequestedAt: undefined, deletionRequestedBy: undefined, deletionReason: undefined }, ...s.providers] } : s;
+    }
+    case 'localLog': return { ...s, decisions: [a.dec, ...s.decisions] };
+    case 'localDelete': return { ...s, providers: s.providers.filter((x) => x.id !== a.id), pendingDeletion: s.pendingDeletion.filter((x) => x.id !== a.id), favorites: s.favorites.filter((x) => x !== a.id) };
     case 'setTaxonomies': return { ...s, categories: a.categories, cities: a.cities, districts: a.districts, productTags: a.productTags };
     case 'setProposals': return { ...s, proposals: a.v };
     case 'setDecisions': return { ...s, decisions: a.v };
@@ -161,6 +180,13 @@ interface ContribApi {
   submit: (p: Proposal) => Promise<void>;
   complement: (id: string, patch: Partial<Proposal>) => Promise<void>;
   decide: (id: string, status: Status, note: string) => Promise<void>;
+  /** Enregistre les corrections de l'équipe ; renvoie un message d'erreur en cas d'échec. */
+  edit: (p: Proposal) => Promise<string | null>;
+  /** Fiches (équipe) : chaque fonction renvoie un message d'erreur, ou null si tout va bien. */
+  saveProvider: (p: Provider) => Promise<string | null>;
+  requestDeletion: (id: string, reason: string) => Promise<string | null>;
+  restoreProvider: (id: string) => Promise<string | null>;
+  removeProvider: (id: string) => Promise<string | null>;
   /** Recharge les taxonomies après une modification dans l'administration. */
   reloadTaxonomies: () => Promise<void>;
 }
@@ -178,7 +204,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const base = {
         lang: s.lang, city: s.city, locPref: s.locPref, favorites: s.favorites,
         downloads: s.downloads, lastSync: s.lastSync, draft: s.draft, installDismissed: s.installDismissed,
-        providers: s.providers, categories: s.categories, cities: s.cities, districts: s.districts, productTags: s.productTags
+        providers: s.providers, pendingDeletion: s.pendingDeletion, categories: s.categories, cities: s.cities, districts: s.districts, productTags: s.productTags
       };
       const persist = isSupabaseConfigured ? base
         : { ...base, user: s.user, proposals: s.proposals, decisions: s.decisions };
@@ -237,6 +263,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => { alive = false; };
   }, [s.user?.id, s.user?.role]);
 
+  /* Journal des décisions : événements sur les fiches (suppressions). */
+  const logEvent = async (p: Provider, decision: Status, note: string) => {
+    const by = sRef.current.user?.name ?? 'Équipe';
+    if (!supabase) {
+      const now = new Date();
+      d({ t: 'localLog', dec: { date: now.toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), proposalName: p.name, cn: p.cn, decision, note, by, lastCheck: '—' } });
+      return;
+    }
+    await logProviderEvent(p.name, p.cn, decision, note, by);
+    d({ t: 'setDecisions', v: await fetchDecisions() });
+  };
+
   const api = useMemo<ContribApi>(() => ({
     saveDraft: async (p) => {
       if (!supabase) { d({ t: 'saveDraft', p }); return; }
@@ -256,6 +294,49 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!supabase) { d({ t: 'complement', id, patch }); return; }
       await complementProposal(id, patch);
       d({ t: 'setProposals', v: await fetchMyProposals() });
+    },
+    saveProvider: async (p) => {
+      if (!supabase) { d({ t: 'localProvider', p }); return null; }
+      const { error } = await saveProviderRow(p);
+      if (error) return error;
+      d({ t: 'setProviders', v: await fetchProviders() });
+      return null;
+    },
+    requestDeletion: async (id, reason) => {
+      const by = sRef.current.user?.name ?? 'Équipe';
+      const t = sRef.current.providers.find((x) => x.id === id);
+      if (!supabase) { d({ t: 'localDeletion', id, reason, by }); if (t) logEvent(t, 'Suppression demandée', reason || '—'); return null; }
+      const { error } = await requestProviderDeletion(id, reason, by);
+      if (error) return error;
+      if (t) await logEvent(t, 'Suppression demandée', reason || '—');
+      d({ t: 'setProviders', v: await fetchProviders() });
+      return null;
+    },
+    restoreProvider: async (id) => {
+      const t = sRef.current.pendingDeletion.find((x) => x.id === id);
+      if (!supabase) { d({ t: 'localRestore', id }); if (t) logEvent(t, 'Suppression refusée', 'La fiche est conservée.'); return null; }
+      const { error } = await cancelProviderDeletion(id);
+      if (error) return error;
+      if (t) await logEvent(t, 'Suppression refusée', 'La fiche est conservée.');
+      d({ t: 'setProviders', v: await fetchProviders() });
+      return null;
+    },
+    removeProvider: async (id) => {
+      const t = sRef.current.pendingDeletion.find((x) => x.id === id) ?? sRef.current.providers.find((x) => x.id === id);
+      const note = t?.deletionReason ? `Motif : ${t.deletionReason}` : 'Suppression directe par l’administrateur.';
+      if (!supabase) { d({ t: 'localDelete', id }); if (t) logEvent(t, 'Fiche supprimée', note); return null; }
+      const { error } = await deleteProvider(id);
+      if (error) return error;
+      if (t) await logEvent(t, 'Fiche supprimée', note);
+      d({ t: 'setProviders', v: await fetchProviders() });
+      return null;
+    },
+    edit: async (p) => {
+      if (!supabase) { d({ t: 'edit', p }); return null; }
+      const { error } = await updateProposalFields(p);
+      if (error) return error;
+      d({ t: 'setProposals', v: await fetchAllProposals() });
+      return null;
     },
     decide: async (id, status, note) => {
       if (!supabase) { d({ t: 'decide', id, status, note }); return; }

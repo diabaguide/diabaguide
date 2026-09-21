@@ -109,6 +109,17 @@ export async function saveProposal(p: Proposal, status: Status, datePrefix: stri
   return { data: rowToProposal(data as ProposalRow) };
 }
 
+/** Corrections faites par l'équipe : met à jour les champs sans toucher au statut ni à l'auteur. */
+export async function updateProposalFields(p: Proposal): Promise<{ error?: string }> {
+  const vErr = validateProposal(p);
+  if (vErr) return { error: vErr };
+  if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
+  const { id: _id, status: _s, date: _d, feedback: _f, author: _a, ...fields } = proposalToRow(p);
+  const { error } = await supabase.from('proposals').update(fields).eq('id', p.id);
+  if (error) { warn('enregistrement des modifications', error); return { error: error.message }; }
+  return {};
+}
+
 /** Complément envoyé par l'auteur : passe la proposition en vérification. */
 export async function complementProposal(id: string, patch: Partial<Proposal>): Promise<void> {
   if (!supabase) return;
@@ -139,4 +150,13 @@ function warn(what: string, e: unknown) {
     // eslint-disable-next-line no-console
     console.warn(`[Diaba Guide] Échec : ${what}.`, e);
   }
+}
+
+/** Journalise un événement sur une fiche (demande, refus ou validation de suppression). */
+export async function logProviderEvent(name: string, cn: string, decision: Status, note: string, by: string): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.from('decisions').insert({
+    date: frDateTime(), proposal_name: name, cn, decision, note: note || '—', by, last_check: '—',
+  });
+  if (error) warn('journalisation de l’événement', error);
 }

@@ -5,7 +5,7 @@ import { catLabel, cityName, type Cat, type City, type Proposal, type Status } f
 import { emptyProposal, useStore } from '../store';
 import { compressImage } from '../lib/image';
 import { uploadPhoto } from '../lib/photos';
-import { Button, DemoNote, Field, Icon, KV, Photo, RadioCard, Screen, Section, StatusBadge, TextArea, TopBar, Select } from '../ui';
+import { Button, DemoNote, Field, Icon, KV, RadioCard, Screen, Section, StatusBadge, StoredPhoto, TextArea, TopBar, Select } from '../ui';
 
 const LABELS = ['Lieu', 'Contact', 'Photos', 'Envoi'];
 
@@ -25,10 +25,14 @@ const required = (p: Proposal) => ({
   loc: p.loc.trim() ? null : 'Indiquez au moins un quartier, un marché ou un repère.',
 });
 
-/* Compresse la photo choisie ; `onPick` reçoit l'image allégée, prête à être envoyée. */
-function FilePick({ label, onPick, done }: { label: string; onPick: (img: Blob, path?: string) => void; done?: boolean }) {
+export const MAX_PHOTOS = 3;
+
+/* Deux façons d'ajouter une photo : prendre le lieu en photo, ou choisir dans la galerie.
+   La photo est compressée puis envoyée ; `onPick` reçoit l'image allégée et son chemin. */
+export function FilePick({ label, onPick, done }: { label: string; onPick: (img: Blob, path?: string) => void; done?: boolean }) {
   const { tr } = useI18n();
-  const ref = useRef<HTMLInputElement>(null);
+  const camRef = useRef<HTMLInputElement>(null);
+  const galRef = useRef<HTMLInputElement>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const change = async (input: HTMLInputElement) => {
@@ -46,9 +50,13 @@ function FilePick({ label, onPick, done }: { label: string; onPick: (img: Blob, 
   };
   return (
     <>
-      <input ref={ref} type="file" accept="image/*" capture="environment" className="sr" aria-label={tr(label)} onChange={(e) => change(e.target)} />
-      <button type="button" className="upload" disabled={busy} onClick={() => ref.current?.click()}>
+      <input ref={camRef} type="file" accept="image/*" capture="environment" className="sr" aria-label={tr("Prendre une photo")} onChange={(e) => change(e.target)} />
+      <input ref={galRef} type="file" accept="image/*" className="sr" aria-label={tr("Choisir dans la galerie")} onChange={(e) => change(e.target)} />
+      <button type="button" className="upload" disabled={busy} onClick={() => camRef.current?.click()}>
         <Icon name={done ? 'check' : 'camera'} size={26} />{tr(busy ? 'Préparation de la photo…' : label)}
+      </button>
+      <button type="button" className="upload" disabled={busy} onClick={() => galRef.current?.click()}>
+        <Icon name="image" size={26} />{tr("Choisir dans la galerie")}
       </button>
       {err && <div role="alert" className="error"><Icon name="alert" size={16} sw={2} /><span>{tr(err)}</span></div>}
     </>
@@ -115,17 +123,11 @@ export function Wizard() {
         )}
         {n === 3 && (
           <>
-            <div className="small muted">{tr("Facultatif. Des photos et la carte de visite aident l’équipe à vérifier l’adresse.")}</div>
-            <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Photos du lieu (")}{tr(p.photos)})</h2>
+            <div className="small muted">{tr("Facultatif. Des photos du lieu aident l’équipe à vérifier l’adresse.")}</div>
+            <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Photos du lieu (")}{tr(p.photos)}{tr(" sur ")}{tr(MAX_PHOTOS)})</h2>
               <div className="grid2">
-                {Array.from({ length: Math.min(p.photos, 4) }).map((_, i) => <Photo key={i} label={tr(`Photo ${i + 1}`)} h={100} round={12} />)}
-                <FilePick label={tr("Ajouter une photo")} onPick={(_, path) => set({ photos: p.photos + 1, photoPaths: path ? [...p.photoPaths, path] : p.photoPaths })} />
-              </div>
-            </section>
-            <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Carte de visite")}</h2>
-              <div className="grid2">
-                {p.cardFront ? <Photo label={tr("Recto")} h={112} round={12} /> : <FilePick label={tr("Ajouter le recto")} onPick={(_, path) => set({ cardFront: true, cardFrontPath: path })} />}
-                {p.cardBack ? <Photo label={tr("Verso")} h={112} round={12} /> : <FilePick label={tr("Ajouter le verso")} onPick={(_, path) => set({ cardBack: true, cardBackPath: path })} />}
+                {Array.from({ length: Math.min(p.photos, MAX_PHOTOS) }).map((_, i) => <StoredPhoto key={i} path={p.photoPaths[i]} label={tr(`Photo ${i + 1}`)} h={100} round={12} />)}
+                {p.photos < MAX_PHOTOS ? <FilePick label="Prendre une photo" onPick={(_, path) => set({ photos: p.photos + 1, photoPaths: path ? [...p.photoPaths, path] : p.photoPaths })} /> : <div className="small muted">{tr("3 photos au maximum.")}</div>}
               </div>
             </section>
           </>
@@ -138,7 +140,7 @@ export function Wizard() {
                 ['Catégorie', catLabel(p.cat), 1], ['Nom', [p.name, p.cn].filter(Boolean).join(' · '), 1],
                 ['Localisation', [cityName(p.city), p.loc].filter(Boolean).join(' · '), 1], ['Produits', p.products, 2], ['Minimum de commande', p.moq, 2],
                 ['Téléphone et WeChat', [p.tel, p.wechat].filter(Boolean).join(' · '), 2],
-                ['Photos', `${p.photos} photo(s)${p.cardFront || p.cardBack ? ', carte de visite' : ''}`, 3],
+                ['Photos', `${p.photos} photo(s)`, 3],
               ].map(([k, v, to]) => (
                 <div key={k as string} className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <KV k={tr(k as string)}>{tr((v as string) || undefined)}</KV>
@@ -247,7 +249,7 @@ export function ContributionDetail() {
         {p.status === 'Complément demandé' && (
           <Section title={tr("Compléter les informations")} icon="edit">
             <Field id="tel2" label={tr("Téléphone")} type="tel" value={tel} onChange={setTel} placeholder={tr("+86 …")} />
-            <FilePick label={photo ? 'Photo ajoutée' : 'Ajouter une photo de la devanture'} done={photo} onPick={(_, path) => { setPhoto(true); if (path) setNewPaths((x) => [...x, path]); }} />
+            {p.photos + newPaths.length < MAX_PHOTOS && <FilePick label={photo ? 'Photo ajoutée' : 'Prendre une photo de la devanture'} done={photo} onPick={(_, path) => { setPhoto(true); if (path) setNewPaths((x) => [...x, path]); }} />}
             <TextArea id="note" label={tr("Message pour l’équipe (facultatif)")} value={note} onChange={setNote} />
             <Button icon="send" onClick={() => api.complement(p.id, { tel: tel || p.tel, photos: p.photos + newPaths.length + (photo && !newPaths.length ? 1 : 0), photoPaths: [...p.photoPaths, ...newPaths] })}>{tr("Envoyer le complément")}</Button>
           </Section>

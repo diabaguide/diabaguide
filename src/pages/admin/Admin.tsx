@@ -4,6 +4,7 @@ import { Link, NavLink, Navigate, Outlet, useNavigate, useParams } from 'react-r
 import { STATUSES, catLabel, cityName, type Cat, type City, type Provider, type Proposal, type Status } from '../../data';
 import { useStore } from '../../store';
 import { signOut } from '../../lib/auth';
+import { FilePick, MAX_PHOTOS } from '../Contribute';
 import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, StoredPhoto, Tag, TextArea } from '../../ui';
 
 /* Toutes les propositions vues par l’équipe (hors brouillons des voyageurs).
@@ -32,9 +33,10 @@ export function AdminLayout() {
   const nav = useNavigate();
   const isAdmin = s.user?.role === 'admin';
   const items: [string, string, Parameters<typeof Icon>[0]['name'], boolean][] = [
-    ['/equipe', 'Tableau de bord', 'grid', true], ['/equipe/propositions', 'Propositions', 'inbox', false], ['/equipe/historique', 'Historique des décisions', 'history', false],
+    ['/equipe', 'Tableau de bord', 'grid', true], ['/equipe/propositions', 'Propositions', 'inbox', false], ['/equipe/fiches', 'Fiches', 'list', false], ['/equipe/historique', 'Historique des décisions', 'history', false],
     // Administration : réservée au rôle admin.
     ...(isAdmin ? ([
+      ['/equipe/suppressions', s.pendingDeletion.length ? `Suppressions (${s.pendingDeletion.length})` : 'Suppressions', 'trash', false],
       ['/equipe/membres', 'Membres', 'users', false],
       ['/equipe/villes', 'Villes', 'pin', false],
       ['/equipe/categories', 'Catégories', 'grid', false],
@@ -166,6 +168,7 @@ export function AdminVerify() {
   const [msg, setMsg] = useState('Merci pour votre proposition. Pouvez-vous ajouter une photo du stand et la station de métro la plus proche ?');
   const [target, setTarget] = useState<string>('');
   const [saved, setSaved] = useState(false);
+  const [saveErr, setSaveErr] = useState<string | null>(null);
   if (!src || !p) return <Navigate to="/equipe/propositions" replace />;
   const set = (patch: Partial<Proposal>) => { setP({ ...p, ...patch }); setSaved(false); };
   const cands = dupCandidates(p, s.providers, dupQ);
@@ -224,11 +227,10 @@ export function AdminVerify() {
               <TextArea id="p" label={tr("Produits ou services")} value={p.products} onChange={(v) => set({ products: v })} />
               <div className="form2"><Field id="moq" label={tr("Minimum de commande")} value={p.moq} onChange={(v) => set({ moq: v })} placeholder={tr("Non renseigné par le contributeur")} /><Field id="metro" label={tr("Station de métro proche")} value="" placeholder={tr("À compléter par l’équipe")} /></div>
             </Section>
-            <Section title={tr("Photos et carte de visite")} icon="camera">
+            <Section title={tr("Photos du lieu")} icon="camera">
               <div className="grid2" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
                 {Array.from({ length: p.photos }).map((_, i) => <StoredPhoto key={i} path={p.photoPaths[i]} label={tr(`Photo ${i + 1}`)} h={130} round={12} />)}
-                {p.cardFront ? <StoredPhoto path={p.cardFrontPath} label={tr("Carte : recto")} h={130} round={12} /> : <div className="upload" style={{ cursor: 'default', minHeight: 130 }}>{tr("Recto non fourni")}</div>}
-                {p.cardBack ? <StoredPhoto path={p.cardBackPath} label={tr("Carte : verso")} h={130} round={12} /> : <div className="upload" style={{ cursor: 'default', minHeight: 130, fontWeight: 400 }}>{tr("Verso non fourni")}</div>}
+                {p.photos < MAX_PHOTOS && <FilePick label="Prendre une photo" onPick={(_, path) => set({ photos: p.photos + 1, photoPaths: path ? [...p.photoPaths, path] : p.photoPaths })} />}
               </div>
             </Section>
           </div>
@@ -246,8 +248,9 @@ export function AdminVerify() {
             </Section>
             <Section title={tr("Décision")} icon="shield">
               <div className="small muted">{tr("Chaque publication ou refus demande une confirmation.")}</div>
+              {saveErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(saveErr)}</span></div>}
               {saved && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr("Modifications enregistrées.")}</span></div>}
-              <Button kind="s" icon="edit" onClick={() => setSaved(true)}>{tr("Enregistrer les modifications")}</Button>
+              <Button kind="s" icon="edit" onClick={async () => { setSaveErr(null); const err = await api.edit(p); if (err) setSaveErr(err); else setSaved(true); }}>{tr("Enregistrer les modifications")}</Button>
               <Button kind="s" icon="alert" onClick={() => setDlg('complement')}>{tr("Demander un complément")}</Button>
               <Button kind="s" icon="link" onClick={() => setDlg('attach')}>{tr("Rattacher à une fiche existante")}</Button>
               <Button icon="check" onClick={() => setDlg('publish')}>{tr("Publier")}</Button>
