@@ -1,5 +1,19 @@
 import { useI18n } from './i18n';
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+
+/* Vrai à partir de 1024 px : la mise en page « site web » est active. */
+export function useWide() {
+  const q = '(min-width: 1024px)';
+  const [wide, setWide] = useState(() => typeof matchMedia === 'function' && matchMedia(q).matches);
+  useEffect(() => {
+    const m = matchMedia(q);
+    const on = () => setWide(m.matches);
+    on();
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return wide;
+}
 import { photoUrl, type PhotoBucket } from './lib/photos';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ICONS, type IconName } from './icons';

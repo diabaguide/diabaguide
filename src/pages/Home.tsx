@@ -21,7 +21,7 @@ export function Home() {
   const featured = s.providers.filter((p) => p.featured && p.city === s.city);
 
   return (
-    <Screen className="sceau">
+    <Screen className="sceau" wide>
       <header className="hero">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <Logo height={30} tail="GUIDE" />
@@ -58,7 +58,7 @@ export function Home() {
             ))}
           </div>
         </section>
-        <section className="stack">
+        <section className="stack cards-grid">
           <h2 className="display" style={{ fontSize: 19 }}>{tr("Sélection Diaba · ")}{tr(cityName(s.city))}</h2>
           {featured.map((p) => <ResultCard key={p.id} p={p} />)}
         </section>

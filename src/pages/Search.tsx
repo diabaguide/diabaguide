@@ -4,7 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { catIcon, catLabel, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
-import { Button, Chip, DemoNote, Field, Icon, Screen, StoredPhoto } from '../ui';
+import { Button, Chip, DemoNote, Field, Icon, Screen, StoredPhoto, useWide } from '../ui';
 
 export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
   const { tr } = useI18n();
@@ -58,6 +58,7 @@ export function Search() {
   const { q, sp, setSp } = useQuery();
   const { s } = useStore();
   const nav = useNavigate();
+  const wide = useWide();
   const online = useOnline();
   const [loading, setLoading] = useState(true);
   const [sel, setSel] = useState(0);
@@ -66,6 +67,7 @@ export function Search() {
   const list = useMemo(() => filterProviders(q, s.providers), [key, s.providers]);
   const nFilters = [q.cat, q.fret, q.prox].filter(Boolean).length;
   const set = (k: string, v: string | null) => { const n = new URLSearchParams(sp); v ? n.set(k, v) : n.delete(k); setSp(n, { replace: true }); };
+  const patch = (o: Record<string, string | null>) => { const n = new URLSearchParams(sp); for (const [k, v] of Object.entries(o)) { if (v) n.set(k, v); else n.delete(k); } setSp(n, { replace: true }); };
 
   const body = () => {
     if (!online) {
@@ -101,39 +103,81 @@ export function Search() {
             <Button kind="s" onClick={() => nav('/recherche/filtres?' + key)}>{tr("Modifier la recherche")}</Button>
             <Button to="/contributions/nouvelle/1" icon="plus">{tr("Proposer une adresse")}</Button>
           </div>
-        ) : q.view === 'carte' ? (
+        ) : q.view === 'carte' && !wide ? (
           <MapView list={list} sel={sel} setSel={setSel} />
         ) : (
           list.map(({ p, km }) => <ResultCard key={p.id} p={p} meta={`${km !== null ? fmtKm(km) + ' · ' : ''}Vérifiée le ${p.verified}`} />)
         )}
-        {q.view === 'carte' && list.length > 0 && <Button kind="t" icon="list" onClick={() => set('view', null)}>{tr("Afficher les résultats en liste")}</Button>}
+        {q.view === 'carte' && !wide && list.length > 0 && <Button kind="t" icon="list" onClick={() => set('view', null)}>{tr("Afficher les résultats en liste")}</Button>}
         <DemoNote />
       </>
     );
   };
 
   return (
-    <Screen>
-      <header className="stack" style={{ padding: '16px 16px 8px' }}>
+    <Screen wide>
+      <header className="stack search-head">
         <div className="row">
-          <button type="button" className="iconbtn" aria-label={tr("Retour à l’accueil")} onClick={() => nav('/accueil')}><Icon name="chevL" size={24} sw={2.2} /></button>
+          <button type="button" className="iconbtn m-only" aria-label={tr("Retour à l’accueil")} onClick={() => nav('/accueil')}><Icon name="chevL" size={24} sw={2.2} /></button>
           <label htmlFor="q" className="sr">{tr("Recherche")}</label>
           <input id="q" type="search" className="grow" value={q.q} placeholder={tr("Quel produit ou service cherchez-vous ?")} onChange={(e) => set('q', e.target.value || null)}
             style={{ minHeight: 48, padding: '0 14px', borderRadius: 12, border: '1.5px solid var(--primary)', font: 'inherit', fontSize: 16 }} />
         </div>
-        <div className="seg" role="group" aria-label={tr("Affichage")}>
+        <div className="seg m-only" role="group" aria-label={tr("Affichage")}>
           <button type="button" className={q.view === 'liste' ? 'on' : ''} onClick={() => set('view', null)}><Icon name="list" size={18} />{tr("Liste")}</button>
           <button type="button" className={q.view === 'carte' ? 'on' : ''} onClick={() => set('view', 'carte')}><Icon name="map" size={18} />{tr("Carte")}</button>
         </div>
-        <div className="chips" style={{ flexWrap: 'nowrap', overflowX: 'auto' }}>
+        <div className="chips m-only" style={{ flexWrap: 'nowrap', overflowX: 'auto' }}>
           <Chip on icon="sliders" to={'/recherche/filtres?' + key}>{tr("Filtres")}{tr(nFilters ? ` · ${nFilters}` : '')}</Chip>
           <Chip>{tr(q.city)}</Chip>
           {q.cat && <Chip>{tr(catLabel(q.cat))}</Chip>}
           {q.prox && <Chip icon="pin">{tr(Number(q.prox) > 0 ? `< ${q.prox} km` : 'Toute la ville')}</Chip>}
         </div>
       </header>
-      <main className="main">{tr(body())}</main>
+      <div className="search-layout">
+        <aside className="search-filters" aria-label={tr("Filtres")}><FilterPanel q={q} patch={patch} onReset={() => setSp(new URLSearchParams(), { replace: true })} /></aside>
+        <main className="main">{tr(body())}</main>
+        <aside className="search-map">{online && !loading && list.length > 0 && <MapView list={list} sel={sel} setSel={setSel} />}</aside>
+      </div>
     </Screen>
+  );
+}
+
+/* Filtres en colonne (ordinateur) : chaque choix met l'URL à jour immédiatement. */
+function FilterPanel({ q, patch, onReset }: { q: ReturnType<typeof useQuery>['q']; patch: (o: Record<string, string | null>) => void; onReset: () => void }) {
+  const { tr } = useI18n();
+  const { s } = useStore();
+  const radios = (name: string, val: string, opts: { v: string; l: string }[], on: (v: string) => void) => (
+    <div className="chips">
+      {opts.map((o) => (
+        <label key={o.v} className={`chip ${val === o.v ? 'on' : ''}`}>
+          <input type="radio" name={name} checked={val === o.v} onChange={() => on(o.v)} className="sr" />{val === o.v && <Icon name="check" size={16} sw={2.4} />}{tr(o.l)}
+        </label>
+      ))}
+    </div>
+  );
+  return (
+    <div className="stack" style={{ gap: 20 }}>
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <h2 style={{ fontSize: 19 }}>{tr("Filtres")}</h2>
+        <button type="button" className="link" onClick={onReset}>{tr("Réinitialiser")}</button>
+      </div>
+      <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Catégorie")}</h3>
+        {radios('pcat', q.cat ?? '', [{ v: '', l: 'Toutes' }, ...s.categories.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => patch({ cat: v || null, fret: null }))}
+      </section>
+      <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Ville")}</h3>
+        {radios('pville', q.city, s.cities.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.name })), (v) => patch({ ville: v }))}
+      </section>
+      <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Proximité")}</h3>
+        {radios('pprox', q.prox ?? '0', [{ v: '2', l: 'Moins de 2 km' }, { v: '5', l: 'Moins de 5 km' }, { v: '10', l: 'Moins de 10 km' }, { v: '0', l: 'Toute la ville' }], (v) => patch({ prox: v === '0' ? null : v }))}
+        <div className="hint">{tr("Le rayon s’applique quand la position ou un quartier est choisi.")}</div>
+      </section>
+      {q.cat && isFreight(q.cat) && (
+        <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Fret vers le Sénégal")}</h3>
+          {radios('pfret', q.fret ?? 'both', [{ v: 'air', l: 'Aérien' }, { v: 'sea', l: 'Maritime' }, { v: 'both', l: 'Les deux' }], (v) => patch({ fret: v === 'both' ? null : v }))}
+        </section>
+      )}
+    </div>
   );
 }
 

@@ -66,14 +66,16 @@ export function Fiche() {
     setMsg('Lien copié. La personne qui le reçoit devra se connecter pour consulter la fiche.');
   };
   return (
-    <Screen>
+    <Screen wide>
       <div className="hero-photo">
         <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr(`Photo : ${p.name}`)} h={250} round={0} />
         <div className="back"><button type="button" className="iconbtn" aria-label={tr("Retour aux résultats")} onClick={() => nav(-1)}><Icon name="chevL" size={24} sw={2.2} /></button></div>
         {(p.photoPaths?.length ?? 0) > 0 && <div className="count">1 / {p.photoPaths!.length}</div>}
       </div>
-      <main className="main" style={{ gap: 18, paddingTop: 14 }}>
-        {(p.photoPaths?.length ?? 0) > 1 && <div className="row">{p.photoPaths!.slice(1).map((path, i) => <StoredPhoto key={path} bucket="fiche-photos" path={path} label={tr(`Photo ${i + 2}`)} h={72} w={72} round={10} />)}</div>}
+      <main className="main fiche-main" style={{ gap: 18, paddingTop: 14 }}>
+        <div className="fiche-col">
+        {(p.photoPaths?.length ?? 0) > 1 && <div style={{ order: 0 }}><div className="row">{p.photoPaths!.slice(1).map((path, i) => <StoredPhoto key={path} bucket="fiche-photos" path={path} label={tr(`Photo ${i + 2}`)} h={72} w={72} round={10} />)}</div></div>}
+        <div className="stack" style={{ order: 1 }}>
         <div className="stack" style={{ gap: 8 }}>
           <div className="row wrap"><Tag icon={catIcon(p.cat)}>{tr(catLabel(p.cat))}</Tag><span className="small muted">{tr(p.district)}, {tr(cityName(p.city))}</span></div>
           <h1 className="display" style={{ fontSize: 31, lineHeight: 1.1 }}>{p.name}</h1>
@@ -82,20 +84,11 @@ export function Fiche() {
           <p>{p.desc}</p>
           <DemoNote />
         </div>
-        <div className="grid2">
-          <button type="button" className={`btn btn-tog ${fav ? 'on' : ''}`} aria-pressed={fav}
-            onClick={() => { d({ t: 'fav', id: p.id }); setMsg(fav ? 'Retiré de vos favoris.' : 'Ajouté à vos favoris.'); }}><Icon name="heart" size={20} />{tr(fav ? 'Favori ajouté' : 'Ajouter aux favoris')}</button>
-          <button type="button" className={`btn btn-tog ${dl ? 'on' : ''}`} aria-pressed={dl}
-            onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Fiche téléchargée : elle sera consultable hors connexion.'); }}><Icon name="download" size={20} />{tr(dl ? 'Fiche téléchargée' : 'Télécharger la fiche')}</button>
-          <button type="button" className="btn btn-tog" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
-          <Link to={`/adresses/${p.id}/signaler`} className="btn btn-tog"><Icon name="edit" size={20} />{tr("Proposer une correction")}</Link>
         </div>
-        {msg && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(msg)}</span></div>}
-        <div className="stack">
-          <Button to={`/adresses/${p.id}/contact`} icon={p.cat === 'hotel' || p.cat === 'resto' ? 'phone' : 'chat'}>{tr(ctaLabel(p))}</Button>
-          <Button kind="s" icon="route" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(p.addrFr)}`}>{tr("Ouvrir l’itinéraire")}</Button>
-        </div>
+        <div className="stack" style={{ order: 5 }}>
         <Specific p={p} />
+        </div>
+        <div style={{ order: 6 }}>
         <Section title={tr("Adresse en chinois")} icon="pin">
           <div className="zhaddr" lang="zh-Hans">{p.addrCn}</div>
           <div className="small muted">{p.addrFr}</div>
@@ -105,11 +98,34 @@ export function Fiche() {
           </div>
           <Button to={`/adresses/${p.id}/carte`} kind="s" icon="share">{tr("Carte de visite à partager")}</Button>
         </Section>
+        </div>
+        <div style={{ order: 7 }}>
         <Section title={tr("Accès")} icon="route">
           <KV k={tr("Entrée exacte")}>{p.entree}</KV>
           <KV k={tr("Repères utiles")}>{p.reperes}</KV>
           {p.metro ? <div className="notice"><Icon name="train" size={22} /><div><div className="small muted" style={{ fontWeight: 700 }}>{tr("Métro et gare")}</div>{p.metro}</div></div> : <KV k={tr("Métro et gare")} />}
         </Section>
+        </div>
+        </div>
+        <div className="fiche-col fiche-side">
+        <div style={{ order: 2 }}>
+        <div className="grid2">
+          <button type="button" className={`btn btn-tog ${fav ? 'on' : ''}`} aria-pressed={fav}
+            onClick={() => { d({ t: 'fav', id: p.id }); setMsg(fav ? 'Retiré de vos favoris.' : 'Ajouté à vos favoris.'); }}><Icon name="heart" size={20} />{tr(fav ? 'Favori ajouté' : 'Ajouter aux favoris')}</button>
+          <button type="button" className={`btn btn-tog ${dl ? 'on' : ''}`} aria-pressed={dl}
+            onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Fiche téléchargée : elle sera consultable hors connexion.'); }}><Icon name="download" size={20} />{tr(dl ? 'Fiche téléchargée' : 'Télécharger la fiche')}</button>
+          <button type="button" className="btn btn-tog" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
+          <Link to={`/adresses/${p.id}/signaler`} className="btn btn-tog"><Icon name="edit" size={20} />{tr("Proposer une correction")}</Link>
+        </div>
+        </div>
+        {msg && <div style={{ order: 3 }}><div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(msg)}</span></div></div>}
+        <div style={{ order: 4 }}>
+        <div className="stack">
+          <Button to={`/adresses/${p.id}/contact`} icon={p.cat === 'hotel' || p.cat === 'resto' ? 'phone' : 'chat'}>{tr(ctaLabel(p))}</Button>
+          <Button kind="s" icon="route" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(p.addrFr)}`}>{tr("Ouvrir l’itinéraire")}</Button>
+        </div>
+        </div>
+        <div style={{ order: 8 }}>
         <Section title={tr("Coordonnées")} icon="chat">
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <KV k={tr("Téléphone")}>{p.tel}</KV>
@@ -126,8 +142,12 @@ export function Fiche() {
             </details>
           )}
         </Section>
+        </div>
+        <div style={{ order: 9 }}>
         <div className="row" style={{ justifyContent: 'center' }}>
           <Link className="link" style={{ color: 'var(--danger)' }} to={`/adresses/${p.id}/signaler`}><Icon name="flag" size={18} />{tr(" Signaler un problème")}</Link>
+        </div>
+        </div>
         </div>
       </main>
     </Screen>

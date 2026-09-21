@@ -350,3 +350,35 @@ body { -webkit-font-smoothing: antialiased; }
   .site-footer { display: block; margin-top: 24px; border-top: 1px solid var(--line); background: var(--surface); }
   .site-footer-in { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; max-width: 1240px; margin: 0 auto; padding: 18px 32px; color: var(--muted); font-size: 14px; }
 }
+
+/* Accueil, recherche et fiche en pleine largeur (>= 1024 px) */
+.search-head { padding: 16px 16px 8px; }
+.search-layout { display: contents; }
+.search-filters, .search-map { display: none; }
+.fiche-col { display: contents; }
+@media (min-width: 1024px) {
+  .m-only { display: none !important; }
+  .phone.has-nav .screen.wide .main { padding-inline: 40px; }
+  .phone.has-nav .screen.wide .hero { padding: 36px 40px 60px; }
+  .phone.has-nav .screen.wide .hero .searchfake { max-width: 760px; }
+  .phone.has-nav .screen.wide .hero .seg { max-width: 440px; }
+  .phone.has-nav .screen.wide .cattiles { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .phone.has-nav .screen.wide .cattile.wide { grid-column: auto; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 124px; }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+  .cards-grid > h2 { grid-column: 1 / -1; }
+  .phone.has-nav .screen.wide .install, .phone.has-nav .screen.wide .main > .card.sec { max-width: 760px; }
+  .phone.has-nav .screen.wide .main > .btn { align-self: flex-start; }
+
+  .search-head { padding: 24px 40px 8px; }
+  .search-head input#q { max-width: 760px; }
+  .search-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr) 420px; gap: 28px; align-items: start; padding-inline: 40px; }
+  .search-layout .main { padding-inline: 0 !important; }
+  .search-filters { display: block; position: sticky; top: 84px; padding: 18px; background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+  .search-map { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 84px; }
+
+  .phone.has-nav .hero-photo { margin: 20px 40px 0; }
+  .phone.has-nav .hero-photo .photo { height: 360px !important; border-radius: 20px !important; }
+  .fiche-main { display: grid !important; grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr); gap: 32px !important; align-items: start; }
+  .fiche-col { display: flex; flex-direction: column; gap: 18px; }
+  .fiche-side { position: sticky; top: 84px; }
+}
