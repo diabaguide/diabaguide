@@ -6,7 +6,7 @@ import { lazy, Suspense } from 'react';
 import { Welcome, Signup, SignupDone, Login, Forgot, ResetPassword } from './pages/Access';
 import { Home, Locate } from './pages/Home';
 import { Search, Filters } from './pages/Search';
-import { Fiche, Driver, Contact, Report } from './pages/Fiche';
+import { Fiche, Driver, Card, Contact, Report } from './pages/Fiche';
 import { Favorites, Profile, Downloads } from './pages/Account';
 import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contribute';
 
@@ -56,6 +56,7 @@ export default function App() {
           <Route path="/recherche/filtres" element={<Filters />} />
           <Route path="/adresses/:id" element={<Fiche />} />
           <Route path="/adresses/:id/chauffeur" element={<Driver />} />
+          <Route path="/adresses/:id/carte" element={<Card />} />
           <Route path="/adresses/:id/contact" element={<Contact />} />
           <Route path="/adresses/:id/signaler" element={<Report />} />
           <Route path="/favoris" element={<Favorites />} />

@@ -1,10 +1,11 @@
 import { useI18n } from '../i18n';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catIcon, catLabel, category, cityName, tagLabel, type Provider } from '../data';
 import { useProviderById, useStore } from '../store';
 import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, Tag, TopBar, Verified } from '../ui';
 import { saveReport } from '../lib/reports';
+import { downloadCard, renderCard, shareCard } from '../lib/card';
 
 async function copy(text: string) {
   try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
@@ -102,6 +103,7 @@ export function Fiche() {
             <Button kind="s" icon="copy" className="btn-tog" onClick={async () => setMsg((await copy(p.addrCn)) ? 'Adresse chinoise copiée.' : 'Copie impossible : sélectionnez le texte.')}>{tr("Copier l’adresse")}</Button>
             <Button to={`/adresses/${p.id}/chauffeur`} icon="truck">{tr("Montrer au chauffeur")}</Button>
           </div>
+          <Button to={`/adresses/${p.id}/carte`} kind="s" icon="share">{tr("Carte de visite à partager")}</Button>
         </Section>
         <Section title={tr("Accès")} icon="route">
           <KV k={tr("Entrée exacte")}>{p.entree}</KV>
@@ -155,6 +157,45 @@ export function Driver() {
         </div>
       </div>
     </div>
+  );
+}
+
+export function Card() {
+  const { tr } = useI18n();
+  const p = useProvider();
+  const [blob, setBlob] = useState<Blob | null>(null);
+  const [src, setSrc] = useState('');
+  const [msg, setMsg] = useState('');
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!p) return;
+    let url = '';
+    let live = true;
+    renderCard(p).then((b) => { if (!live) return; url = URL.createObjectURL(b); setBlob(b); setSrc(url); }).catch(() => live && setFailed(true));
+    return () => { live = false; if (url) URL.revokeObjectURL(url); };
+  }, [p]);
+  if (!p) return <Navigate to="/recherche" replace />;
+  const share = async () => {
+    if (!blob) return;
+    const r = await shareCard(blob, p);
+    if (r === 'unsupported') { downloadCard(blob, p); setMsg('Partage direct indisponible sur cet appareil : l’image a été enregistrée, envoyez-la depuis WhatsApp ou WeChat.'); }
+    else if (r === 'shared') setMsg('');
+  };
+  return (
+    <Screen>
+      <TopBar title={tr("Carte de visite")} back={`/adresses/${p.id}`} />
+      <div className="main">
+        <div className="notice"><Icon name="info" size={22} /><div style={{ fontWeight: 500 }}>{tr("Envoyez cette carte par WhatsApp ou WeChat, ou montrez-la au chauffeur pour qu’il vous emmène chez le prestataire.")}</div></div>
+        {failed ? <div role="alert" className="notice"><Icon name="info" size={22} /><span>{tr("La carte n’a pas pu être générée. Réessayez.")}</span></div>
+          : src ? <img src={src} alt={`${p.name} · ${p.cn}`} style={{ width: '100%', borderRadius: 16, boxShadow: 'var(--shadow-md)' }} />
+          : <div className="muted" role="status">{tr("Génération de la carte…")}</div>}
+        {msg && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(msg)}</span></div>}
+        <div className="stack">
+          <Button icon="share" onClick={share} disabled={!blob}>{tr("Partager (WhatsApp, WeChat…)")}</Button>
+          <Button kind="s" icon="download" onClick={() => blob && downloadCard(blob, p)} disabled={!blob}>{tr("Enregistrer l’image")}</Button>
+        </div>
+      </div>
+    </Screen>
   );
 }
 
