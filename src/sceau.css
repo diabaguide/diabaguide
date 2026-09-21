@@ -105,3 +105,6 @@
   .sceau .btn-s { border-color: var(--accent); color: var(--accent); }
   .sceau .searchfake { color: #3d3f5c; }
 }
+
+/* La pastille de légende reste claire : son texte doit rester foncé, même en mode sombre. */
+.sceau .photo-cap { color: #1A2350; }
