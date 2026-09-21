@@ -333,10 +333,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     edit: async (p) => {
       if (!supabase) { d({ t: 'edit', p }); return null; }
-      const { error } = await updateProposalFields(p);
-      if (error) return error;
-      d({ t: 'setProposals', v: await fetchAllProposals() });
-      return null;
+      try {
+        const { error } = await updateProposalFields(p);
+        if (error) return error;
+        d({ t: 'setProposals', v: await fetchAllProposals() });
+        return null;
+      } catch (e) {
+        return `Enregistrement impossible : ${(e as Error).message}`;
+      }
     },
     decide: async (id, status, note) => {
       if (!supabase) { d({ t: 'decide', id, status, note }); return; }

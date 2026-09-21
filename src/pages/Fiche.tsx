@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catIcon, catLabel, category, cityName, tagLabel, type Provider } from '../data';
 import { useProviderById, useStore } from '../store';
-import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, Tag, TopBar, Verified } from '../ui';
+import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, StoredPhoto, Tag, TopBar, Verified } from '../ui';
 import { saveReport } from '../lib/reports';
 import { downloadCard, renderCard, shareCard } from '../lib/card';
 
@@ -68,12 +68,12 @@ export function Fiche() {
   return (
     <Screen>
       <div className="hero-photo">
-        <Photo label={tr(`Photo : ${p.name}`)} h={250} round={0} />
+        <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr(`Photo : ${p.name}`)} h={250} round={0} />
         <div className="back"><button type="button" className="iconbtn" aria-label={tr("Retour aux résultats")} onClick={() => nav(-1)}><Icon name="chevL" size={24} sw={2.2} /></button></div>
-        <div className="count">1 / 4</div>
+        {(p.photoPaths?.length ?? 0) > 0 && <div className="count">1 / {p.photoPaths!.length}</div>}
       </div>
       <main className="main" style={{ gap: 18, paddingTop: 14 }}>
-        <div className="row">{[2, 3, 4].map((i) => <Photo key={i} label={tr(`Photo ${i}`)} h={72} w={72} round={10} />)}</div>
+        {(p.photoPaths?.length ?? 0) > 1 && <div className="row">{p.photoPaths!.slice(1).map((path, i) => <StoredPhoto key={path} bucket="fiche-photos" path={path} label={tr(`Photo ${i + 2}`)} h={72} w={72} round={10} />)}</div>}
         <div className="stack" style={{ gap: 8 }}>
           <div className="row wrap"><Tag icon={catIcon(p.cat)}>{tr(catLabel(p.cat))}</Tag><span className="small muted">{tr(p.district)}, {tr(cityName(p.city))}</span></div>
           <h1 className="display" style={{ fontSize: 31, lineHeight: 1.1 }}>{p.name}</h1>

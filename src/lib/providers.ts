@@ -31,6 +31,7 @@ interface ProviderRow {
   freight: Provider['freight'] | null;
   goods: string | null;
   senegal: string | null;
+  photo_paths: string[] | null;
   deletion_requested_at: string | null;
   deletion_requested_by: string | null;
   deletion_reason: string | null;
@@ -69,6 +70,7 @@ function rowToProvider(r: ProviderRow): Provider {
     freight: undef(r.freight),
     goods: undef(r.goods),
     senegal: undef(r.senegal),
+    photoPaths: r.photo_paths ?? [],
     deletionRequestedAt: undef(r.deletion_requested_at),
     deletionRequestedBy: undef(r.deletion_requested_by),
     deletionReason: undef(r.deletion_reason),
@@ -118,6 +120,7 @@ function providerToRow(p: Provider) {
     tel: nul(p.tel), wechat: nul(p.wechat), products: arr(p.products), product_tags: p.productTags ?? [], moq: nul(p.moq),
     services: arr(p.services), cuisine: nul(p.cuisine), hours: nul(p.hours), halal: nul(p.halal),
     freight: arr(p.freight), goods: nul(p.goods), senegal: nul(p.senegal),
+    photo_paths: p.photoPaths ?? [],
   };
 }
 

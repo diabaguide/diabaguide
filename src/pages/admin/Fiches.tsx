@@ -4,7 +4,8 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catLabel, cityName, type Cat, type City, type Freight, type Provider } from '../../data';
 import { useStore } from '../../store';
 import { newProviderId, validateProvider } from '../../lib/providers';
-import { Button, DemoNote, Field, Icon, Section, Select, TextArea } from '../../ui';
+import { Button, DemoNote, Field, Icon, Section, Select, StoredPhoto, TextArea } from '../../ui';
+import { FilePick, MAX_PHOTOS } from '../Contribute';
 
 /* Gestion des fiches par l'équipe : ajout, modification, demande de suppression.
    La suppression définitive est validée par l'administrateur (page « Suppressions »). */
@@ -156,6 +157,21 @@ export function FicheEdit() {
                 ))}
               </fieldset>
             )}
+          </Section>
+          <Section title="Photos" icon="camera">
+            <div className="small muted">{tr("Jusqu’à 3 photos, visibles par les voyageurs sur la fiche.")}</div>
+            <div className="grid2" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
+              {(p.photoPaths ?? []).map((path, i) => (
+                <div key={path} className="stack" style={{ gap: 6 }}>
+                  <StoredPhoto bucket="fiche-photos" path={path} label={tr(`Photo ${i + 1}`)} h={130} round={12} />
+                  <Button kind="s" icon="trash" onClick={() => set({ photoPaths: (p.photoPaths ?? []).filter((x) => x !== path) })}>{tr("Retirer")}</Button>
+                </div>
+              ))}
+            </div>
+            {(p.photoPaths ?? []).length < MAX_PHOTOS
+              ? <div className="grid2"><FilePick bucket="fiche-photos" label="Prendre une photo" onPick={(_, path) => path && set({ photoPaths: [...(p.photoPaths ?? []), path] })} /></div>
+              : <div className="small muted">{tr("3 photos au maximum.")}</div>}
+            <div className="small muted">{tr("Les photos sont enregistrées avec la fiche : cliquez sur Enregistrer.")}</div>
           </Section>
           <Section title="Position et vérification" icon="pin">
             <div className="form2">

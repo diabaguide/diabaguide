@@ -96,6 +96,7 @@ export interface Provider {
   freight?: Freight[];
   goods?: string;
   senegal?: string;
+  photoPaths?: string[];    // bucket fiche-photos
   deletionRequestedAt?: string;  // demande de suppression en attente de l’administrateur
   deletionRequestedBy?: string;
   deletionReason?: string;

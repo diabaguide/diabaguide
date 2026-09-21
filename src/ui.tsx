@@ -1,6 +1,6 @@
 import { useI18n } from './i18n';
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import { photoUrl } from './lib/photos';
+import { photoUrl, type PhotoBucket } from './lib/photos';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ICONS, type IconName } from './icons';
 import { STATUS_STYLE, type Status } from './data';
@@ -23,14 +23,14 @@ export function Logo({ height = 40, tail }: { height?: number; tail?: string }) 
 }
 
 /* Photo privée du bucket Supabase : URL temporaire ; emplacement rayé si absente ou illisible. */
-export function StoredPhoto({ path, label, h, w, round }: { path?: string; label: string; h?: number; w?: number | string; round?: number }) {
+export function StoredPhoto({ path, label, h, w, round, bucket }: { path?: string; label: string; h?: number; w?: number | string; round?: number; bucket?: PhotoBucket }) {
   const [url, setUrl] = useState<string | undefined>();
   useEffect(() => {
     let live = true;
     setUrl(undefined);
-    if (path) photoUrl(path).then((u) => { if (live && u) setUrl(u); });
+    if (path) photoUrl(path, 3600, bucket).then((u) => { if (live && u) setUrl(u); });
     return () => { live = false; };
-  }, [path]);
+  }, [path, bucket]);
   return <Photo label={label} h={h} w={w} round={round} src={url} />;
 }
 

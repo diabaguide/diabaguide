@@ -4,7 +4,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catLabel, cityName, type Cat, type City, type Proposal, type Status } from '../data';
 import { emptyProposal, useStore } from '../store';
 import { compressImage } from '../lib/image';
-import { uploadPhoto } from '../lib/photos';
+import { uploadPhoto, type PhotoBucket } from '../lib/photos';
 import { Button, DemoNote, Field, Icon, KV, RadioCard, Screen, Section, StatusBadge, StoredPhoto, TextArea, TopBar, Select } from '../ui';
 
 const LABELS = ['Lieu', 'Contact', 'Photos', 'Envoi'];
@@ -29,7 +29,7 @@ export const MAX_PHOTOS = 3;
 
 /* Deux façons d'ajouter une photo : prendre le lieu en photo, ou choisir dans la galerie.
    La photo est compressée puis envoyée ; `onPick` reçoit l'image allégée et son chemin. */
-export function FilePick({ label, onPick, done }: { label: string; onPick: (img: Blob, path?: string) => void; done?: boolean }) {
+export function FilePick({ label, onPick, done, bucket }: { label: string; onPick: (img: Blob, path?: string) => void; done?: boolean; bucket?: PhotoBucket }) {
   const { tr } = useI18n();
   const camRef = useRef<HTMLInputElement>(null);
   const galRef = useRef<HTMLInputElement>(null);
@@ -43,7 +43,7 @@ export function FilePick({ label, onPick, done }: { label: string; onPick: (img:
     setBusy(true);
     try {
       const img = await compressImage(file);
-      const up = await uploadPhoto(img);
+      const up = await uploadPhoto(img, bucket);
       if (up.error) setErr(up.error); else onPick(img, up.path);
     } catch (e) { setErr((e as Error).message); }
     setBusy(false);
