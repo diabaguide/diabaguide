@@ -192,6 +192,9 @@ export interface Proposal {
   photos: number;
   cardFront: boolean;
   cardBack: boolean;
+  photoPaths: string[];    // chemins dans le bucket proposal-photos
+  cardFrontPath?: string;
+  cardBackPath?: string;
   status: Status;
   date: string; // dernière mise à jour affichée
   feedback?: string;
@@ -200,7 +203,7 @@ export interface Proposal {
 
 export const emptyProposal = (): Proposal => ({
   id: 'draft', name: '', cn: '', cat: 'gros', city: 'guangzhou', loc: '', products: '', productTags: [], moq: '', tel: '', wechat: '', addrCn: '',
-  photos: 0, cardFront: false, cardBack: false, status: 'Brouillon', date: '', author: 'Bacary D.',
+  photos: 0, cardFront: false, cardBack: false, photoPaths: [], status: 'Brouillon', date: '', author: 'Bacary D.',
 });
 
 const P = (o: Partial<Proposal> & Pick<Proposal, 'id' | 'name' | 'cn' | 'cat' | 'city' | 'status' | 'date'>): Proposal => ({

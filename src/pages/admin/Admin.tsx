@@ -4,7 +4,7 @@ import { Link, NavLink, Navigate, Outlet, useNavigate, useParams } from 'react-r
 import { STATUSES, catLabel, cityName, type Cat, type City, type Provider, type Proposal, type Status } from '../../data';
 import { useStore } from '../../store';
 import { signOut } from '../../lib/auth';
-import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, Tag, TextArea } from '../../ui';
+import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, StoredPhoto, Tag, TextArea } from '../../ui';
 
 /* Toutes les propositions vues par l’équipe (hors brouillons des voyageurs).
    Pour un compte équipe, `s.proposals` contient déjà toutes les propositions
@@ -226,9 +226,9 @@ export function AdminVerify() {
             </Section>
             <Section title={tr("Photos et carte de visite")} icon="camera">
               <div className="grid2" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
-                {Array.from({ length: p.photos }).map((_, i) => <Photo key={i} label={tr(`Photo ${i + 1}`)} h={130} round={12} />)}
-                {p.cardFront ? <Photo label={tr("Carte : recto")} h={130} round={12} /> : <div className="upload" style={{ cursor: 'default', minHeight: 130 }}>{tr("Recto non fourni")}</div>}
-                {p.cardBack ? <Photo label={tr("Carte : verso")} h={130} round={12} /> : <div className="upload" style={{ cursor: 'default', minHeight: 130, fontWeight: 400 }}>{tr("Verso non fourni")}</div>}
+                {Array.from({ length: p.photos }).map((_, i) => <StoredPhoto key={i} path={p.photoPaths[i]} label={tr(`Photo ${i + 1}`)} h={130} round={12} />)}
+                {p.cardFront ? <StoredPhoto path={p.cardFrontPath} label={tr("Carte : recto")} h={130} round={12} /> : <div className="upload" style={{ cursor: 'default', minHeight: 130 }}>{tr("Recto non fourni")}</div>}
+                {p.cardBack ? <StoredPhoto path={p.cardBackPath} label={tr("Carte : verso")} h={130} round={12} /> : <div className="upload" style={{ cursor: 'default', minHeight: 130, fontWeight: 400 }}>{tr("Verso non fourni")}</div>}
               </div>
             </Section>
           </div>
