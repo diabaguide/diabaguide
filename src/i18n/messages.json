@@ -2668,5 +2668,25 @@
     "en": "{0} proposal(s) selected",
     "zh": "已选择 {0} 条提案",
     "ar": "تم تحديد {0} اقتراح/اقتراحات"
+  },
+  "Proposition précédente": {
+    "en": "Previous proposal",
+    "zh": "上一条提案",
+    "ar": "الاقتراح السابق"
+  },
+  "Proposition suivante": {
+    "en": "Next proposal",
+    "zh": "下一条提案",
+    "ar": "الاقتراح التالي"
+  },
+  "{0} sur {1} à traiter": {
+    "en": "{0} of {1} to review",
+    "zh": "待处理 {0}/{1}",
+    "ar": "{0} من أصل {1} للمعالجة"
+  },
+  "Décision enregistrée : {0}.": {
+    "en": "Decision saved: {0}.",
+    "zh": "决定已保存：{0}。",
+    "ar": "تم حفظ القرار: {0}."
   }
 }

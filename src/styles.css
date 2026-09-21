@@ -311,3 +311,11 @@ body { -webkit-font-smoothing: antialiased; }
 }
 [dir='rtl'] .icon-dir { transform: scaleX(-1); }
 .table.dense { overflow: clip; }
+
+/* Vérification d'une proposition : colonne de décision collante */
+.split.verify { grid-template-columns: minmax(0, 1.6fr) minmax(360px, 1fr); }
+.verify-side { position: sticky; top: 85px; max-height: calc(100vh - 101px); overflow-y: auto; align-self: start; padding: 2px; }
+.actions-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.actions-grid .btn { padding: 0 10px; font-size: 15px; }
+.iconbtn.off { opacity: .35; pointer-events: none; }
+@media (max-width: 1000px) { .split.verify { grid-template-columns: 1fr; } .verify-side { position: static; max-height: none; overflow: visible; } }

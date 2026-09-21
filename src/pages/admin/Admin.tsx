@@ -294,12 +294,14 @@ export function AdminList() {
 
 type Dlg = null | 'publish' | 'refuse' | 'complement' | 'attach';
 
-export function AdminVerify() {
-  const { tr } = useI18n();
+function VerifyBody() {
+  const { tr, t } = useI18n();
   const { id } = useParams();
   const all = useTeamAll();
   const { s, api } = useStore();
   const nav = useNavigate();
+  const loc = useLocation();
+  const decided = (loc.state as { decided?: string } | null)?.decided;
   const src = all.find((p) => p.id === id);
   const [p, setP] = useState<Proposal | null>(src ?? null);
   const [dlg, setDlg] = useState<Dlg>(null);
@@ -312,7 +314,18 @@ export function AdminVerify() {
   if (!src || !p) return <Navigate to="/equipe/propositions" replace />;
   const set = (patch: Partial<Proposal>) => { setP({ ...p, ...patch }); setSaved(false); };
   const cands = dupCandidates(p, s.providers, dupQ);
-  const decide = (status: Status, note: string) => { void api.decide(p.id, status, note); nav('/equipe/historique'); };
+  // File de traitement : propositions à traiter, les plus anciennes d'abord.
+  const queue = all.filter(actionable).sort((a, b) => ageHours(b) - ageHours(a));
+  const pos = queue.findIndex((x) => x.id === p.id);
+  const prev = pos > 0 ? queue[pos - 1] : undefined;
+  const next = pos >= 0 ? queue[pos + 1] : queue[0];
+  const others = queue.filter((x) => x.id !== p.id);
+  const after = others.find((x) => queue.indexOf(x) > pos) ?? others[0];
+  const decide = (status: Status, note: string) => {
+    void api.decide(p.id, status, note);
+    if (after) nav(`/equipe/propositions/${after.id}`, { state: { decided: status } });
+    else nav('/equipe/historique');
+  };
   const ready = !!p.name.trim() && !!p.loc.trim();
 
   const dialog = () => {
@@ -349,9 +362,14 @@ export function AdminVerify() {
   return (
     <>
       <Head title={tr(p.name)} sub={tr(`${p.cn} · ${catLabel(p.cat)} · ${cityName(p.city)} · reçue le ${src.date}`)}
-        right={<div className="row"><StatusBadge status={src.status} big /><Button to="/equipe/propositions" kind="s" icon="chevL" full={false}>{tr("Retour à la liste")}</Button></div>} />
+        right={<div className="row">
+          {pos >= 0 && <span className="small muted">{t('{0} sur {1} à traiter', { 0: pos + 1, 1: queue.length })}</span>}
+          {prev ? <Link className="iconbtn" to={`/equipe/propositions/${prev.id}`} aria-label={tr("Proposition précédente")} title={tr("Proposition précédente")}><Icon name="chevL" size={22} /></Link> : <span className="iconbtn off" aria-hidden="true"><Icon name="chevL" size={22} /></span>}
+          {next ? <Link className="iconbtn" to={`/equipe/propositions/${next.id}`} aria-label={tr("Proposition suivante")} title={tr("Proposition suivante")}><Icon name="chevR" size={22} /></Link> : <span className="iconbtn off" aria-hidden="true"><Icon name="chevR" size={22} /></span>}
+          <StatusBadge status={src.status} big /><Button to="/equipe/propositions" kind="s" icon="list" full={false}>{tr("Retour à la liste")}</Button></div>} />
       <div className="admin-body">
-        <div className="split">
+        {decided && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{t('Décision enregistrée : {0}.', { 0: tr(decided) })}</span></div>}
+        <div className="split verify">
           <div className="stack" style={{ gap: 20 }}>
             <Section title={tr("Informations proposées")} icon="edit">
               <div className="form2">
@@ -374,7 +392,19 @@ export function AdminVerify() {
               </div>
             </Section>
           </div>
-          <div className="stack" style={{ gap: 20 }}>
+          <div className="stack verify-side" style={{ gap: 20 }}>
+            <Section title={tr("Décision")} icon="shield">
+              <div className="small muted">{tr("Chaque publication ou refus demande une confirmation.")}</div>
+              {saveErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(saveErr)}</span></div>}
+              {saved && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr("Modifications enregistrées.")}</span></div>}
+              <div className="actions-grid">
+                <Button icon="check" onClick={() => setDlg('publish')}>{tr("Publier")}</Button>
+                <Button kind="d" icon="x" onClick={() => setDlg('refuse')}>{tr("Refuser avec un motif")}</Button>
+                <Button kind="s" icon="alert" onClick={() => setDlg('complement')}>{tr("Demander un complément")}</Button>
+                <Button kind="s" icon="link" onClick={() => setDlg('attach')}>{tr("Rattacher à une fiche existante")}</Button>
+              </div>
+              <Button kind="s" icon="edit" onClick={async () => { setSaveErr(null); const err = await api.edit(p); if (err) setSaveErr(err); else setSaved(true); }}>{tr("Enregistrer les modifications")}</Button>
+            </Section>
             <Section title={tr("Doublons possibles")} icon="search">
               <Field id="dq" label={tr("Rechercher une fiche existante")} type="search" value={dupQ} onChange={setDupQ} />
               {cands.length === 0 && <div className="small muted">{tr("Aucune fiche existante ne correspond.")}</div>}
@@ -386,16 +416,6 @@ export function AdminVerify() {
                 </div>
               ))}
             </Section>
-            <Section title={tr("Décision")} icon="shield">
-              <div className="small muted">{tr("Chaque publication ou refus demande une confirmation.")}</div>
-              {saveErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(saveErr)}</span></div>}
-              {saved && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr("Modifications enregistrées.")}</span></div>}
-              <Button kind="s" icon="edit" onClick={async () => { setSaveErr(null); const err = await api.edit(p); if (err) setSaveErr(err); else setSaved(true); }}>{tr("Enregistrer les modifications")}</Button>
-              <Button kind="s" icon="alert" onClick={() => setDlg('complement')}>{tr("Demander un complément")}</Button>
-              <Button kind="s" icon="link" onClick={() => setDlg('attach')}>{tr("Rattacher à une fiche existante")}</Button>
-              <Button icon="check" onClick={() => setDlg('publish')}>{tr("Publier")}</Button>
-              <Button kind="d" icon="x" onClick={() => setDlg('refuse')}>{tr("Refuser avec un motif")}</Button>
-            </Section>
           </div>
         </div>
         <DemoNote />
@@ -403,6 +423,11 @@ export function AdminVerify() {
       {tr(dialog())}
     </>
   );
+}
+
+export function AdminVerify() {
+  const { id } = useParams();
+  return <VerifyBody key={id} />;
 }
 
 export function AdminHistory() {
