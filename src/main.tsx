@@ -4,7 +4,10 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { StoreProvider } from './store';
+import '@fontsource-variable/bricolage-grotesque';
+import '@fontsource/gloock';
 import './styles.css';
+import './sceau.css';
 
 import { registerSW } from 'virtual:pwa-register';
 

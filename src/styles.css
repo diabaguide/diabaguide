@@ -5,8 +5,8 @@
   --input-border: #7787A6; --chip-border: #A3B0CB;
   --accent: #153E9F; --page: #E8EDF8; --nav-bg: rgba(255,255,255,.85); --skel: #DDE4F2; --th: #E8EDF8; --card-line: rgba(213,221,236,.55);
   --hero-a: #123794; --hero-b: #2F63D6; --shadow-sm: 0 1px 2px rgba(15,26,48,.04), 0 4px 14px rgba(21,62,159,.06); --shadow-md: 0 2px 4px rgba(15,26,48,.04), 0 12px 28px rgba(21,62,159,.12);
-  --font-body: Figtree, 'Noto Sans SC', system-ui, sans-serif;
-  --font-display: Newsreader, Georgia, 'Noto Sans SC', serif;
+  --font-body: 'Bricolage Grotesque Variable', 'Noto Sans SC', system-ui, sans-serif;
+  --font-display: Gloock, 'Noto Serif SC', Georgia, serif;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
