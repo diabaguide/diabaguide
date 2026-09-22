@@ -53,7 +53,7 @@ export function FichesList() {
             {rows.map((p) => (
               <tr key={p.id}>
                 <td className="thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={48} w={48} round={8} /></td>
-                <td><strong>{p.name}</strong><div className="small muted zh">{p.cn}</div></td>
+                <td><strong>{p.name}</strong>{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}<div className="small muted zh">{p.cn}</div></td>
                 <td>{tr(catLabel(p.cat))}</td><td>{tr(cityName(p.city))}</td><td>{p.verified || '—'}</td>
                 <td><Link className="link" to={`/equipe/fiches/${p.id}`}>{tr("Modifier")}<Icon name="chevR" size={18} sw={2.4} /></Link></td>
               </tr>
@@ -195,6 +195,12 @@ export function FicheEdit() {
           <Section title="Actions" icon="check">
             {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
             {saved && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr("Fiche enregistrée.")}</span></div>}
+            {isAdmin && (
+              <label className="check">
+                <input type="checkbox" checked={!!p.featured} onChange={(e) => set({ featured: e.target.checked })} />
+                <span>{tr("Mettre en avant sur la page d’accueil")}</span>
+              </label>
+            )}
             <Button icon="check" onClick={save} disabled={busy}>{tr(isNew ? 'Créer la fiche' : 'Enregistrer')}</Button>
             {!isNew && !isAdmin && <Button kind="d" icon="trash" onClick={() => { setReason(''); setDlg('request'); }} disabled={busy}>{tr("Demander la suppression")}</Button>}
             {!isNew && isAdmin && <Button kind="d" icon="trash" onClick={() => setDlg('delete')} disabled={busy}>{tr("Supprimer définitivement")}</Button>}
