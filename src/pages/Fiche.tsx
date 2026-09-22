@@ -127,7 +127,7 @@ export function Fiche() {
           <button type="button" className={`btn btn-tog ${fav ? 'on' : ''}`} aria-pressed={fav}
             onClick={() => { d({ t: 'fav', id: p.id }); setMsg(fav ? 'Retiré de vos favoris.' : 'Ajouté à vos favoris.'); }}><Icon name="heart" size={20} />{tr(fav ? 'Favori ajouté' : 'Ajouter aux favoris')}</button>
           <button type="button" className={`btn btn-tog ${dl ? 'on' : ''}`} aria-pressed={dl}
-            onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Fiche téléchargée : elle sera consultable hors connexion.'); }}><Icon name="download" size={20} />{tr(dl ? 'Fiche téléchargée' : 'Télécharger la fiche')}</button>
+            onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Cette fiche est maintenant disponible hors connexion, sans qu’aucun fichier ne soit enregistré sur l’appareil.'); }}><Icon name="download" size={20} />{tr(dl ? 'Disponible hors connexion' : 'Rendre disponible hors connexion')}</button>
           <button type="button" className="btn btn-tog" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
           <Link to={`/adresses/${p.id}/signaler`} className="btn btn-tog"><Icon name="edit" size={20} />{tr("Proposer une correction")}</Link>
         </div>

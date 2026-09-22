@@ -2693,5 +2693,25 @@
     "en": "Search for a person",
     "zh": "搜索成员",
     "ar": "البحث عن شخص"
+  },
+  "Rendre disponible hors connexion": {
+    "en": "Make available offline",
+    "zh": "设为离线可用",
+    "ar": "إتاحة الاطلاع بدون اتصال"
+  },
+  "Disponible hors connexion": {
+    "en": "Available offline",
+    "zh": "离线可用",
+    "ar": "متاح بدون اتصال"
+  },
+  "Cette fiche est maintenant disponible hors connexion, sans qu’aucun fichier ne soit enregistré sur l’appareil.": {
+    "en": "This listing is now available offline — no file is saved on the device.",
+    "zh": "该信息现已可离线查看，设备上不会保存任何文件。",
+    "ar": "أصبحت هذه البطاقة متاحة الآن بدون اتصال، دون حفظ أي ملف على الجهاز."
+  },
+  "Disponible hors connexion depuis le ": {
+    "en": "Available offline since ",
+    "zh": "自 ",
+    "ar": "متاح بدون اتصال منذ "
   }
 }

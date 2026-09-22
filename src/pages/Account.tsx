@@ -54,11 +54,11 @@ export function Favorites() {
               </Link>
               <div className="row wrap">
                 <Tag tone="fav" icon="heart">{tr("Favori")}</Tag>
-                {date ? <Tag tone="ok" icon="download">{tr("Téléchargée le ")}{tr(date)}</Tag> : locked && <Tag tone="muted" icon="lock">{tr("Non disponible hors connexion")}</Tag>}
+                {date ? <Tag tone="ok" icon="download">{tr("Disponible hors connexion depuis le ")}{tr(date)}</Tag> : locked && <Tag tone="muted" icon="lock">{tr("Non disponible hors connexion")}</Tag>}
               </div>
               {online && (date
                 ? <Button kind="s" icon="trash" onClick={() => d({ t: 'dl', id: p.id })}>{tr("Retirer du hors connexion")}</Button>
-                : <Button icon="download" onClick={() => d({ t: 'dl', id: p.id })}>{tr("Télécharger la fiche")}</Button>)}
+                : <Button icon="download" onClick={() => d({ t: 'dl', id: p.id })}>{tr("Rendre disponible hors connexion")}</Button>)}
               {!online && date && <Button to={`/adresses/${p.id}`}>{tr("Consulter la fiche")}</Button>}
             </div>
           );
@@ -123,7 +123,7 @@ export function Downloads() {
           return (
             <div key={id} className="card stack" style={{ gap: 10 }}>
               <div><div style={{ fontWeight: 700, fontSize: 17 }}>{p.name}</div><div className="small muted zh">{p.cn}</div></div>
-              <div className="row small muted"><Icon name="clock" size={16} />{tr("Téléchargée le ")}{tr(s.downloads[id])}</div>
+              <div className="row small muted"><Icon name="clock" size={16} />{tr("Disponible hors connexion depuis le ")}{tr(s.downloads[id])}</div>
               <div className="grid2">
                 <Button kind="s" icon="refresh" onClick={() => { d({ t: 'dl', id }); d({ t: 'dl', id }); }}>{tr("Mettre à jour")}</Button>
                 <Button kind="s" icon="trash" onClick={() => d({ t: 'dl', id })}>{tr("Supprimer")}</Button>
