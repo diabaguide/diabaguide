@@ -15,6 +15,33 @@ const isStandalone = () =>
   (typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches)
   || (navigator as unknown as { standalone?: boolean }).standalone === true;
 
+/* Boutons côte à côte pour un petit nombre de villes ; liste déroulante
+   au-delà, pour ne jamais déborder sur mobile quand on en ajoute plusieurs. */
+const CITY_BUTTONS_MAX = 4;
+function CitySwitch() {
+  const { tr } = useI18n();
+  const { s, d } = useStore();
+  const active = s.cities.filter((c) => c.active);
+  if (active.length > CITY_BUTTONS_MAX) {
+    return (
+      <label className="city-switch">
+        <span className="sr">{tr("Ville")}</span>
+        <Icon name="pin" size={18} />
+        <select value={s.city} onChange={(e) => d({ t: 'city', v: e.target.value })}>
+          {active.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </label>
+    );
+  }
+  return (
+    <div className="seg" role="group" aria-label={tr("Ville")}>
+      {active.map((c) => (
+        <button key={c.id} type="button" className={s.city === c.id ? 'on' : ''} aria-pressed={s.city === c.id} onClick={() => d({ t: 'city', v: c.id })}>{tr(s.city === c.id && '✓ ')}{c.name}</button>
+      ))}
+    </div>
+  );
+}
+
 export function Home() {
   const { tr } = useI18n();
   const { s, d } = useStore();
@@ -39,11 +66,7 @@ export function Home() {
           <span className="seal seal-sm" aria-hidden="true"><span>指</span><span>南</span></span>
         </div>
         <div className="hello display">{tr("Bonjour ")}{s.user?.name.split(' ')[0]}</div>
-        <div className="seg" role="group" aria-label={tr("Ville")}>
-          {s.cities.filter((c) => c.active).map((c) => (
-            <button key={c.id} type="button" className={s.city === c.id ? 'on' : ''} aria-pressed={s.city === c.id} onClick={() => d({ t: 'city', v: c.id })}>{tr(s.city === c.id && '✓ ')}{c.name}</button>
-          ))}
-        </div>
+        <CitySwitch />
         <Link to={`/recherche?ville=${s.city}`} className="searchfake" aria-label={tr("Rechercher un produit ou un service")}>
           <Icon name="search" /><span>{tr("Quel produit ou service cherchez-vous ?")}</span>
         </Link>
