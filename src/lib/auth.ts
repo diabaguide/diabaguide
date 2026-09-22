@@ -50,6 +50,10 @@ export async function signUp(
   if (!supabase) return { error: 'Supabase non configuré.' };
   const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name, phone } } });
   if (error) return { error: translate(error.message) };
+  // Avec la confirmation par e-mail activée, Supabase ne renvoie pas d'erreur
+  // pour un e-mail déjà utilisé (afin de ne pas révéler les comptes existants) :
+  // `identities` est alors vide au lieu de contenir la nouvelle identité créée.
+  if (data.user?.identities?.length === 0) return { error: 'Un compte existe déjà pour cette adresse e-mail.' };
   if (!data.session) return { needsConfirm: true }; // confirmation par e-mail activée
   return { user: await profileFor(data.user!.id, email, name, phone) };
 }
