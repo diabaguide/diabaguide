@@ -4,8 +4,9 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { StoreProvider } from './store';
-import '@fontsource-variable/bricolage-grotesque';
-import '@fontsource/gloock';
+import '@fontsource-variable/plus-jakarta-sans';
+import '@fontsource/playfair-display/400.css';
+import '@fontsource/playfair-display/600.css';
 import './styles.css';
 import './sceau.css';
 

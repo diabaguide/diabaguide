@@ -46,7 +46,7 @@ function CitySwitch() {
 }
 
 export function Home() {
-  const { tr } = useI18n();
+  const { tr, t } = useI18n();
   const { s, d } = useStore();
   const [evt, setEvt] = useState<InstallEvent | null>(null);
   useEffect(() => {
@@ -59,7 +59,13 @@ export function Home() {
     window.addEventListener('appinstalled', onInstalled);
     return () => { window.removeEventListener('beforeinstallprompt', onPromptable); window.removeEventListener('appinstalled', onInstalled); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const featured = s.providers.filter((p) => p.featured && p.city === s.city);
+  // Priorité aux fiches mises en avant par l'équipe ; complétée avec d'autres
+  // fiches de la ville pour ne jamais paraître vide quand il y en a peu.
+  const MIN_SELECTION = 4;
+  const cityProviders = s.providers.filter((p) => p.city === s.city);
+  const cityFeatured = cityProviders.filter((p) => p.featured);
+  const selection = cityFeatured.length >= MIN_SELECTION ? cityFeatured
+    : [...cityFeatured, ...cityProviders.filter((p) => !p.featured)].slice(0, MIN_SELECTION);
 
   return (
     <Screen className="sceau" wide>
@@ -68,6 +74,7 @@ export function Home() {
           <Logo height={30} tail="GUIDE" />
           <span className="seal seal-sm" aria-hidden="true"><span>指</span><span>南</span></span>
         </div>
+        <span className="hero-eyebrow">{tr("Conciergerie Diaba")}<i aria-hidden="true">•</i>{t('{0} ville(s)', { 0: s.cities.filter((c) => c.active).length })}</span>
         <div className="hello display">{tr("Bonjour ")}{s.user?.name.split(' ')[0]}</div>
         <CitySwitch />
         <Link to={`/recherche?ville=${s.city}`} className="searchfake" aria-label={tr("Rechercher un produit ou un service")}>
@@ -93,17 +100,22 @@ export function Home() {
         <section aria-label={tr("Catégories")}>
           <h2 className="display" style={{ fontSize: 19, marginBottom: 12 }}>{tr("Que cherchez-vous ?")}</h2>
           <div className="cattiles">
-            {s.categories.filter((c) => c.active).map((c, i, arr) => (
-              <Link key={c.id} to={`/recherche?cat=${c.id}&ville=${s.city}`} className={`cattile ${arr.length % 2 === 1 && i === arr.length - 1 ? 'wide' : ''}`}>
-                <span className="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
-                <span className="ico"><Icon name={c.icon} size={24} /></span>{tr(c.label)}
-              </Link>
-            ))}
+            {s.categories.filter((c) => c.active).map((c, i, arr) => {
+              const n = s.providers.filter((p) => p.cat === c.id && p.city === s.city).length;
+              return (
+                <Link key={c.id} to={`/recherche?cat=${c.id}&ville=${s.city}`} className={`cattile ${arr.length % 2 === 1 && i === arr.length - 1 ? 'wide' : ''}`}>
+                  <span className="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="ico"><Icon name={c.icon} size={24} /></span>
+                  <span>{tr(c.label)}</span>
+                  <span className="cattile-sub">{c.labelCn && <span className="zh">{c.labelCn} · </span>}{t('{0} lieu(x)', { 0: n })}</span>
+                </Link>
+              );
+            })}
           </div>
         </section>
         <section className="stack cards-grid">
           <h2 className="display" style={{ fontSize: 19 }}>{tr("Sélection Diaba · ")}{tr(cityName(s.city))}</h2>
-          {featured.map((p) => <ResultCard key={p.id} p={p} />)}
+          {selection.map((p) => <ResultCard key={p.id} p={p} />)}
         </section>
         <section className="card sec">
           <h2 className="display" style={{ fontSize: 19 }}><Icon name="pin" size={22} />{tr("À proximité")}</h2>

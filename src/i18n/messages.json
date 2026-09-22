@@ -644,6 +644,26 @@
     "zh": "查看详情",
     "ar": "فتح البطاقة"
   },
+  "Fiche complète": {
+    "en": "Full listing",
+    "zh": "完整详情",
+    "ar": "البطاقة الكاملة"
+  },
+  "Conciergerie Diaba": {
+    "en": "Diaba Concierge",
+    "zh": "Diaba 礼宾服务",
+    "ar": "كونسيرج Diaba"
+  },
+  "{0} ville(s)": {
+    "en": "{0} cities",
+    "zh": "{0} 个城市",
+    "ar": "{0} مدينة/مدن"
+  },
+  "{0} lieu(x)": {
+    "en": "{0} places",
+    "zh": "{0} 处",
+    "ar": "{0} مكان/أماكن"
+  },
   "Réinitialiser": {
     "en": "Reset",
     "zh": "重置",

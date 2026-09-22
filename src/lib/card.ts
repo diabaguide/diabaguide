@@ -9,8 +9,8 @@ const W = 1080;
 const H = 1350;
 const PAD = 72;
 const BAND = 150;   // hauteur du bandeau vermillon final
-const SANS = "'Bricolage Grotesque Variable','Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif";
-const SERIF = "Gloock,'Noto Serif SC','Songti SC',Georgia,serif";
+const SANS = "'Plus Jakarta Sans Variable','Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif";
+const SERIF = "'Playfair Display','Noto Serif SC','Songti SC',Georgia,serif";
 const INDIGO = '#151C4A';
 const INDIGO_2 = '#243073';
 const PAPER = '#F3ECDD';
@@ -177,7 +177,7 @@ export async function renderCard(p: Provider): Promise<Blob> {
   // Les polices web doivent être prêtes, sinon le chinois est dessiné avec une police de secours.
   try {
     await Promise.all([
-      `700 40px 'Bricolage Grotesque Variable'`, `500 40px 'Bricolage Grotesque Variable'`, `40px Gloock`,
+      `700 40px 'Plus Jakarta Sans Variable'`, `500 40px 'Plus Jakarta Sans Variable'`, `400 40px 'Playfair Display'`,
       `700 40px 'Noto Sans SC'`, `500 40px 'Noto Sans SC'`,
     ].map((f) => document.fonts.load(f, p.cn + p.addrCn + '指南名称地址电话微信请带我到这个谢DIABA')));
   } catch { /* on continue avec les polices disponibles */ }
