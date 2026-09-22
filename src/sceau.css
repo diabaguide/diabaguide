@@ -88,22 +88,20 @@
 .sceau .btn-p:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--seal); }
 .sceau .btn-s { background: transparent; border: 1.5px solid var(--hero-a); box-shadow: none; }
 
-@media (prefers-color-scheme: dark) {
-  .sceau {
-    --paper: #0A0D24; --bg: #0A0D24; --surface: #12173A; --ink: #EFE7D4; --muted: #A9AAC6;
-    --accent: #E9DDB8; --primary: #2A3A86; --primary-light: #5B6FD0; --hero-a: #0A0F2E; --hero-b: #1E2A6B;
-    --card-line: rgba(233,221,184,.16); --line: rgba(233,221,184,.2); --info-bg: #1A2050; --seal: #EE5A3C; --gold-text: #F0CF7A;
-  }
-  .sceau .cattile { box-shadow: 4px 4px 0 rgba(0,0,0,.4); }
-  .sceau .cattile:hover, .sceau .cattile:active { background: var(--seal); color: #fff; border-color: var(--seal); box-shadow: 6px 6px 0 rgba(0,0,0,.5); }
-  .sceau .cattile:hover .num { color: #fff; }
-  .sceau .rcard { box-shadow: 4px 4px 0 rgba(0,0,0,.4); }
-  .sceau .rcard:hover, .sceau .rcard:active { border-color: var(--seal); box-shadow: 6px 6px 0 rgba(0,0,0,.5); }
-  .sceau .btn-p { background: var(--seal); color: #fff; box-shadow: 4px 4px 0 #0A0F2E; }
-  .sceau .btn-p:hover { box-shadow: 5px 5px 0 #0A0F2E; }
-  .sceau .btn-s { border-color: var(--accent); color: var(--accent); }
-  .sceau .searchfake { color: #3d3f5c; }
+:root[data-theme="dark"] .sceau {
+  --paper: #0A0D24; --bg: #0A0D24; --surface: #12173A; --ink: #EFE7D4; --muted: #A9AAC6;
+  --accent: #E9DDB8; --primary: #2A3A86; --primary-light: #5B6FD0; --hero-a: #0A0F2E; --hero-b: #1E2A6B;
+  --card-line: rgba(233,221,184,.16); --line: rgba(233,221,184,.2); --info-bg: #1A2050; --seal: #EE5A3C; --gold-text: #F0CF7A;
 }
+:root[data-theme="dark"] .sceau .cattile { box-shadow: 4px 4px 0 rgba(0,0,0,.4); }
+:root[data-theme="dark"] .sceau .cattile:hover, :root[data-theme="dark"] .sceau .cattile:active { background: var(--seal); color: #fff; border-color: var(--seal); box-shadow: 6px 6px 0 rgba(0,0,0,.5); }
+:root[data-theme="dark"] .sceau .cattile:hover .num { color: #fff; }
+:root[data-theme="dark"] .sceau .rcard { box-shadow: 4px 4px 0 rgba(0,0,0,.4); }
+:root[data-theme="dark"] .sceau .rcard:hover, :root[data-theme="dark"] .sceau .rcard:active { border-color: var(--seal); box-shadow: 6px 6px 0 rgba(0,0,0,.5); }
+:root[data-theme="dark"] .sceau .btn-p { background: var(--seal); color: #fff; box-shadow: 4px 4px 0 #0A0F2E; }
+:root[data-theme="dark"] .sceau .btn-p:hover { box-shadow: 5px 5px 0 #0A0F2E; }
+:root[data-theme="dark"] .sceau .btn-s { border-color: var(--accent); color: var(--accent); }
+:root[data-theme="dark"] .sceau .searchfake { color: #3d3f5c; }
 
 /* La pastille de légende reste claire : son texte doit rester foncé, même en mode sombre. */
 .sceau .photo-cap { color: #1A2350; }

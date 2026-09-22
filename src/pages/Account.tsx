@@ -2,7 +2,7 @@ import { useI18n } from '../i18n';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { catLabel, type Provider } from '../data';
-import { useOnline, useStore, type LocPref } from '../store';
+import { useOnline, useStore, type LocPref, type Theme } from '../store';
 import { isTeamRole, signOut } from '../lib/auth';
 import { Button, DemoNote, Icon, RadioCard, Screen, StoredPhoto, Tag, TopBar } from '../ui';
 import { LangSwitch } from './Access';
@@ -79,6 +79,11 @@ export function Profile() {
     { v: 'while', l: 'Autoriser pendant l’utilisation' },
     { v: 'never', l: 'Ne pas utiliser ma position', sub: 'Choix manuel du quartier' },
   ];
+  const themes: { v: Theme; l: string; sub?: string; icon: 'auto' | 'sun' | 'moon' }[] = [
+    { v: 'system', l: 'Comme mon appareil', sub: 'Recommandé', icon: 'auto' },
+    { v: 'light', l: 'Clair', icon: 'sun' },
+    { v: 'dark', l: 'Sombre', icon: 'moon' },
+  ];
   return (
     <Screen>
       <TopBar title={tr("Profil")} />
@@ -94,6 +99,9 @@ export function Profile() {
           <Link className="listrow" to="/profil/telechargements"><Icon name="download" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Fiches téléchargées")}</div><div className="small muted">{tr(Object.keys(s.downloads).length)} {tr(" fiche(s) disponibles hors connexion")}</div></div><Icon name="chevR" size={20} /></Link>
           <Link className="listrow" to="/contributions"><Icon name="pen" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Mes contributions")}</div><div className="small muted">{tr(s.proposals.filter((p) => p.status === 'Complément demandé').length)} {tr(" complément demandé")}</div></div><Icon name="chevR" size={20} /></Link>
           {isTeamRole(s.user?.role) && <Link className="listrow" to="/equipe"><Icon name="shield" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Espace équipe Diaba")}</div></div><Icon name="chevR" size={20} /></Link>}
+        </section>
+        <section className="stack"><h2 className="row" style={{ fontSize: 17 }}><Icon name="sun" size={20} />{tr("Apparence")}</h2>
+          {themes.map((x) => <RadioCard key={x.v} name="theme" icon={x.icon} label={tr(x.l)} sub={tr(x.sub)} checked={s.theme === x.v} onChange={() => d({ t: 'theme', v: x.v })} />)}
         </section>
         <section className="stack"><h2 className="row" style={{ fontSize: 17 }}><Icon name="pin" size={20} />{tr("Préférences de localisation")}</h2>
           {prefs.map((x) => <RadioCard key={x.v} name="loc" label={tr(x.l)} sub={tr(x.sub)} checked={s.locPref === x.v} onChange={() => d({ t: 'locPref', v: x.v })} />)}

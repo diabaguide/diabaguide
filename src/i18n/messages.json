@@ -1219,6 +1219,26 @@
     "zh": "位置设置",
     "ar": "تفضيلات الموقع"
   },
+  "Apparence": {
+    "en": "Appearance",
+    "zh": "外观",
+    "ar": "المظهر"
+  },
+  "Comme mon appareil": {
+    "en": "Match my device",
+    "zh": "跟随设备设置",
+    "ar": "مثل جهازي"
+  },
+  "Clair": {
+    "en": "Light",
+    "zh": "浅色",
+    "ar": "فاتح"
+  },
+  "Sombre": {
+    "en": "Dark",
+    "zh": "深色",
+    "ar": "داكن"
+  },
   "Se déconnecter": {
     "en": "Sign out",
     "zh": "退出登录",

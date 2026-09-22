@@ -15,12 +15,14 @@ import {
 
 export type Lang = 'fr' | 'en' | 'zh' | 'ar';
 export type LocPref = 'ask' | 'while' | 'never';
+export type Theme = 'system' | 'light' | 'dark';
 
 interface User { id?: string; name: string; email: string; role: Role }
 interface State {
   user: User | null;
   authReady: boolean; // la session Supabase a-t-elle été vérifiée ?
   lang: Lang;
+  theme: Theme;
   city: City;
   locPref: LocPref;
   favorites: string[];
@@ -43,7 +45,7 @@ interface State {
 
 const KEY = 'diaba-guide-state-v1';
 const initial: State = {
-  user: null, authReady: !isSupabaseConfigured, lang: 'fr', city: 'guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'],
+  user: null, authReady: !isSupabaseConfigured, lang: 'fr', theme: 'system', city: 'guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'],
   downloads: { baiyun: '18 sept. 2026', jinyuan: '18 sept. 2026' }, lastSync: '19 sept. 2026, 09:12',
   providers: PROVIDERS, pendingDeletion: [],
   categories: STATIC_CATEGORIES, cities: STATIC_CITIES, districts: STATIC_DISTRICTS, productTags: [],
@@ -58,6 +60,7 @@ type Action =
   | { t: 'logout' }
   | { t: 'session'; user: User | null } // résultat de la vérification de session Supabase
   | { t: 'lang'; v: Lang }
+  | { t: 'theme'; v: Theme }
   | { t: 'city'; v: City }
   | { t: 'locPref'; v: LocPref }
   | { t: 'fav'; id: string }
@@ -89,6 +92,7 @@ function reducer(s: State, a: Action): State {
     case 'logout': return { ...s, user: null, authReady: true, ...cleared };
     case 'session': return { ...s, user: a.user, authReady: true, ...(a.user ? {} : cleared) };
     case 'lang': return { ...s, lang: a.v };
+    case 'theme': return { ...s, theme: a.v };
     case 'city': return { ...s, city: a.v };
     case 'locPref': return { ...s, locPref: a.v };
     case 'fav': return { ...s, favorites: s.favorites.includes(a.id) ? s.favorites.filter((x) => x !== a.id) : [...s.favorites, a.id] };
@@ -197,12 +201,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [s, d] = useReducer(reducer, undefined, load);
   const sRef = useRef(s); sRef.current = s;
 
+  // Applique le thème choisi (ou celui du système si « system ») sur <html>,
+  // et suit les changements du système tant qu'aucun choix explicite n'est fait.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (s.theme !== 'system') { root.setAttribute('data-theme', s.theme); return; }
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => root.setAttribute('data-theme', mq.matches ? 'dark' : 'light');
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, [s.theme]);
+
   useEffect(() => {
     // On ne persiste pas les données rechargées depuis Supabase (providers,
     // proposals, decisions) ni la session (`user`, `authReady`).
     try {
       const base = {
-        lang: s.lang, city: s.city, locPref: s.locPref, favorites: s.favorites,
+        lang: s.lang, theme: s.theme, city: s.city, locPref: s.locPref, favorites: s.favorites,
         downloads: s.downloads, lastSync: s.lastSync, draft: s.draft, installDismissed: s.installDismissed,
         providers: s.providers, pendingDeletion: s.pendingDeletion, categories: s.categories, cities: s.cities, districts: s.districts, productTags: s.productTags
       };
