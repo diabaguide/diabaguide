@@ -44,18 +44,18 @@ export function Welcome() {
         <div className="gold-rule" />
         <h1 className="display" style={{ fontSize: 34 }}>{tr("Vos adresses professionnelles en Chine")}</h1>
         <p>{tr("Fournisseurs en gros, hôtels, restaurants, transporteurs et transitaires à Guangzhou et Shenzhen, pour préparer vos déplacements d’affaires.")}</p>
-        <Photo label={tr("Marché de gros, Guangzhou")} h={150} round={16} src="/guangzhou.jpg" />
         <span className="seal seal-lg" aria-hidden="true"><span>指</span><span>南</span></span>
       </div>
-      <div className="main" style={{ paddingTop: 26 }}>
-        {[['shield', 'Des adresses relues et vérifiées par l’équipe Diaba'], ['pin', 'L’adresse en chinois, prête à montrer au chauffeur'], ['download', 'Vos fiches favorites, même sans connexion']].map(([i, t]) => (
-          <div className="benefit" key={t}><span className="ico"><Icon name={i as 'shield'} /></span><span>{tr(t)}</span></div>
-        ))}
-      </div>
-      <div className="stack" style={{ padding: '0 20px 20px' }}>
+      <div className="stack" style={{ padding: '20px 20px 4px' }}>
         <Button to="/inscription">{tr("Créer mon compte")}</Button>
         <Button to="/connexion" kind="s">{tr("Se connecter")}</Button>
         <p className="small muted center">{tr("Un compte est nécessaire pour consulter les adresses. Version de démonstration.")}</p>
+      </div>
+      <div className="main" style={{ paddingTop: 10 }}>
+        <Photo label={tr("Marché de gros, Guangzhou")} h={120} round={16} src="/guangzhou.jpg" />
+        {[['shield', 'Des adresses relues et vérifiées par l’équipe Diaba'], ['pin', 'L’adresse en chinois, prête à montrer au chauffeur'], ['download', 'Vos fiches favorites, même sans connexion']].map(([i, t]) => (
+          <div className="benefit" key={t}><span className="ico"><Icon name={i as 'shield'} /></span><span>{tr(t)}</span></div>
+        ))}
       </div>
     </Screen>
   );
