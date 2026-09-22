@@ -754,6 +754,11 @@
     "zh": "添加到收藏",
     "ar": "إضافة إلى المفضلة"
   },
+  "Retirer des favoris": {
+    "en": "Remove from favorites",
+    "zh": "从收藏中移除",
+    "ar": "إزالة من المفضلة"
+  },
   "Retiré de vos favoris.": {
     "en": "Removed from your favorites.",
     "zh": "已从收藏中移除。",

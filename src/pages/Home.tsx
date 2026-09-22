@@ -22,21 +22,24 @@ function CitySwitch() {
   const { tr } = useI18n();
   const { s, d } = useStore();
   const active = s.cities.filter((c) => c.active);
+  const count = (id: string) => s.providers.filter((p) => p.city === id).length;
   if (active.length > CITY_BUTTONS_MAX) {
     return (
       <label className="city-switch">
         <span className="sr">{tr("Ville")}</span>
         <Icon name="pin" size={18} />
         <select value={s.city} onChange={(e) => d({ t: 'city', v: e.target.value })}>
-          {active.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {active.map((c) => <option key={c.id} value={c.id}>{c.name} ({count(c.id)})</option>)}
         </select>
       </label>
     );
   }
   return (
-    <div className="seg" role="group" aria-label={tr("Ville")}>
+    <div className="seg city-seg" role="group" aria-label={tr("Ville")}>
       {active.map((c) => (
-        <button key={c.id} type="button" className={s.city === c.id ? 'on' : ''} aria-pressed={s.city === c.id} onClick={() => d({ t: 'city', v: c.id })}>{tr(s.city === c.id && '✓ ')}{c.name}</button>
+        <button key={c.id} type="button" className={s.city === c.id ? 'on' : ''} aria-pressed={s.city === c.id} onClick={() => d({ t: 'city', v: c.id })}>
+          {tr(s.city === c.id && '✓ ')}{c.name}<span className="citycount">{count(c.id)}</span>
+        </button>
       ))}
     </div>
   );

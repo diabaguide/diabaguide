@@ -93,6 +93,9 @@ h1, h2, h3, p { margin: 0; }
 .seg { display: flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
 .seg button, .seg a { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 0; border-radius: 10px; background: transparent; color: var(--accent); font: inherit; font-weight: 500; cursor: pointer; text-decoration: none; }
 .seg .on { background: var(--primary); color: #fff; font-weight: 700; }
+.city-seg { flex-wrap: wrap; }
+.city-seg button { flex: none; padding: 0 14px; }
+.citycount { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; padding: 0 6px; border-radius: 999px; font-size: 11px; font-weight: 700; background: color-mix(in srgb, currentColor 16%, transparent); }
 .city-switch { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; color: var(--accent); }
 .city-switch select { flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
 .hero .city-switch { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .28); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; }
@@ -121,10 +124,14 @@ h1, h2, h3, p { margin: 0; }
 .logo-tail { font-size: 13px; font-weight: 700; letter-spacing: 4px; color: var(--gold-text); }
 
 /* Résultats */
-.rcard { display: flex; gap: 12px; padding: 12px; background: var(--surface); border: 1px solid var(--card-line); border-radius: 18px; text-decoration: none; color: var(--ink); box-shadow: 0 4px 12px rgba(21, 62, 159, 0.04); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.rcard { position: relative; display: flex; gap: 12px; padding: 12px; background: var(--surface); border: 1px solid var(--card-line); border-radius: 18px; color: var(--ink); box-shadow: 0 4px 12px rgba(21, 62, 159, 0.04); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 .rcard:hover, .rcard:active { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(21, 62, 159, 0.08); border-color: var(--primary-light); }
 .rcard .name { font-weight: 700; font-size: 17px; line-height: 1.2; }
 .rcard .meta { font-size: 13px; color: var(--muted); margin-top: auto; }
+.rcard-link { position: absolute; inset: 0; z-index: 0; border-radius: inherit; }
+.rcard-fav { position: relative; z-index: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: -6px -4px 0 0; border-radius: 999px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.rcard-fav:hover { background: var(--danger-bg); color: var(--danger); }
+.rcard-fav[aria-pressed="true"] { color: var(--danger); }
 
 /* Écrans spécifiques */
 .hero { background: linear-gradient(140deg, var(--hero-a) 0%, var(--hero-b) 100%); color: #fff; padding: 20px; border-radius: 0 0 28px 28px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 8px 24px rgba(21, 62, 159, 0.15); }
@@ -375,9 +382,10 @@ body { -webkit-font-smoothing: antialiased; }
   .phone.has-nav .screen.wide .hero { padding: 36px 40px 60px; }
   .phone.has-nav .screen.wide .hero .searchfake { max-width: 760px; }
   .phone.has-nav .screen.wide .hero .seg { max-width: 440px; }
-  .phone.has-nav .screen.wide .cattiles { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .phone.has-nav .screen.wide .hero .city-seg { max-width: none; }
+  .phone.has-nav .screen.wide .cattiles { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
   .phone.has-nav .screen.wide .cattile.wide { grid-column: auto; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 124px; }
-  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px; }
   .cards-grid > h2 { grid-column: 1 / -1; }
   .phone.has-nav .screen.wide .install, .phone.has-nav .screen.wide .main > .card.sec { max-width: 760px; }
   .phone.has-nav .screen.wide .main > .btn { align-self: flex-start; }

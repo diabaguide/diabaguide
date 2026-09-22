@@ -8,17 +8,26 @@ import { Button, Chip, DemoNote, Field, Icon, Screen, Stars, StoredPhoto, useWid
 
 export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
   const { tr } = useI18n();
+  const { s, d } = useStore();
+  const fav = s.favorites.includes(p.id);
   return (
-    <Link to={`/adresses/${p.id}`} className="rcard">
+    <article className="rcard">
+      <Link to={`/adresses/${p.id}`} className="rcard-link" aria-label={p.name} />
       <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={104} w={104} round={12} />
       <div className="stack grow" style={{ gap: 3 }}>
-        <span className="name">{p.name}</span>
+        <span className="row" style={{ justifyContent: 'space-between', gap: 6 }}>
+          <span className="name">{p.name}</span>
+          <button type="button" className="rcard-fav" aria-pressed={fav} aria-label={tr(fav ? 'Retirer des favoris' : 'Ajouter aux favoris')}
+            onClick={(e) => { e.preventDefault(); d({ t: 'fav', id: p.id }); }}>
+            <Icon name="heart" size={18} sw={fav ? 0 : 2} fill={fav ? 'currentColor' : 'none'} />
+          </button>
+        </span>
         <span className="small muted zh">{p.cn}</span>
         <span className="small row" style={{ gap: 6 }}><Icon name={catIcon(p.cat)} size={16} sw={2} />{tr(catLabel(p.cat))} · {tr(p.district)}</span>
         <Stars avg={p.ratingAvg} count={p.ratingCount} size={14} />
         <span className="meta">{tr(meta ?? `Vérifiée le ${p.verified}`)}</span>
       </div>
-    </Link>
+    </article>
   );
 }
 
