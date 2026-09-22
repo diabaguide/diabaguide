@@ -17,7 +17,12 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured
-  ? createClient(url!, anonKey!)
+  // flowType 'pkce' (recommandé par Supabase pour les apps navigateur) : la
+  // connexion Google renvoie un ?code= échangé côté client, plus fiable que
+  // l'ancien flux « implicit » (jeton dans le fragment d'URL), notamment
+  // avec les protections anti-traçage (Safari, Brave, Firefox strict) qui
+  // provoquaient parfois un échec nécessitant de relancer la connexion.
+  ? createClient(url!, anonKey!, { auth: { flowType: 'pkce' } })
   : null;
 
 if (!isSupabaseConfigured && import.meta.env.DEV) {
