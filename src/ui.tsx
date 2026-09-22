@@ -38,11 +38,13 @@ export function Logo({ height = 40, tail }: { height?: number; tail?: string }) 
   );
 }
 
-/* Photo privée du bucket Supabase : URL temporaire ; emplacement rayé si absente ou illisible. */
+/* Photo privée du bucket Supabase : URL temporaire ; emplacement rayé si absente ou illisible.
+   Un chemin déjà en http(s) (données de démonstration) est utilisé tel quel, sans passer par Supabase. */
 export function StoredPhoto({ path, label, h, w, round, bucket }: { path?: string; label: string; h?: number; w?: number | string; round?: number; bucket?: PhotoBucket }) {
-  const [url, setUrl] = useState<string | undefined>();
+  const [url, setUrl] = useState<string | undefined>(path?.startsWith('http') ? path : undefined);
   useEffect(() => {
     let live = true;
+    if (path?.startsWith('http')) { setUrl(path); return; }
     setUrl(undefined);
     if (path) photoUrl(path, 3600, bucket).then((u) => { if (live && u) setUrl(u); });
     return () => { live = false; };

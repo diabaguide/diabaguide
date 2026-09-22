@@ -113,6 +113,7 @@ export const PROVIDERS: Provider[] = [
     metro: 'Ligne 2 · Station Sanyuanli (三元里) · Sortie B, puis 6 min à pied',
     tel: '+86 130 0000 0000', wechat: 'baiyun_textile_demo',
     products: ['Tissus wax et imprimés', 'Bazin riche', 'Coton et popeline', 'Dentelle et broderie'], moq: '50 pièces par référence',
+    photoPaths: ["https://picsum.photos/seed/diaba-baiyun-1/640/480","https://picsum.photos/seed/diaba-baiyun-2/640/480","https://picsum.photos/seed/diaba-baiyun-3/640/480"],
   },
   {
     id: 'zhongda', name: 'Zhongda Fabric Market, stand 217', cn: '中大布匹市场217档', cat: 'gros', city: 'guangzhou', district: 'Haizhu',
@@ -120,6 +121,7 @@ export const PROVIDERS: Provider[] = [
     desc: 'Stand de tissus au marché de gros de Zhongda : tissus d’ameublement et étoffes au mètre.',
     addrCn: '广东省广州市海珠区示例路217号', addrFr: '217, route de l’Exemple (adresse fictive), district de Haizhu, Guangzhou',
     tel: '+86 134 0000 0000', products: ['Tissus au mètre', 'Tissus d’ameublement'],
+    photoPaths: ["https://picsum.photos/seed/diaba-zhongda-1/640/480","https://picsum.photos/seed/diaba-zhongda-2/640/480"],
   },
   {
     id: 'lihua', name: 'Lihua Lace & Bazin', cn: '丽华蕾丝布行', cat: 'gros', city: 'guangzhou', district: 'Liwan',
@@ -127,6 +129,7 @@ export const PROVIDERS: Provider[] = [
     desc: 'Boutique de dentelles et de bazin, vente en gros et au détail.',
     addrCn: '广东省广州市荔湾区示例街9号', addrFr: '9, rue de l’Exemple (adresse fictive), district de Liwan, Guangzhou',
     wechat: 'lihua_lace_demo', products: ['Dentelle', 'Bazin'],
+    photoPaths: ["https://picsum.photos/seed/diaba-lihua-1/640/480","https://picsum.photos/seed/diaba-lihua-2/640/480"],
   },
   {
     id: 'jinyuan', name: 'Jinyuan Business Hotel', cn: '金源商务酒店', cat: 'hotel', city: 'guangzhou', district: 'Yuexiu',
@@ -137,6 +140,7 @@ export const PROVIDERS: Provider[] = [
     metro: 'Ligne 2 · Gare de Guangzhou (广州火车站) · Sortie C, puis 4 min à pied',
     tel: '+86 131 0000 0000', wechat: 'jinyuan_hotel_demo',
     services: ['Wi-Fi dans les chambres', 'Petit-déjeuner disponible', 'Bagagerie', 'Chambres pour 1 à 3 personnes'],
+    photoPaths: ["https://picsum.photos/seed/diaba-jinyuan-1/640/480","https://picsum.photos/seed/diaba-jinyuan-2/640/480","https://picsum.photos/seed/diaba-jinyuan-3/640/480"],
   },
   {
     id: 'alnour', name: 'Lanzhou Al-Nour', cn: '兰州清真拉面馆', cat: 'resto', city: 'guangzhou', district: 'Yuexiu',
@@ -147,6 +151,7 @@ export const PROVIDERS: Provider[] = [
     metro: 'Ligne 5 · Station proche (exemple) · Sortie A, puis 3 min à pied',
     tel: '+86 132 0000 0000', wechat: 'alnour_demo',
     cuisine: 'Chinoise, nouilles tirées à la main', hours: '10 h 30 – 22 h 00', halal: 'Indiquée par l’établissement, à confirmer sur place',
+    photoPaths: ["https://picsum.photos/seed/diaba-alnour-1/640/480","https://picsum.photos/seed/diaba-alnour-2/640/480"],
   },
   {
     id: 'sinodakar', name: 'Sino-Dakar Cargo', cn: '中达国际货运代理有限公司', cat: 'transitaire', city: 'guangzhou', district: 'Baiyun',
@@ -157,6 +162,7 @@ export const PROVIDERS: Provider[] = [
     metro: 'Ligne 3 · Station proche (exemple) · Sortie D, puis 8 min à pied',
     tel: '+86 133 0000 0000', wechat: 'sinodakar_demo',
     freight: ['air', 'sea'], goods: 'Textiles, pièces détachées, appareils électroménagers', senegal: 'Dakar : port et aéroport',
+    photoPaths: ["https://picsum.photos/seed/diaba-sinodakar-1/640/480","https://picsum.photos/seed/diaba-sinodakar-2/640/480"],
   },
   {
     id: 'huaqiang', name: 'Huaqiang Digital Parts', cn: '华强数码配件', cat: 'gros', city: 'shenzhen', district: 'Futian',
@@ -164,6 +170,7 @@ export const PROVIDERS: Provider[] = [
     desc: 'Accessoires et pièces pour téléphones : coques, câbles, chargeurs, écouteurs.',
     addrCn: '深圳市福田区示例路华强北 远望数码城 2楼', addrFr: 'Huaqiangbei, marché Yuanwang, 2e étage (adresse fictive), Futian, Shenzhen',
     tel: '+86 135 0000 0000', products: ['Coques', 'Câbles', 'Chargeurs', 'Écouteurs'],
+    photoPaths: ["https://picsum.photos/seed/diaba-huaqiang-1/640/480","https://picsum.photos/seed/diaba-huaqiang-2/640/480","https://picsum.photos/seed/diaba-huaqiang-3/640/480"],
   },
 ];
 
@@ -221,7 +228,7 @@ const P = (o: Partial<Proposal> & Pick<Proposal, 'id' | 'name' | 'cn' | 'cat' | 
 
 export const SEED_PROPOSALS: Proposal[] = [
   P({ id: 'p1', name: 'Huaqiang Digital Parts', cn: '华强数码配件', cat: 'gros', city: 'shenzhen', status: 'Brouillon', date: 'Enregistré le 20 sept.',
-      loc: 'Huaqiangbei, marché Yuanwang, 2e étage', products: 'Coques de téléphone, câbles, chargeurs, écouteurs.', tel: '+86 130 0000 0000', wechat: 'huaqiang_parts_demo', addrCn: '福田区华强北路 远望数码城 2楼', photos: 2, cardFront: true }),
+      loc: 'Huaqiangbei, marché Yuanwang, 2e étage', products: 'Coques de téléphone, câbles, chargeurs, écouteurs.', tel: '+86 130 0000 0000', wechat: 'huaqiang_parts_demo', addrCn: '福田区华强北路 远望数码城 2楼', photos: 2, cardFront: true, photoPaths: ["https://picsum.photos/seed/diaba-p1-1/640/480","https://picsum.photos/seed/diaba-p1-2/640/480"] }),
   P({ id: 'p2', name: 'Tianhe Sample Hotel', cn: '天河示例酒店', cat: 'hotel', city: 'guangzhou', status: 'Soumise', date: 'Envoyée le 19 sept.', loc: 'Tianhe, près de la gare Est' }),
   P({ id: 'p3', name: 'Nanshan Cargo Express', cn: '南山快运', cat: 'transport', city: 'shenzhen', status: 'En vérification', date: 'Envoyée le 18 sept.', loc: 'Nanshan' }),
   P({ id: 'p4', name: 'Yuexiu Halal Kitchen', cn: '越秀清真小厨', cat: 'resto', city: 'guangzhou', status: 'Complément demandé', date: 'Envoyée le 16 sept.', loc: 'Yuexiu',
