@@ -136,7 +136,8 @@ export function Fiche() {
         <div style={{ order: 4 }}>
         <div className="stack">
           <Button to={`/adresses/${p.id}/contact`} icon={p.cat === 'hotel' || p.cat === 'resto' ? 'phone' : 'chat'}>{tr(ctaLabel(p))}</Button>
-          <Button kind="s" icon="route" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(p.addrFr)}`}>{tr("Ouvrir l’itinéraire")}</Button>
+          {/* Coordonnées réelles, pas l'adresse (fictive en démonstration, donc non géolocalisable). */}
+          <Button kind="s" icon="route" href={`https://www.openstreetmap.org/directions?to=${p.lat}%2C${p.lng}`}>{tr("Ouvrir l’itinéraire")}</Button>
         </div>
         </div>
         <div style={{ order: 8 }}>
