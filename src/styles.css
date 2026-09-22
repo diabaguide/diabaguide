@@ -140,6 +140,9 @@ h1, h2, h3, p { margin: 0; }
 .hero-photo { position: relative; }
 .hero-photo .back { position: absolute; top: 14px; inset-inline-start: 14px; }
 .hero-photo .count { position: absolute; top: 14px; inset-inline-end: 14px; background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); }
+.photo-thumbs { gap: 8px; }
+.photo-thumb { padding: 0; border: 2px solid transparent; border-radius: 12px; background: none; cursor: pointer; line-height: 0; flex-shrink: 0; }
+.photo-thumb.on { border-color: var(--accent); }
 .zhaddr { font-size: 22px; font-weight: 500; line-height: 1.4; }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 details.qr { border: 1.5px solid var(--chip-border); border-radius: 12px; padding: 0 14px; }

@@ -56,9 +56,12 @@ export function Fiche() {
   const { s, d } = useStore();
   const nav = useNavigate();
   const [msg, setMsg] = useState('');
+  const [photoIdx, setPhotoIdx] = useState(0);
+  useEffect(() => { setPhotoIdx(0); }, [p?.id]);
   if (!p) return <Navigate to="/recherche" replace />;
   const fav = s.favorites.includes(p.id);
   const dl = !!s.downloads[p.id];
+  const photos = p.photoPaths ?? [];
   const share = async () => {
     const url = `${location.origin}/adresses/${p.id}`;
     if (navigator.share) { try { await navigator.share({ title: p.name, url }); return; } catch { /* annulé */ } }
@@ -68,13 +71,24 @@ export function Fiche() {
   return (
     <Screen wide>
       <div className="hero-photo">
-        <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr(`Photo : ${p.name}`)} h={250} round={0} />
+        <StoredPhoto bucket="fiche-photos" path={photos[photoIdx]} label={tr(`Photo : ${p.name}`)} h={250} round={0} />
         <div className="back"><button type="button" className="iconbtn" aria-label={tr("Retour aux résultats")} onClick={() => nav(-1)}><Icon name="chevL" size={24} sw={2.2} /></button></div>
-        {(p.photoPaths?.length ?? 0) > 0 && <div className="count">1 / {p.photoPaths!.length}</div>}
+        {photos.length > 0 && <div className="count">{photoIdx + 1} / {photos.length}</div>}
       </div>
       <main className="main fiche-main" style={{ gap: 18, paddingTop: 14 }}>
         <div className="fiche-col">
-        {(p.photoPaths?.length ?? 0) > 1 && <div style={{ order: 0 }}><div className="row">{p.photoPaths!.slice(1).map((path, i) => <StoredPhoto key={path} bucket="fiche-photos" path={path} label={tr(`Photo ${i + 2}`)} h={72} w={72} round={10} />)}</div></div>}
+        {photos.length > 1 && (
+          <div style={{ order: 0 }}>
+            <div className="row photo-thumbs">
+              {photos.map((path, i) => (
+                <button key={path} type="button" className={`photo-thumb ${i === photoIdx ? 'on' : ''}`} aria-pressed={i === photoIdx}
+                  aria-label={tr(`Photo ${i + 1}`)} onClick={() => setPhotoIdx(i)}>
+                  <StoredPhoto bucket="fiche-photos" path={path} label={tr(`Photo ${i + 1}`)} h={72} w={72} round={10} />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="stack" style={{ order: 1 }}>
         <div className="stack" style={{ gap: 8 }}>
           <div className="row wrap"><Tag icon={catIcon(p.cat)}>{tr(catLabel(p.cat))}</Tag><span className="small muted">{tr(p.district)}, {tr(cityName(p.city))}</span></div>
