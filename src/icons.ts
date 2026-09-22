@@ -55,5 +55,6 @@ export const ICONS = {
   sun: "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4\"/>",
   moon: "<path d=\"M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z\"/>",
   auto: "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 3v18a9 9 0 0 0 0-18z\" fill=\"currentColor\" stroke=\"none\"/>",
+  star: "<path d=\"m12 3 2.8 5.9 6.4.8-4.7 4.5 1.2 6.4-5.7-3.1-5.7 3.1 1.2-6.4-4.7-4.5 6.4-.8z\"/>",
 } as const;
 export type IconName = keyof typeof ICONS;

@@ -12,6 +12,8 @@ interface ProviderRow {
   lat: number;
   lng: number;
   featured: boolean | null;
+  rating_avg: number | null;
+  rating_count: number | null;
   verified: string | null;
   description: string | null;
   addr_cn: string | null;
@@ -51,6 +53,8 @@ function rowToProvider(r: ProviderRow): Provider {
     lat: r.lat,
     lng: r.lng,
     featured: r.featured ?? undefined,
+    ratingAvg: r.rating_avg ?? undefined,
+    ratingCount: r.rating_count ?? undefined,
     verified: r.verified ?? '',
     desc: r.description ?? '',
     addrCn: r.addr_cn ?? '',

@@ -21,10 +21,45 @@ import { STATUS_STYLE, type Status } from './data';
 import { useStore, type Lang } from './store';
 import { isTeamRole } from './lib/auth';
 
-export function Icon({ name, size = 22, sw = 1.9 }: { name: IconName; size?: number; sw?: number }) {
+export function Icon({ name, size = 22, sw = 1.9, fill = 'none' }: { name: IconName; size?: number; sw?: number; fill?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round"
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth={sw} strokeLinecap="round"
       strokeLinejoin="round" aria-hidden="true" className={name === 'chevL' || name === 'chevR' ? 'icon icon-dir' : 'icon'} dangerouslySetInnerHTML={{ __html: ICONS[name] }} />
+  );
+}
+
+/** Étoiles en lecture seule : moyenne (arrondie à l'étoile la plus proche) et nombre d'avis. */
+export function Stars({ avg, count, size = 16 }: { avg?: number; count?: number; size?: number }) {
+  const { t } = useI18n();
+  if (!avg || !count) return null;
+  const full = Math.round(avg);
+  return (
+    <span className="row stars" style={{ gap: 2 }} aria-label={t('{0} sur 5 ({1} avis)', { 0: avg.toFixed(1), 1: count })}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} style={{ color: i <= full ? 'var(--gold-fill)' : 'var(--chip-border)' }}>
+          <Icon name="star" size={size} sw={i <= full ? 0 : 1.8} fill={i <= full ? 'currentColor' : 'none'} />
+        </span>
+      ))}
+      <span className="small muted" aria-hidden="true">{avg.toFixed(1)} ({count})</span>
+    </span>
+  );
+}
+
+/** Étoiles interactives : note du voyageur connecté pour une fiche. */
+export function StarInput({ value, onChange, size = 28, disabled }: { value: number | null; onChange: (v: number) => void; size?: number; disabled?: boolean }) {
+  const { tr, t } = useI18n();
+  const [hover, setHover] = useState<number | null>(null);
+  const shown = hover ?? value ?? 0;
+  return (
+    <div className="row star-input" role="radiogroup" aria-label={tr("Votre note")} onMouseLeave={() => setHover(null)}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <button key={i} type="button" role="radio" aria-checked={value === i} aria-label={t('{0} étoile(s)', { 0: i })}
+          disabled={disabled} style={{ color: i <= shown ? 'var(--gold-fill)' : 'var(--chip-border)' }}
+          onMouseEnter={() => setHover(i)} onFocus={() => setHover(i)} onBlur={() => setHover(null)} onClick={() => onChange(i)}>
+          <Icon name="star" size={size} sw={i <= shown ? 0 : 1.8} fill={i <= shown ? 'currentColor' : 'none'} />
+        </button>
+      ))}
+    </div>
   );
 }
 

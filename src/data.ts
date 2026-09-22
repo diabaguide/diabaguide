@@ -77,6 +77,8 @@ export interface Provider {
   lat: number;
   lng: number;
   featured?: boolean;
+  ratingAvg?: number;   // moyenne des notes (1 à 5), calculée côté base
+  ratingCount?: number; // nombre de voyageurs ayant noté cette fiche
   verified: string; // date de dernière vérification
   desc: string;
   addrCn: string;

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catIcon, catLabel, category, cityName, tagLabel, type Provider } from '../data';
 import { useProviderById, useStore } from '../store';
-import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, StoredPhoto, Tag, TopBar, Verified } from '../ui';
+import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, Stars, StarInput, StoredPhoto, Tag, TopBar, Verified } from '../ui';
 import { saveReport } from '../lib/reports';
 import { downloadCard, renderCard, shareCard } from '../lib/card';
 
@@ -53,15 +53,24 @@ function Specific({ p }: { p: Provider }) {
 export function Fiche() {
   const { tr } = useI18n();
   const p = useProvider();
-  const { s, d } = useStore();
+  const { s, d, api } = useStore();
   const nav = useNavigate();
   const [msg, setMsg] = useState('');
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [rating, setRating] = useState(false);
   useEffect(() => { setPhotoIdx(0); }, [p?.id]);
+  useEffect(() => { if (p) void api.loadMyRating(p.id); }, [p?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!p) return <Navigate to="/recherche" replace />;
   const fav = s.favorites.includes(p.id);
   const dl = !!s.downloads[p.id];
   const photos = p.photoPaths ?? [];
+  const mine = s.myRatings[p.id] ?? null;
+  const rate = async (stars: number) => {
+    setRating(true);
+    const err = await api.rate(p.id, stars);
+    setRating(false);
+    if (err) setMsg(err);
+  };
   const share = async () => {
     const url = `${location.origin}/adresses/${p.id}`;
     if (navigator.share) { try { await navigator.share({ title: p.name, url }); return; } catch { /* annulé */ } }
@@ -99,10 +108,19 @@ export function Fiche() {
           <DemoNote />
         </div>
         </div>
-        <div className="stack" style={{ order: 5 }}>
+        <div style={{ order: 2 }}>
+        <Section title={tr("Avis des voyageurs")} icon="star">
+          {p.ratingCount ? <Stars avg={p.ratingAvg} count={p.ratingCount} size={20} /> : <span className="small muted">{tr("Aucun avis pour le moment.")}</span>}
+          <div className="stack" style={{ gap: 6 }}>
+            <span className="small muted">{tr(mine ? 'Votre note' : 'Donnez votre note')}</span>
+            <StarInput value={mine} onChange={rate} disabled={rating} />
+          </div>
+        </Section>
+        </div>
+        <div className="stack" style={{ order: 6 }}>
         <Specific p={p} />
         </div>
-        <div style={{ order: 6 }}>
+        <div style={{ order: 7 }}>
         <Section title={tr("Adresse en chinois")} icon="pin">
           <div className="zhaddr" lang="zh-Hans">{p.addrCn}</div>
           <div className="small muted">{p.addrFr}</div>
@@ -113,7 +131,7 @@ export function Fiche() {
           <Button to={`/adresses/${p.id}/carte`} kind="s" icon="share">{tr("Carte de visite à partager")}</Button>
         </Section>
         </div>
-        <div style={{ order: 7 }}>
+        <div style={{ order: 8 }}>
         <Section title={tr("Accès")} icon="route">
           <KV k={tr("Entrée exacte")}>{p.entree}</KV>
           <KV k={tr("Repères utiles")}>{p.reperes}</KV>
@@ -122,7 +140,7 @@ export function Fiche() {
         </div>
         </div>
         <div className="fiche-col fiche-side">
-        <div style={{ order: 2 }}>
+        <div style={{ order: 3 }}>
         <div className="grid2">
           <button type="button" className={`btn btn-tog ${fav ? 'on' : ''}`} aria-pressed={fav}
             onClick={() => { d({ t: 'fav', id: p.id }); setMsg(fav ? 'Retiré de vos favoris.' : 'Ajouté à vos favoris.'); }}><Icon name="heart" size={20} />{tr(fav ? 'Favori ajouté' : 'Ajouter aux favoris')}</button>
@@ -132,15 +150,15 @@ export function Fiche() {
           <Link to={`/adresses/${p.id}/signaler`} className="btn btn-tog"><Icon name="edit" size={20} />{tr("Proposer une correction")}</Link>
         </div>
         </div>
-        {msg && <div style={{ order: 3 }}><div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(msg)}</span></div></div>}
-        <div style={{ order: 4 }}>
+        {msg && <div style={{ order: 4 }}><div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(msg)}</span></div></div>}
+        <div style={{ order: 5 }}>
         <div className="stack">
           <Button to={`/adresses/${p.id}/contact`} icon={p.cat === 'hotel' || p.cat === 'resto' ? 'phone' : 'chat'}>{tr(ctaLabel(p))}</Button>
           {/* Coordonnées réelles, pas l'adresse (fictive en démonstration, donc non géolocalisable). */}
           <Button kind="s" icon="route" href={`https://www.openstreetmap.org/directions?to=${p.lat}%2C${p.lng}`}>{tr("Ouvrir l’itinéraire")}</Button>
         </div>
         </div>
-        <div style={{ order: 8 }}>
+        <div style={{ order: 9 }}>
         <Section title={tr("Coordonnées")} icon="chat">
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <KV k={tr("Téléphone")}>{p.tel}</KV>
@@ -158,7 +176,7 @@ export function Fiche() {
           )}
         </Section>
         </div>
-        <div style={{ order: 9 }}>
+        <div style={{ order: 10 }}>
         <div className="row" style={{ justifyContent: 'center' }}>
           <Link className="link" style={{ color: 'var(--danger)' }} to={`/adresses/${p.id}/signaler`}><Icon name="flag" size={18} />{tr(" Signaler un problème")}</Link>
         </div>

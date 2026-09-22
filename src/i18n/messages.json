@@ -924,6 +924,36 @@
     "zh": "如何到达",
     "ar": "الوصول"
   },
+  "Avis des voyageurs": {
+    "en": "Traveler reviews",
+    "zh": "旅行者评价",
+    "ar": "آراء المسافرين"
+  },
+  "Aucun avis pour le moment.": {
+    "en": "No reviews yet.",
+    "zh": "暂无评价。",
+    "ar": "لا توجد آراء حتى الآن."
+  },
+  "Votre note": {
+    "en": "Your rating",
+    "zh": "您的评分",
+    "ar": "تقييمكم"
+  },
+  "Donnez votre note": {
+    "en": "Rate this place",
+    "zh": "为此地点评分",
+    "ar": "قيّموا هذا المكان"
+  },
+  "{0} sur 5 ({1} avis)": {
+    "en": "{0} out of 5 ({1} reviews)",
+    "zh": "{0} 分（满分 5 分），{1} 条评价",
+    "ar": "{0} من 5 ({1} تقييماً)"
+  },
+  "{0} étoile(s)": {
+    "en": "{0} star(s)",
+    "zh": "{0} 星",
+    "ar": "{0} نجمة/نجوم"
+  },
   "Entrée exacte": {
     "en": "Exact entrance",
     "zh": "具体入口",

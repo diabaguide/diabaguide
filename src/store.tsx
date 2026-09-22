@@ -7,6 +7,7 @@ import {
 } from './data';
 import { fetchTaxonomies } from './lib/taxonomies';
 import { cancelProviderDeletion, deleteProvider, fetchProviders, requestProviderDeletion, saveProvider as saveProviderRow } from './lib/providers';
+import { fetchMyRating, rateProvider } from './lib/ratings';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { isTeamRole, userFromSession, type Role } from './lib/auth';
 import {
@@ -26,6 +27,7 @@ interface State {
   city: City;
   locPref: LocPref;
   favorites: string[];
+  myRatings: Record<string, number>; // id de fiche -> ma note (1 à 5)
   downloads: Record<string, string>; // id -> date de téléchargement
   lastSync: string;
   providers: Provider[]; // adresses (Supabase, avec repli statique)
@@ -45,7 +47,7 @@ interface State {
 
 const KEY = 'diaba-guide-state-v1';
 const initial: State = {
-  user: null, authReady: !isSupabaseConfigured, lang: 'fr', theme: 'system', city: 'guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'],
+  user: null, authReady: !isSupabaseConfigured, lang: 'fr', theme: 'system', city: 'guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'], myRatings: {},
   downloads: { baiyun: '18 sept. 2026', jinyuan: '18 sept. 2026' }, lastSync: '19 sept. 2026, 09:12',
   providers: PROVIDERS, pendingDeletion: [],
   categories: STATIC_CATEGORIES, cities: STATIC_CITIES, districts: STATIC_DISTRICTS, productTags: [],
@@ -65,6 +67,8 @@ type Action =
   | { t: 'locPref'; v: LocPref }
   | { t: 'fav'; id: string }
   | { t: 'dl'; id: string }
+  | { t: 'rate'; id: string; stars: number } // repli local (Supabase non configuré)
+  | { t: 'setMyRating'; id: string; stars: number | null }
   | { t: 'syncAll' }
   | { t: 'draft'; p: Proposal | null }
   | { t: 'saveDraft'; p: Proposal }
@@ -96,6 +100,24 @@ function reducer(s: State, a: Action): State {
     case 'city': return { ...s, city: a.v };
     case 'locPref': return { ...s, locPref: a.v };
     case 'fav': return { ...s, favorites: s.favorites.includes(a.id) ? s.favorites.filter((x) => x !== a.id) : [...s.favorites, a.id] };
+    case 'rate': {
+      const prevMine = s.myRatings[a.id];
+      const providers = s.providers.map((p) => {
+        if (p.id !== a.id) return p;
+        const count = p.ratingCount ?? 0;
+        const avg = p.ratingAvg ?? 0;
+        const nextCount = prevMine === undefined ? count + 1 : count;
+        const nextAvg = prevMine === undefined
+          ? (avg * count + a.stars) / nextCount
+          : nextCount > 0 ? (avg * count - prevMine + a.stars) / nextCount : a.stars;
+        return { ...p, ratingAvg: Math.round(nextAvg * 100) / 100, ratingCount: nextCount };
+      });
+      return { ...s, providers, myRatings: { ...s.myRatings, [a.id]: a.stars } };
+    }
+    case 'setMyRating': {
+      if (a.stars === null) { const { [a.id]: _drop, ...rest } = s.myRatings; return { ...s, myRatings: rest }; }
+      return { ...s, myRatings: { ...s.myRatings, [a.id]: a.stars } };
+    }
     case 'dl': {
       const d = { ...s.downloads };
       if (d[a.id]) delete d[a.id]; else d[a.id] = TODAY;
@@ -193,6 +215,10 @@ interface ContribApi {
   removeProvider: (id: string) => Promise<string | null>;
   /** Recharge les taxonomies après une modification dans l'administration. */
   reloadTaxonomies: () => Promise<void>;
+  /** Note (ou met à jour la note) du voyageur connecté pour une fiche. */
+  rate: (id: string, stars: number) => Promise<string | null>;
+  /** Charge la note déjà donnée par le voyageur connecté pour une fiche (Supabase uniquement). */
+  loadMyRating: (id: string) => Promise<void>;
 }
 interface Ctx { s: State; d: React.Dispatch<Action>; api: ContribApi }
 const C = createContext<Ctx>(null as unknown as Ctx);
@@ -218,7 +244,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // proposals, decisions) ni la session (`user`, `authReady`).
     try {
       const base = {
-        lang: s.lang, theme: s.theme, city: s.city, locPref: s.locPref, favorites: s.favorites,
+        lang: s.lang, theme: s.theme, city: s.city, locPref: s.locPref, favorites: s.favorites, myRatings: s.myRatings,
         downloads: s.downloads, lastSync: s.lastSync, draft: s.draft, installDismissed: s.installDismissed,
         providers: s.providers, pendingDeletion: s.pendingDeletion, categories: s.categories, cities: s.cities, districts: s.districts, productTags: s.productTags
       };
@@ -370,6 +396,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const t = await fetchTaxonomies();
       setTaxonomies(t);
       d({ t: 'setTaxonomies', categories: t.categories, cities: t.cities, districts: t.districts, productTags: t.tags });
+    },
+    rate: async (id, stars) => {
+      if (!supabase) { d({ t: 'rate', id, stars }); return null; }
+      const { error } = await rateProvider(id, stars);
+      if (error) return error;
+      d({ t: 'setMyRating', id, stars });
+      d({ t: 'setProviders', v: await fetchProviders() });
+      return null;
+    },
+    loadMyRating: async (id) => {
+      if (!supabase) return; // déjà en état local (persisté)
+      const stars = await fetchMyRating(id);
+      d({ t: 'setMyRating', id, stars });
     },
   }), []);
 

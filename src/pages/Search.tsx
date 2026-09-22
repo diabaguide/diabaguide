@@ -4,7 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { catIcon, catLabel, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
-import { Button, Chip, DemoNote, Field, Icon, Screen, StoredPhoto, useWide } from '../ui';
+import { Button, Chip, DemoNote, Field, Icon, Screen, Stars, StoredPhoto, useWide } from '../ui';
 
 export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
   const { tr } = useI18n();
@@ -15,6 +15,7 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
         <span className="name">{p.name}</span>
         <span className="small muted zh">{p.cn}</span>
         <span className="small row" style={{ gap: 6 }}><Icon name={catIcon(p.cat)} size={16} sw={2} />{tr(catLabel(p.cat))} · {tr(p.district)}</span>
+        <Stars avg={p.ratingAvg} count={p.ratingCount} size={14} />
         <span className="meta">{tr(meta ?? `Vérifiée le ${p.verified}`)}</span>
       </div>
     </Link>
