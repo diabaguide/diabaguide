@@ -6,14 +6,26 @@ import { useStore, type Lang } from '../store';
 import { supabase } from '../lib/supabase';
 import { isTeamRole, sendPasswordReset, signIn, signInWithGoogle, signOut, signUp, updatePassword } from '../lib/auth';
 
+/* Logo « G » officiel de Google (4 couleurs de marque), pour le bouton de connexion. */
+function GoogleLogo() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.08-1.79 2.72v2.26h2.91c1.7-1.57 2.68-3.87 2.68-6.62z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z" />
+      <path fill="#FBBC05" d="M3.96 10.71c-.18-.54-.28-1.12-.28-1.71s.1-1.17.28-1.71V4.96H.96C.35 6.17 0 7.55 0 9s.35 2.83.96 4.04z" />
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.59C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z" />
+    </svg>
+  );
+}
+
 function GoogleButton({ path, onError }: { path: string; onError: (m: string) => void }) {
   const { tr } = useI18n();
   if (!supabase) return null;
   return (
     <>
-      <Button kind="s" onClick={async () => { const r = await signInWithGoogle(path); if (r.error) onError(r.error); }}>
-        {tr('Continuer avec Google')}
-      </Button>
+      <button type="button" className="btn btn-s btn-full" onClick={async () => { const r = await signInWithGoogle(path); if (r.error) onError(r.error); }}>
+        <GoogleLogo /><span>{tr('Continuer avec Google')}</span>
+      </button>
       <p className="small muted center" style={{ margin: 0 }}>{tr('ou')}</p>
     </>
   );
