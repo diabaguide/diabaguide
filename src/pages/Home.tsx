@@ -7,17 +7,28 @@ import { useStore } from '../store';
 import { Button, DemoNote, Icon, Logo, RadioCard, Screen, TopBar } from '../ui';
 import { ResultCard } from './Search';
 
-interface InstallEvent extends Event { prompt: () => Promise<void> }
+interface InstallEvent extends Event { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> }
+
+/* Vrai si l'app tourne déjà installée (lancée depuis l'écran d'accueil) :
+   « display-mode: standalone » sur la plupart des navigateurs, `navigator.standalone` sur iOS Safari. */
+const isStandalone = () =>
+  (typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches)
+  || (navigator as unknown as { standalone?: boolean }).standalone === true;
 
 export function Home() {
   const { tr } = useI18n();
   const { s, d } = useStore();
   const [evt, setEvt] = useState<InstallEvent | null>(null);
   useEffect(() => {
-    const h = (e: Event) => { e.preventDefault(); setEvt(e as InstallEvent); };
-    window.addEventListener('beforeinstallprompt', h);
-    return () => window.removeEventListener('beforeinstallprompt', h);
-  }, []);
+    // Déjà installée (y compris une installation faite hors de ce bouton, ex. iOS) : ne plus proposer.
+    if (isStandalone() && !s.installDismissed) d({ t: 'dismissInstall' });
+    const onPromptable = (e: Event) => { e.preventDefault(); setEvt(e as InstallEvent); };
+    // Émis par le navigateur juste après une installation réussie, quel que soit le déclencheur.
+    const onInstalled = () => { setEvt(null); d({ t: 'dismissInstall' }); };
+    window.addEventListener('beforeinstallprompt', onPromptable);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => { window.removeEventListener('beforeinstallprompt', onPromptable); window.removeEventListener('appinstalled', onInstalled); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const featured = s.providers.filter((p) => p.featured && p.city === s.city);
 
   return (
@@ -43,7 +54,13 @@ export function Home() {
             <Icon name="download" size={22} />
             <div className="grow"><div style={{ fontWeight: 700, fontSize: 15 }}>{tr("Installer Diaba Guide")}</div><div className="small muted">{tr("Ajoutez le site à l’écran d’accueil de votre téléphone.")}</div></div>
             <button type="button" className="btn btn-s" style={{ minHeight: 44, fontSize: 14, padding: '0 12px' }}
-              onClick={() => (evt ? evt.prompt() : alert('Sur iPhone : Partager > Sur l’écran d’accueil. Sur Android : menu du navigateur > Installer l’application.'))}>{tr("Installer")}</button>
+              onClick={async () => {
+                if (!evt) { alert('Sur iPhone : Partager > Sur l’écran d’accueil. Sur Android : menu du navigateur > Installer l’application.'); return; }
+                await evt.prompt();
+                const { outcome } = await evt.userChoice;
+                setEvt(null);
+                if (outcome === 'accepted') d({ t: 'dismissInstall' });
+              }}>{tr("Installer")}</button>
             <button type="button" className="iconbtn" style={{ border: 0, background: 'transparent', color: 'var(--muted)' }} aria-label={tr("Fermer la proposition d’installation")} onClick={() => d({ t: 'dismissInstall' })}><Icon name="x" size={20} /></button>
           </div>
         )}
