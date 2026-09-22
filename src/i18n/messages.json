@@ -14,10 +14,10 @@
     "zh": "您的中国商务地址指南",
     "ar": "عناوينكم التجارية في الصين"
   },
-  "Fournisseurs en gros, hôtels, restaurants, transporteurs et transitaires à Guangzhou et Shenzhen, pour préparer vos déplacements d’affaires.": {
-    "en": "Wholesale suppliers, hotels, restaurants, carriers and freight forwarders in Guangzhou and Shenzhen to help you plan your business trips.",
-    "zh": "查找广州和深圳的批发供应商、酒店、餐厅、运输商和货运代理，轻松规划商务行程。",
-    "ar": "موردو الجملة والفنادق والمطاعم وشركات النقل ووكلاء الشحن في قوانغتشو وشنتشن، لتحضير رحلاتكم التجارية."
+  "Fournisseurs en gros, hôtels, restaurants et transporteurs à Guangzhou et Shenzhen, pour préparer vos déplacements d’affaires.": {
+    "en": "Wholesale suppliers, hotels, restaurants and carriers in Guangzhou and Shenzhen to help you plan your business trips.",
+    "zh": "查找广州和深圳的批发供应商、酒店、餐厅和运输商，轻松规划商务行程。",
+    "ar": "موردو الجملة والفنادق والمطاعم وشركات النقل في قوانغتشو وشنتشن، لتحضير رحلاتكم التجارية."
   },
   "Marché de gros, Guangzhou": {
     "en": "Wholesale market, Guangzhou",
@@ -63,6 +63,11 @@
     "en": "Enter a complete email address, such as name@example.com.",
     "zh": "请输入完整的电子邮箱地址，如 name@example.com。",
     "ar": "أدخلوا عنوان بريد إلكتروني كاملاً، مثل name@example.com."
+  },
+  "Saisissez un numéro de téléphone valide.": {
+    "en": "Enter a valid phone number.",
+    "zh": "请输入有效的电话号码。",
+    "ar": "أدخلوا رقم هاتف صحيحاً."
   },
   "Le mot de passe doit contenir au moins 8 caractères.": {
     "en": "The password must contain at least 8 characters.",
@@ -113,6 +118,16 @@
     "en": "Email address",
     "zh": "电子邮箱",
     "ar": "البريد الإلكتروني"
+  },
+  "Numéro de téléphone": {
+    "en": "Phone number",
+    "zh": "电话号码",
+    "ar": "رقم الهاتف"
+  },
+  "Utilisé par l’équipe Diaba pour vous contacter si besoin.": {
+    "en": "Used by the Diaba team to contact you if needed.",
+    "zh": "用于 Diaba 团队在必要时联系您。",
+    "ar": "يستخدمه فريق Diaba للتواصل معكم عند الحاجة."
   },
   "Mot de passe": {
     "en": "Password",
@@ -669,10 +684,10 @@
     "zh": "运往塞内加尔的货运",
     "ar": "الشحن إلى السنغال"
   },
-  "Disponible pour les transporteurs et les transitaires.": {
-    "en": "Available for carriers and freight forwarders.",
-    "zh": "适用于运输商和货运代理。",
-    "ar": "متاح لشركات النقل ووكلاء الشحن."
+  "Disponible pour les transporteurs.": {
+    "en": "Available for carriers.",
+    "zh": "适用于运输商。",
+    "ar": "متاح لشركات النقل."
   },
   "Aérien": {
     "en": "Air",
@@ -1243,6 +1258,11 @@
     "en": "Sign out",
     "zh": "退出登录",
     "ar": "تسجيل الخروج"
+  },
+  "Revenir à l’espace voyageur": {
+    "en": "Back to the traveler space",
+    "zh": "返回旅行者空间",
+    "ar": "العودة إلى فضاء المسافر"
   },
   "Diaba Guide · version de démonstration": {
     "en": "Diaba Guide · demo version",

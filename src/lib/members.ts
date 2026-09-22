@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import type { Role } from './auth';
 
-export interface Member { id: string; name: string | null; email: string; role: Role; createdAt: string }
+export interface Member { id: string; name: string | null; phone: string | null; email: string; role: Role; createdAt: string }
 export interface Invitation { email: string; role: Exclude<Role, 'traveler'>; createdAt: string }
 
 export const ROLE_LABEL: Record<Role, string> = {
@@ -14,10 +14,10 @@ export const ROLE_LABEL: Record<Role, string> = {
 export async function fetchMembers(): Promise<Member[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from('profiles').select('id, name, email, role, created_at').order('created_at', { ascending: true });
+    .from('profiles').select('id, name, phone, email, role, created_at').order('created_at', { ascending: true });
   if (error) { warn('chargement des comptes', error); return []; }
-  return (data as { id: string; name: string | null; email: string; role: Role; created_at: string }[])
-    .map((r) => ({ id: r.id, name: r.name, email: r.email, role: r.role, createdAt: r.created_at }));
+  return (data as { id: string; name: string | null; phone: string | null; email: string; role: Role; created_at: string }[])
+    .map((r) => ({ id: r.id, name: r.name, phone: r.phone, email: r.email, role: r.role, createdAt: r.created_at }));
 }
 
 /** Invitations en attente (personne pas encore inscrite). */

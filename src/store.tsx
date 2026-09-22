@@ -17,7 +17,7 @@ export type Lang = 'fr' | 'en' | 'zh' | 'ar';
 export type LocPref = 'ask' | 'while' | 'never';
 export type Theme = 'system' | 'light' | 'dark';
 
-interface User { id?: string; name: string; email: string; role: Role }
+interface User { id?: string; name: string; phone: string; email: string; role: Role }
 interface State {
   user: User | null;
   authReady: boolean; // la session Supabase a-t-elle été vérifiée ?

@@ -1,6 +1,6 @@
 import { useI18n } from '../../i18n';
 import { useEffect, useState } from 'react';
-import { DemoNote, Icon } from '../../ui';
+import { DemoNote, Icon, NotProvided } from '../../ui';
 import { SortTh, compare, useSort } from './tableSort';
 import { fetchMembers, type Member } from '../../lib/members';
 
@@ -46,11 +46,12 @@ export function Travelers() {
           {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
             : rows.length === 0 ? <p className="muted">{tr(pq ? 'Aucun voyageur ne correspond à la recherche.' : 'Aucun voyageur inscrit pour le moment.')}</p> : (
             <div className="table dense"><table>
-              <thead><tr><SortTh k="name" label="Voyageur" sort={sort} onSort={toggle} /><SortTh k="createdAt" label="Inscrit le" sort={sort} onSort={toggle} /></tr></thead>
+              <thead><tr><SortTh k="name" label="Voyageur" sort={sort} onSort={toggle} /><th>{tr("Téléphone")}</th><SortTh k="createdAt" label="Inscrit le" sort={sort} onSort={toggle} /></tr></thead>
               <tbody>
                 {rows.map((m) => (
                   <tr key={m.id}>
                     <td><strong>{tr(m.name ?? '—')}</strong><div className="small muted">{m.email}</div></td>
+                    <td>{m.phone ?? <NotProvided />}</td>
                     <td>{shown(m.createdAt)}</td>
                   </tr>
                 ))}

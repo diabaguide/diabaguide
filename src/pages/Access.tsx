@@ -4,32 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Field, Icon, Logo, Photo, Screen, TopBar } from '../ui';
 import { useStore, type Lang } from '../store';
 import { supabase } from '../lib/supabase';
-import { isTeamRole, sendPasswordReset, signIn, signInWithGoogle, signOut, signUp, updatePassword } from '../lib/auth';
-
-/* Logo « G » officiel de Google (4 couleurs de marque), pour le bouton de connexion. */
-function GoogleLogo() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.08-1.79 2.72v2.26h2.91c1.7-1.57 2.68-3.87 2.68-6.62z" />
-      <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z" />
-      <path fill="#FBBC05" d="M3.96 10.71c-.18-.54-.28-1.12-.28-1.71s.1-1.17.28-1.71V4.96H.96C.35 6.17 0 7.55 0 9s.35 2.83.96 4.04z" />
-      <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.59C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z" />
-    </svg>
-  );
-}
-
-function GoogleButton({ path, onError }: { path: string; onError: (m: string) => void }) {
-  const { tr } = useI18n();
-  if (!supabase) return null;
-  return (
-    <>
-      <button type="button" className="btn btn-s btn-full" onClick={async () => { const r = await signInWithGoogle(path); if (r.error) onError(r.error); }}>
-        <GoogleLogo /><span>{tr('Continuer avec Google')}</span>
-      </button>
-      <p className="small muted center" style={{ margin: 0 }}>{tr('ou')}</p>
-    </>
-  );
-}
+import { isTeamRole, sendPasswordReset, signIn, signOut, signUp, updatePassword } from '../lib/auth';
 
 const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }, { v: 'ar', l: 'العربية', flag: '🇸🇦' }];
 export function LangSwitch({ dark = false }: { dark?: boolean }) {
@@ -55,7 +30,7 @@ export function Welcome() {
         <Logo height={56} tail="GUIDE" />
         <div className="gold-rule" />
         <h1 className="display" style={{ fontSize: 34 }}>{tr("Vos adresses professionnelles en Chine")}</h1>
-        <p>{tr("Fournisseurs en gros, hôtels, restaurants, transporteurs et transitaires à Guangzhou et Shenzhen, pour préparer vos déplacements d’affaires.")}</p>
+        <p>{tr("Fournisseurs en gros, hôtels, restaurants et transporteurs à Guangzhou et Shenzhen, pour préparer vos déplacements d’affaires.")}</p>
         <span className="seal seal-lg" aria-hidden="true"><span>指</span><span>南</span></span>
       </div>
       <div className="stack" style={{ padding: '20px 20px 4px' }}>
@@ -74,18 +49,20 @@ export function Welcome() {
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE = /^[+]?[\d\s().-]{6,20}$/;
 
 export function Signup() {
   const { tr } = useI18n();
   const { d } = useStore();
   const nav = useNavigate();
-  const [f, setF] = useState({ name: '', email: '', pw: '', terms: false });
+  const [f, setF] = useState({ name: '', phone: '', email: '', pw: '', terms: false });
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [apiErr, setApiErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const errs = {
     name: f.name.trim() ? null : 'Saisissez votre nom.',
+    phone: PHONE.test(f.phone.trim()) ? null : 'Saisissez un numéro de téléphone valide.',
     email: EMAIL.test(f.email) ? null : 'Saisissez une adresse e-mail complète, par exemple nom@exemple.com.',
     pw: f.pw.length >= 8 ? null : 'Le mot de passe doit contenir au moins 8 caractères.',
     terms: f.terms ? null : 'Acceptez les conditions pour créer votre compte.',
@@ -98,12 +75,12 @@ export function Signup() {
     setInfo(null);
     if (count) return;
     if (!supabase) {
-      d({ t: 'login', user: { name: f.name, email: f.email, role: 'traveler' } });
+      d({ t: 'login', user: { name: f.name, phone: f.phone, email: f.email, role: 'traveler' } });
       nav('/inscription/confirmation');
       return;
     }
     setBusy(true);
-    const res = await signUp(f.name, f.email, f.pw);
+    const res = await signUp(f.name, f.phone, f.email, f.pw);
     setBusy(false);
     if (res.error) { setApiErr(res.error); return; }
     if (res.needsConfirm) {
@@ -121,10 +98,10 @@ export function Signup() {
         {tried && count > 0 && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(count)} {tr(" information")}{tr(count > 1 ? 's sont' : ' est')} {tr(" à corriger avant de continuer.")}</span></div>}
         {apiErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(apiErr)}</span></div>}
         {info && <div role="status" className="notice"><Icon name="check" size={20} sw={2} /><span>{tr(info)}</span></div>}
-        <GoogleButton path="/accueil" onError={setApiErr} />
         <p className="muted small">{tr("Un compte est nécessaire pour consulter les adresses et en proposer. Les champs marqués * sont obligatoires.")}</p>
         <Field id="nom" label={tr("Nom complet")} value={f.name} onChange={(v) => setF({ ...f, name: v })} req error={tr(show('name'))} />
         <Field id="mail" label={tr("Adresse e-mail")} type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} req error={tr(show('email'))} />
+        <Field id="tel" label={tr("Numéro de téléphone")} type="tel" value={f.phone} onChange={(v) => setF({ ...f, phone: v })} req hint={tr("Utilisé par l’équipe Diaba pour vous contacter si besoin.")} error={tr(show('phone'))} />
         <Field id="mdp" label={tr("Mot de passe")} type="password" value={f.pw} onChange={(v) => setF({ ...f, pw: v })} req hint={tr("Au moins 8 caractères.")} error={tr(show('pw'))} />
         <div>
           <label className="check">
@@ -182,7 +159,7 @@ export function Login() {
     if (!supabase) {
       // Repli démo : tout compte est accepté ; « equipe » ouvre l’espace équipe.
       const team = email.toLowerCase().includes('equipe');
-      d({ t: 'login', user: { name: team ? 'Agent Diaba' : email.split('@')[0], email, role: team ? 'team' : 'traveler' } });
+      d({ t: 'login', user: { name: team ? 'Agent Diaba' : email.split('@')[0], phone: '', email, role: team ? 'team' : 'traveler' } });
       nav(next ?? (team ? '/equipe' : '/accueil'), { replace: true });
       return;
     }
@@ -201,7 +178,6 @@ export function Login() {
           <div className="notice warn"><Icon name="share" size={22} /><div><strong>{tr("Une fiche vous a été partagée")}</strong><div className="small">{tr("Connectez-vous pour la consulter. Un compte est nécessaire.")}</div></div></div>
         )}
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-        <GoogleButton path={next ?? '/accueil'} onError={setErr} />
         <Field id="mail" label={tr("Adresse e-mail")} type="email" value={email} onChange={setEmail} placeholder={tr("nom@exemple.com")} />
         <Field id="mdp" label={tr("Mot de passe")} type="password" value={pw} onChange={setPw} />
         <div style={{ textAlign: 'right' }}><Link className="link" to="/mot-de-passe">{tr("Mot de passe oublié ?")}</Link></div>

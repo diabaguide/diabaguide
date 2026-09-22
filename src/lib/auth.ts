@@ -2,7 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
 export type Role = 'traveler' | 'team' | 'admin';
-export interface AuthUser { id: string; name: string; email: string; role: Role }
+export interface AuthUser { id: string; name: string; phone: string; email: string; role: Role }
 /** Un admin dispose aussi de tous les droits « équipe ». */
 export const isTeamRole = (r: Role | undefined) => r === 'team' || r === 'admin';
 
@@ -19,36 +19,39 @@ function translate(msg: string): string {
 }
 
 /** Récupère (ou déduit) le profil d'un utilisateur authentifié. */
-async function profileFor(id: string, email: string, metaName?: string): Promise<AuthUser> {
+async function profileFor(id: string, email: string, metaName?: string, metaPhone?: string): Promise<AuthUser> {
   // Repli volontairement au rôle le plus faible : un privilège ne doit jamais
   // être déduit de l'e-mail ni accordé parce que la lecture du profil échoue.
   let role: Role = 'traveler';
   let name = metaName ?? email.split('@')[0];
+  let phone = metaPhone ?? '';
   try {
-    const { data } = await supabase!.from('profiles').select('name, role').eq('id', id).maybeSingle();
+    const { data } = await supabase!.from('profiles').select('name, phone, role').eq('id', id).maybeSingle();
     if (data) {
       role = (data.role as Role) ?? role;
       name = data.name ?? name;
+      phone = data.phone ?? phone;
     }
   } catch { /* profil pas encore créé (trigger) : on reste « voyageur » */ }
-  return { id, name, email, role };
+  return { id, name, phone, email, role };
 }
 
 /** Utilisateur courant à partir d'une session Supabase (ou null). */
 export async function userFromSession(session: Session | null): Promise<AuthUser | null> {
   if (!session?.user) return null;
   const u = session.user;
-  return profileFor(u.id, u.email ?? '', (u.user_metadata as { name?: string } | null)?.name);
+  const meta = u.user_metadata as { name?: string; phone?: string } | null;
+  return profileFor(u.id, u.email ?? '', meta?.name, meta?.phone);
 }
 
 export async function signUp(
-  name: string, email: string, password: string,
+  name: string, phone: string, email: string, password: string,
 ): Promise<{ user?: AuthUser; needsConfirm?: boolean; error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name, phone } } });
   if (error) return { error: translate(error.message) };
   if (!data.session) return { needsConfirm: true }; // confirmation par e-mail activée
-  return { user: await profileFor(data.user!.id, email, name) };
+  return { user: await profileFor(data.user!.id, email, name, phone) };
 }
 
 export async function signIn(
@@ -57,17 +60,8 @@ export async function signIn(
   if (!supabase) return { error: 'Supabase non configuré.' };
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: translate(error.message) };
-  return { user: await profileFor(data.user.id, email, (data.user.user_metadata as { name?: string } | null)?.name) };
-}
-
-/** Connexion / inscription via Google. Redirige le navigateur vers Google puis vers `path`. */
-export async function signInWithGoogle(path = '/accueil'): Promise<{ error?: string }> {
-  if (!supabase) return { error: 'Supabase non configuré.' };
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin + path },
-  });
-  return { error: error ? translate(error.message) : undefined };
+  const meta = data.user.user_metadata as { name?: string; phone?: string } | null;
+  return { user: await profileFor(data.user.id, email, meta?.name, meta?.phone) };
 }
 
 export async function signOut(): Promise<void> {

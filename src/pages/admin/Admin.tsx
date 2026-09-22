@@ -76,6 +76,7 @@ export function AdminLayout() {
         <div className="me">
           <span className="avatar">{tr((s.user?.name ?? '?').split(/[\s.]+/).map((x) => x[0]?.toUpperCase()).slice(0, 2).join(''))}</span>
           <div className="grow lbl"><div style={{ fontWeight: 600 }}>{s.user?.name}</div><div className="small" style={{ color: '#DCE6FA' }}>{tr(isAdmin ? 'Administrateur' : 'Vérification')}</div></div>
+          <Link to="/accueil" className="iconbtn" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.4)' }} aria-label={tr("Revenir à l’espace voyageur")} title={tr("Revenir à l’espace voyageur")}><Icon name="compass" size={20} /></Link>
           <button type="button" className="iconbtn" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.4)' }} aria-label={tr("Se déconnecter")} onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}><Icon name="logout" size={20} /></button>
         </div>
       </aside>
