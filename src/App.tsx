@@ -19,6 +19,7 @@ const FichesList = lazy(() => import('./pages/admin/Fiches').then(m => ({ defaul
 const FicheEdit = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.FicheEdit })));
 const Deletions = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.Deletions })));
 const Members = lazy(() => import('./pages/admin/Members').then(m => ({ default: m.Members })));
+const Travelers = lazy(() => import('./pages/admin/Travelers').then(m => ({ default: m.Travelers })));
 const AdminCities = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminCities })));
 const AdminCategories = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminCategories })));
 const AdminProductTags = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminProductTags })));
@@ -83,6 +84,7 @@ export default function App() {
             <Route element={<RequireAuth need="admin" />}>
               <Route path="/equipe/suppressions" element={<Deletions />} />
               <Route path="/equipe/membres" element={<Members />} />
+              <Route path="/equipe/voyageurs" element={<Travelers />} />
               <Route path="/equipe/villes" element={<AdminCities />} />
               <Route path="/equipe/categories" element={<AdminCategories />} />
               <Route path="/equipe/produits" element={<AdminProductTags />} />

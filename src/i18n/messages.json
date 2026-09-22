@@ -1624,6 +1624,46 @@
     "zh": "成员",
     "ar": "الأعضاء"
   },
+  "Voyageurs": {
+    "en": "Travelers",
+    "zh": "旅行者",
+    "ar": "المسافرون"
+  },
+  "Comptes voyageurs inscrits sur Diaba Guide.": {
+    "en": "Traveler accounts registered on Diaba Guide.",
+    "zh": "在 Diaba Guide 注册的旅行者账户。",
+    "ar": "حسابات المسافرين المسجلة في Diaba Guide."
+  },
+  "{0} voyageur(s) inscrit(s)": {
+    "en": "{0} traveler(s) registered",
+    "zh": "{0} 位旅行者已注册",
+    "ar": "{0} مسافر(ين) مسجّل(ين)"
+  },
+  "Rechercher un voyageur": {
+    "en": "Search for a traveler",
+    "zh": "搜索旅行者",
+    "ar": "البحث عن مسافر"
+  },
+  "Rechercher par nom ou e-mail": {
+    "en": "Search by name or email",
+    "zh": "按姓名或邮箱搜索",
+    "ar": "البحث بالاسم أو البريد الإلكتروني"
+  },
+  "Aucun voyageur ne correspond à la recherche.": {
+    "en": "No traveler matches your search.",
+    "zh": "没有符合搜索条件的旅行者。",
+    "ar": "لا يوجد مسافر يطابق البحث."
+  },
+  "Aucun voyageur inscrit pour le moment.": {
+    "en": "No traveler registered yet.",
+    "zh": "目前还没有已注册的旅行者。",
+    "ar": "لا يوجد مسافر مسجّل حتى الآن."
+  },
+  "Inscrit le": {
+    "en": "Registered on",
+    "zh": "注册日期",
+    "ar": "تاريخ التسجيل"
+  },
   "Villes": {
     "en": "Cities",
     "zh": "城市",
