@@ -264,7 +264,7 @@ export function Filters() {
         </section>
         {f.cat && isFreight(f.cat) && (
           <section className="card sec"><h2><Icon name="ship" size={20} />{tr("Fret vers le Sénégal")}</h2>
-            <div className="hint">{tr("Disponible pour les transporteurs et les transitaires.")}</div>
+            <div className="hint">{tr("Disponible pour les transporteurs.")}</div>
             {tr(radios('fret', f.fret, [{ v: 'air', l: 'Aérien' }, { v: 'sea', l: 'Maritime' }, { v: 'both', l: 'Les deux' }], (v) => setF({ ...f, fret: v as Freight | 'both' })))}
           </section>
         )}

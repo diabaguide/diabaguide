@@ -34,7 +34,7 @@ export const STATIC_CATEGORIES: Category[] = [
   { id: 'hotel', label: 'Hôtels', labelCn: '酒店', icon: 'bed', ctaLabel: 'Contacter pour réserver', tagsLabel: 'Services', fields: [], isFreight: false, active: true, sort: 2 },
   { id: 'resto', label: 'Restaurants', labelCn: '餐厅', icon: 'utensils', ctaLabel: 'Contacter le restaurant', tagsLabel: 'Spécialités', fields: ['cuisine', 'hours', 'halal'], isFreight: false, active: true, sort: 3 },
   { id: 'transport', label: 'Transporteurs', labelCn: '运输', icon: 'truck', ctaLabel: 'Contacter le transporteur', tagsLabel: 'Services', fields: ['freight', 'goods', 'senegal'], isFreight: true, active: true, sort: 4 },
-  { id: 'transitaire', label: 'Transitaires', labelCn: '货代', icon: 'ship', ctaLabel: 'Contacter le transitaire', tagsLabel: 'Services', fields: ['freight', 'goods', 'senegal'], isFreight: true, active: true, sort: 5 },
+  { id: 'transitaire', label: 'Transitaires', labelCn: '货代', icon: 'ship', ctaLabel: 'Contacter le transitaire', tagsLabel: 'Services', fields: ['freight', 'goods', 'senegal'], isFreight: true, active: false, sort: 5 },
 ];
 export const STATIC_CITIES: CityRef[] = [
   { id: 'guangzhou', name: 'Guangzhou', nameCn: '广州', lat: 23.13, lng: 113.27, active: true, sort: 1 },
