@@ -4,7 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Field, Icon, Logo, Photo, Screen, TopBar } from '../ui';
 import { useStore, type Lang } from '../store';
 import { supabase } from '../lib/supabase';
-import { isTeamRole, sendPasswordReset, signIn, signOut, signUp, updatePassword } from '../lib/auth';
+import { isTeamRole, sendPasswordReset, signIn, signOut, signUp, updatePassword, ACCOUNT_NOTICE_KEY } from '../lib/auth';
 
 const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }, { v: 'ar', l: 'العربية', flag: '🇸🇦' }];
 export function LangSwitch({ dark = false }: { dark?: boolean }) {
@@ -75,7 +75,7 @@ export function Signup() {
     setInfo(null);
     if (count) return;
     if (!supabase) {
-      d({ t: 'login', user: { name: f.name, phone: f.phone, email: f.email, role: 'traveler' } });
+      d({ t: 'login', user: { name: f.name, phone: f.phone, email: f.email, role: 'traveler', status: 'active' } });
       nav('/inscription/confirmation');
       return;
     }
@@ -152,6 +152,14 @@ export function Login() {
   const [pw, setPw] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Motif d'une déconnexion forcée (compte désactivé) : affiché une seule fois.
+  const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const v = sessionStorage.getItem(ACCOUNT_NOTICE_KEY);
+      if (v) { setNotice(v); sessionStorage.removeItem(ACCOUNT_NOTICE_KEY); }
+    } catch { /* stockage indisponible */ }
+  }, []);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setErr(null);
@@ -159,7 +167,7 @@ export function Login() {
     if (!supabase) {
       // Repli démo : tout compte est accepté ; « equipe » ouvre l’espace équipe.
       const team = email.toLowerCase().includes('equipe');
-      d({ t: 'login', user: { name: team ? 'Agent Diaba' : email.split('@')[0], phone: '', email, role: team ? 'team' : 'traveler' } });
+      d({ t: 'login', user: { name: team ? 'Agent Diaba' : email.split('@')[0], phone: '', email, role: team ? 'team' : 'traveler', status: 'active' } });
       nav(next ?? (team ? '/equipe' : '/accueil'), { replace: true });
       return;
     }
@@ -176,6 +184,9 @@ export function Login() {
       <form className="main" onSubmit={submit} noValidate style={{ gap: 20 }}>
         {next && next.startsWith('/adresses/') && (
           <div className="notice warn"><Icon name="share" size={22} /><div><strong>{tr("Une fiche vous a été partagée")}</strong><div className="small">{tr("Connectez-vous pour la consulter. Un compte est nécessaire.")}</div></div></div>
+        )}
+        {notice === 'suspended' && !err && (
+          <div role="alert" className="notice warn"><Icon name="alert" size={20} sw={2} /><div><strong>{tr("Compte désactivé")}</strong><div className="small">{tr("Votre compte a été désactivé par l’équipe Diaba Guide. Écrivez-nous si vous pensez qu’il s’agit d’une erreur.")}</div></div></div>
         )}
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
         <Field id="mail" label={tr("Adresse e-mail")} type="email" value={email} onChange={setEmail} placeholder={tr("nom@exemple.com")} />

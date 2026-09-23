@@ -2,7 +2,14 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
 export type Role = 'traveler' | 'team' | 'admin';
-export interface AuthUser { id: string; name: string; phone: string; email: string; role: Role }
+/** État du compte : un compte désactivé par un administrateur ne peut plus se connecter. */
+export type AccountStatus = 'active' | 'suspended';
+/**
+ * Clé de sessionStorage portant le motif d'une déconnexion forcée
+ * (compte désactivé) jusqu'à l'écran de connexion.
+ */
+export const ACCOUNT_NOTICE_KEY = 'diaba-account-notice';
+export interface AuthUser { id: string; name: string; phone: string; email: string; role: Role; status: AccountStatus }
 /** Un admin dispose aussi de tous les droits « équipe ». */
 export const isTeamRole = (r: Role | undefined) => r === 'team' || r === 'admin';
 
@@ -25,15 +32,17 @@ async function profileFor(id: string, email: string, metaName?: string, metaPhon
   let role: Role = 'traveler';
   let name = metaName ?? email.split('@')[0];
   let phone = metaPhone ?? '';
+  let status: AccountStatus = 'active';
   try {
-    const { data } = await supabase!.from('profiles').select('name, phone, role').eq('id', id).maybeSingle();
+    const { data } = await supabase!.from('profiles').select('name, phone, role, status').eq('id', id).maybeSingle();
     if (data) {
       role = (data.role as Role) ?? role;
       name = data.name ?? name;
       phone = data.phone ?? phone;
+      status = (data.status as AccountStatus) ?? status;
     }
   } catch { /* profil pas encore créé (trigger) : on reste « voyageur » */ }
-  return { id, name, phone, email, role };
+  return { id, name, phone, email, role, status };
 }
 
 /** Utilisateur courant à partir d'une session Supabase (ou null). */
@@ -65,7 +74,14 @@ export async function signIn(
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: translate(error.message) };
   const meta = data.user.user_metadata as { name?: string; phone?: string } | null;
-  return { user: await profileFor(data.user.id, email, meta?.name, meta?.phone) };
+  const user = await profileFor(data.user.id, email, meta?.name, meta?.phone);
+  // Compte désactivé par un administrateur : on ferme la session immédiatement.
+  // (La base refuse de toute façon la connexion : voir supabase/admin_travelers.sql.)
+  if (user.status === 'suspended') {
+    await supabase.auth.signOut();
+    return { error: 'Ce compte a été désactivé. Contactez l’équipe Diaba Guide.' };
+  }
+  return { user };
 }
 
 export async function signOut(): Promise<void> {

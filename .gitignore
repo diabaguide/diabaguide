@@ -27,5 +27,9 @@ Thumbs.db
 # Vite / cache
 .vite/
 
+# Vidages mémoire (core dumps) laissés par un processus planté
+core
+core.*
+
 # Vercel
 .vercel
