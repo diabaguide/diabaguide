@@ -34,3 +34,4 @@ core.*
 # Vercel
 .vercel
 .env*
+audit_i18n.json
