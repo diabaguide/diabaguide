@@ -1,8 +1,9 @@
 import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useStore } from '../../store';
-import { Button, Field, Icon, Select } from '../../ui';
+import { Button, Field, Icon, Select, useWide } from '../../ui';
 import { SortTh, compare, useSort } from './tableSort';
+import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { Role } from '../../lib/auth';
 import {
   fetchInvitations, fetchMembers, inviteMember, revokeInvitation, setMemberRole,
@@ -30,12 +31,15 @@ export function Members() {
   const { tr } = useI18n();
   const { s } = useStore();
   const meId = s.user?.id;
+  const wide = useWide();
 
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [openMember, setOpenMember] = useState<Member | null>(null);
+  const [openInvite, setOpenInvite] = useState<Invitation | null>(null);
 
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'team' | 'admin'>('team');
@@ -76,6 +80,7 @@ export function Members() {
     const res = await setMemberRole(id, next);
     if (res.error) { setErr(res.error); return; }
     setOk(`Rôle mis à jour : ${ROLE_LABEL[next].toLowerCase()}.`);
+    setOpenMember(null);
     await reload();
   };
 
@@ -84,6 +89,7 @@ export function Members() {
     const res = await revokeInvitation(mail);
     if (res.error) { setErr(res.error); return; }
     setOk(`Invitation annulée pour ${mail}.`);
+    setOpenInvite(null);
     await reload();
   };
 
@@ -118,6 +124,7 @@ export function Members() {
         {invites.length > 0 && (
           <section className="card stack" style={{ gap: 12 }}>
             <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Invitations en attente (")}{tr(invites.length)})</h2>
+            {wide ? (
             <div className="table dense"><table>
               <thead><tr><th>{tr("E-mail")}</th><th>{tr("Rôle prévu")}</th><th /></tr></thead>
               <tbody>
@@ -130,6 +137,14 @@ export function Members() {
                 ))}
               </tbody>
             </table></div>
+            ) : (
+              <div className="acards">
+                {invites.map((i) => (
+                  <AdminCard key={i.email} toneSeed={i.email} title={i.email} sub={tr("Pas encore inscrit")}
+                    badge={<RoleBadge role={i.role} />} onOpen={() => setOpenInvite(i)} />
+                ))}
+              </div>
+            )}
           </section>
         )}
 
@@ -146,7 +161,7 @@ export function Members() {
 
           <div className="admin-search" style={{ maxWidth: 360 }}><Icon name="search" size={18} /><input type="search" value={pq} onChange={(e) => setPq(e.target.value)} aria-label={tr("Rechercher une personne")} placeholder={tr("Rechercher une personne")} /></div>
           {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
-            : shown.length === 0 ? <p className="muted">{tr("Aucun compte à afficher.")}</p> : (
+            : shown.length === 0 ? <p className="muted">{tr("Aucun compte à afficher.")}</p> : wide ? (
             <div className="table dense"><table>
               <thead><tr><SortTh k="name" label="Personne" sort={sort} onSort={toggle} /><SortTh k="role" label="Rôle" sort={sort} onSort={toggle} /><th>{tr("Actions")}</th></tr></thead>
               <tbody>
@@ -181,8 +196,61 @@ export function Members() {
                 })}
               </tbody>
             </table></div>
+          ) : (
+            <div className="acards">
+              {shown.map((m) => {
+                const isMe = m.id === meId;
+                return (
+                  <AdminCard key={m.id} toneSeed={m.name ?? m.email}
+                    title={<>{tr(m.name ?? '—')}{isMe && <span className="muted" style={{ fontWeight: 400 }}>{tr(" (vous)")}</span>}</>}
+                    sub={m.email} badge={<RoleBadge role={m.role} />}
+                    onOpen={() => { setConfirmId(null); setOpenMember(m); }} />
+                );
+              })}
+            </div>
           )}
         </section>
+
+        {openMember && (
+          <AdminSheet title={tr(openMember.name ?? '—')} sub={openMember.email}
+            onClose={() => { setConfirmId(null); setOpenMember(null); }}>
+            <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <RoleBadge role={openMember.role} />
+              {openMember.id === meId && <span className="small muted">{tr("C’est votre compte")}</span>}
+            </div>
+            <SheetActions>
+              {openMember.id === meId ? <p className="small muted" style={{ margin: 0 }}>{tr("Votre propre rôle n’est pas modifiable.")}</p>
+                : confirmId === openMember.id ? (
+                  <>
+                    <SheetDanger>{tr("Retirer l’accès ?")}</SheetDanger>
+                    <p className="small muted" style={{ margin: 0 }}>{tr("La personne redevient voyageur et perd l’accès à l’espace équipe et à l’administration.")}</p>
+                    <Button kind="d" icon="x" full={false} onClick={() => void change(openMember.id, 'traveler')}>{tr("Confirmer le retrait")}</Button>
+                    <Button kind="t" icon="x" full={false} onClick={() => setConfirmId(null)}>{tr("Annuler")}</Button>
+                  </>
+                ) : (
+                  <>
+                    {openMember.role === 'traveler' && <Button kind="s" icon="users" full={false} onClick={() => void change(openMember.id, 'team')}>{tr("Ajouter à l’équipe")}</Button>}
+                    {openMember.role === 'team' && <Button kind="s" icon="shield" full={false} onClick={() => void change(openMember.id, 'admin')}>{tr("Nommer administrateur")}</Button>}
+                    {openMember.role === 'admin' && <Button kind="s" icon="users" full={false} onClick={() => void change(openMember.id, 'team')}>{tr("Rétrograder en équipe")}</Button>}
+                    {openMember.role !== 'traveler' && <Button kind="d" icon="x" full={false} onClick={() => setConfirmId(openMember.id)}>{tr("Retirer l’accès")}</Button>}
+                  </>
+                )}
+            </SheetActions>
+          </AdminSheet>
+        )}
+
+        {openInvite && (
+          <AdminSheet title={tr("Invitation en attente")} sub={openInvite.email} onClose={() => setOpenInvite(null)}>
+            <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <RoleBadge role={openInvite.role} />
+              <span className="small muted">{tr("Pas encore inscrit")}</span>
+            </div>
+            <p className="small muted" style={{ margin: 0 }}>{tr("Le rôle prévu sera appliqué à sa première connexion.")}</p>
+            <SheetActions>
+              <Button kind="d" icon="x" full={false} onClick={() => void revoke(openInvite.email)}>{tr("Annuler l’invitation")}</Button>
+            </SheetActions>
+          </AdminSheet>
+        )}
       </div>
     </>
   );

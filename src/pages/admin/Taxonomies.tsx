@@ -1,9 +1,10 @@
 import { useI18n } from '../../i18n';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useStore } from '../../store';
-import { Button, Field, Icon, Select } from '../../ui';
+import { Button, Field, Icon, Select, useWide } from '../../ui';
 import { FIELD_BLOCKS, type Category, type CityRef, type District, type FieldBlock, type ProductTag } from '../../data';
 import type { IconName } from '../../icons';
+import { AdminCard, AdminSheet, SheetActions } from './mobile';
 import {
   deleteDistrict, deleteTag, saveCategory, saveCity, saveDistrict, saveTag, slugify, usageCount,
 } from '../../lib/taxonomies';
@@ -39,10 +40,12 @@ const Card = ({ title, children }: { title: string; children: ReactNode }) => { 
 export function AdminCities() {
   const { tr } = useI18n();
   const { s, api } = useStore();
+  const wide = useWide();
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [openDistrict, setOpenDistrict] = useState<District | null>(null);
   const [usage, setUsage] = useState<Record<string, number>>({});
 
   const [nf, setNf] = useState({ name: '', nameCn: '', lat: '', lng: '' });
@@ -144,6 +147,7 @@ export function AdminCities() {
 
               {open === c.id && (
                 <>
+                  {wide ? (
                   <div className="table dense"><table>
                     <thead><tr><th>{tr("Quartier")}</th><th>{tr("Latitude")}</th><th>{tr("Longitude")}</th><th /></tr></thead>
                     <tbody>
@@ -156,6 +160,16 @@ export function AdminCities() {
                       ))}
                     </tbody>
                   </table></div>
+                  ) : quarters.length === 0 ? (
+                    <p className="muted">{tr("Aucun quartier.")}</p>
+                  ) : (
+                    <div className="acards">
+                      {quarters.map((q) => (
+                        <AdminCard key={q.id ?? q.name} toneSeed={q.name} title={tr(q.name)}
+                          sub={`${tr("Latitude")} ${tr(q.lat)} · ${tr("Longitude")} ${tr(q.lng)}`} onOpen={() => setOpenDistrict(q)} />
+                      ))}
+                    </div>
+                  )}
                   <form onSubmit={(e) => addDistrict(c.id, e)} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
                     <div className="grow"><Field id={`d-n-${c.id}`} label={tr("Nom du quartier")} value={df.name} onChange={(v) => setDf({ ...df, name: v })} req /></div>
                     <Field id={`d-la-${c.id}`} label={tr("Latitude")} value={df.lat} onChange={(v) => setDf({ ...df, lat: v })} req />
@@ -167,6 +181,22 @@ export function AdminCities() {
             </Card>
           );
         })}
+
+        {openDistrict && (
+          <AdminSheet title={tr(openDistrict.name)}
+            sub={`${tr("Latitude")} ${tr(openDistrict.lat)} · ${tr("Longitude")} ${tr(openDistrict.lng)}`}
+            onClose={() => setOpenDistrict(null)}>
+            <p className="small muted" style={{ margin: 0 }}>
+              {tr("Les quartiers alimentent la recherche par proximité et le calcul des distances.")}
+            </p>
+            <SheetActions>
+              <Button kind="d" icon="trash" full={false}
+                onClick={() => { const q = openDistrict; setOpenDistrict(null); void removeDistrict(q); }}>
+                {tr("Supprimer le quartier")}
+              </Button>
+            </SheetActions>
+          </AdminSheet>
+        )}
       </div>
     </>
   );
@@ -175,9 +205,50 @@ export function AdminCities() {
 /* ==================================================================== */
 /* Catégories                                                           */
 /* ==================================================================== */
+
+/* Formulaire d'une catégorie : affiché dans la page sur ordinateur, dans la
+   fiche plein écran sur téléphone (voir AdminCategories). */
+function CategoryForm({ e, set, busy, onSave, onCancel }: {
+  e: Category; set: (c: Category) => void; busy: boolean; onSave: () => void; onCancel: () => void;
+}) {
+  const { tr } = useI18n();
+  return (
+    <>
+      <div className="filters" style={{ alignItems: 'flex-end' }}>
+        <div className="grow"><Field id={`e-l-${e.id}`} label={tr("Nom")} value={e.label} onChange={(v) => set({ ...e, label: v })} /></div>
+        <Field id={`e-cn-${e.id}`} label={tr("Nom en chinois")} value={e.labelCn ?? ''} onChange={(v) => set({ ...e, labelCn: v })} />
+        <Select id={`e-i-${e.id}`} label={tr("Icône")} value={e.icon} onChange={(v) => set({ ...e, icon: v as IconName })} options={CAT_ICONS.map((i) => ({ v: i, l: i }))} />
+      </div>
+      <div className="filters" style={{ alignItems: 'flex-end' }}>
+        <div className="grow"><Field id={`e-cta-${e.id}`} label={tr("Libellé du bouton de contact")} value={e.ctaLabel ?? ''} onChange={(v) => set({ ...e, ctaLabel: v })} /></div>
+        <div className="grow"><Field id={`e-tl-${e.id}`} label={tr("Titre de la liste produits/services")} value={e.tagsLabel} onChange={(v) => set({ ...e, tagsLabel: v })} /></div>
+      </div>
+      <fieldset className="stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
+        <legend style={{ fontWeight: 600, fontSize: 15, padding: 0 }}>{tr("Blocs affichés sur la fiche")}</legend>
+        {FIELD_BLOCKS.map((b) => (
+          <label key={b.id} className="check">
+            <input type="checkbox" checked={e.fields.includes(b.id)}
+              onChange={(ev) => set({ ...e, fields: ev.target.checked ? [...e.fields, b.id] : e.fields.filter((x) => x !== b.id) })} />
+            <span>{tr(b.label)}</span>
+          </label>
+        ))}
+        <label className="check">
+          <input type="checkbox" checked={e.isFreight} onChange={(ev) => set({ ...e, isFreight: ev.target.checked })} />
+          <span>{tr("Propose du fret (active le filtre aérien / maritime dans la recherche)")}</span>
+        </label>
+      </fieldset>
+      <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+        <Button full={false} onClick={onSave} disabled={busy}>{tr("Enregistrer")}</Button>
+        <Button kind="s" full={false} onClick={onCancel}>{tr("Annuler")}</Button>
+      </div>
+    </>
+  );
+}
+
 export function AdminCategories() {
   const { tr } = useI18n();
   const { s, api } = useStore();
+  const wide = useWide();
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -242,6 +313,15 @@ export function AdminCategories() {
 
         {s.categories.map((c) => {
           const e = edit?.id === c.id ? edit : null;
+          if (!wide) {
+            return (
+              <AdminCard key={c.id} toneSeed={c.label}
+                title={<><Icon name={c.icon} size={18} />{tr(c.label)}{c.labelCn ? ` · ${c.labelCn}` : ''}</>}
+                sub={`${tr(usage[c.id] ?? '…')} ${tr("fiche(s) ou proposition(s)")}`}
+                badge={!c.active ? <span className="tag tag-warn">{tr("Désactivée")}</span> : undefined}
+                onOpen={() => setEdit({ ...c })} />
+            );
+          }
           return (
             <Card key={c.id} title={tr(`${c.label}${c.labelCn ? ' · ' + c.labelCn : ''}`)}>
               <div className="row" style={{ gap: 10, flexWrap: 'wrap', justifyContent: 'space-between' }}>
@@ -258,38 +338,28 @@ export function AdminCategories() {
 
               {e && (
                 <div className="stack" style={{ gap: 14 }}>
-                  <div className="filters" style={{ alignItems: 'flex-end' }}>
-                    <div className="grow"><Field id={`e-l-${c.id}`} label={tr("Nom")} value={e.label} onChange={(v) => setEdit({ ...e, label: v })} /></div>
-                    <Field id={`e-cn-${c.id}`} label={tr("Nom en chinois")} value={e.labelCn ?? ''} onChange={(v) => setEdit({ ...e, labelCn: v })} />
-                    <Select id={`e-i-${c.id}`} label={tr("Icône")} value={e.icon} onChange={(v) => setEdit({ ...e, icon: v as IconName })} options={CAT_ICONS.map((i) => ({ v: i, l: i }))} />
-                  </div>
-                  <div className="filters" style={{ alignItems: 'flex-end' }}>
-                    <div className="grow"><Field id={`e-cta-${c.id}`} label={tr("Libellé du bouton de contact")} value={e.ctaLabel ?? ''} onChange={(v) => setEdit({ ...e, ctaLabel: v })} /></div>
-                    <div className="grow"><Field id={`e-tl-${c.id}`} label={tr("Titre de la liste produits/services")} value={e.tagsLabel} onChange={(v) => setEdit({ ...e, tagsLabel: v })} /></div>
-                  </div>
-                  <fieldset className="stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
-                    <legend style={{ fontWeight: 600, fontSize: 15, padding: 0 }}>{tr("Blocs affichés sur la fiche")}</legend>
-                    {FIELD_BLOCKS.map((b) => (
-                      <label key={b.id} className="check">
-                        <input type="checkbox" checked={e.fields.includes(b.id)}
-                          onChange={(ev) => setEdit({ ...e, fields: ev.target.checked ? [...e.fields, b.id] : e.fields.filter((x) => x !== b.id) })} />
-                        <span>{tr(b.label)}</span>
-                      </label>
-                    ))}
-                    <label className="check">
-                      <input type="checkbox" checked={e.isFreight} onChange={(ev) => setEdit({ ...e, isFreight: ev.target.checked })} />
-                      <span>{tr("Propose du fret (active le filtre aérien / maritime dans la recherche)")}</span>
-                    </label>
-                  </fieldset>
-                  <div className="row" style={{ gap: 8 }}>
-                    <Button full={false} onClick={() => save(e)} disabled={busy}>{tr("Enregistrer")}</Button>
-                    <Button kind="s" full={false} onClick={() => setEdit(null)}>{tr("Annuler")}</Button>
-                  </div>
+                  <CategoryForm e={e} set={setEdit} busy={busy} onSave={() => save(e)} onCancel={() => setEdit(null)} />
                 </div>
               )}
             </Card>
           );
         })}
+
+        {!wide && edit && (
+          <AdminSheet title={tr(edit.label + (edit.labelCn ? ' · ' + edit.labelCn : ''))}
+            sub={`${tr("Catégorie")} · ${tr(usage[edit.id] ?? '…')} ${tr("fiche(s) ou proposition(s)")}`}
+            onClose={() => setEdit(null)}>
+            <div className="stack" style={{ gap: 14 }}>
+              <CategoryForm e={edit} set={setEdit} busy={busy} onSave={() => save(edit)} onCancel={() => setEdit(null)} />
+              <SheetActions>
+                <Button kind="s" icon={edit.active ? 'eye' : 'check'} full={false} disabled={busy}
+                  onClick={() => save({ ...edit, active: !edit.active })}>
+                  {tr(edit.active ? 'Désactiver la catégorie' : 'Réactiver la catégorie')}
+                </Button>
+              </SheetActions>
+            </div>
+          </AdminSheet>
+        )}
       </div>
     </>
   );
@@ -301,6 +371,8 @@ export function AdminCategories() {
 export function AdminProductTags() {
   const { tr } = useI18n();
   const { s, api } = useStore();
+  const wide = useWide();
+  const [openTag, setOpenTag] = useState<ProductTag | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -355,6 +427,7 @@ export function AdminProductTags() {
           const f = form(c.id);
           return (
             <Card key={c.id} title={tr(`${c.label} — ${c.tagsLabel}`)}>
+              {wide ? (
               <div className="table dense"><table>
                 <thead><tr><th>{tr("Libellé")}</th><th>{tr("中文")}</th><th>{tr("État")}</th><th>{tr("Actions")}</th></tr></thead>
                 <tbody>
@@ -374,6 +447,19 @@ export function AdminProductTags() {
                   ))}
                 </tbody>
               </table></div>
+              ) : tags.length === 0 ? (
+                <p className="muted">{tr("Aucun élément pour cette catégorie.")}</p>
+              ) : (
+                <div className="acards">
+                  {tags.map((t) => (
+                    <AdminCard key={t.id} toneSeed={t.label}
+                      title={tr(t.label)}
+                      sub={<>{t.labelCn ?? tr("Non renseigné")} · {tr(t.active ? 'Actif' : 'Désactivé')}</>}
+                      badge={!t.active ? <span className="tag tag-warn">{tr("Désactivé")}</span> : undefined}
+                      onOpen={() => setOpenTag(t)} />
+                  ))}
+                </div>
+              )}
               <form onSubmit={(e) => add(c.id, e)} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
                 <div className="grow"><Field id={`t-l-${c.id}`} label={tr("Libellé")} value={f.label} onChange={(v) => setNf({ ...nf, [c.id]: { ...f, label: v } })} req placeholder={tr("Chaussures en cuir")} /></div>
                 <div className="grow"><Field id={`t-cn-${c.id}`} label={tr("Libellé chinois")} value={f.labelCn} onChange={(v) => setNf({ ...nf, [c.id]: { ...f, labelCn: v } })} placeholder={tr("皮鞋")} /></div>
@@ -382,6 +468,28 @@ export function AdminProductTags() {
             </Card>
           );
         })}
+
+        {openTag && (
+          <AdminSheet title={tr(openTag.label)} sub={openTag.labelCn ?? tr("Non renseigné")} onClose={() => setOpenTag(null)}>
+            <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span className="small muted"><code>{tr(openTag.id)}</code></span>
+              {!openTag.active && <span className="tag tag-warn">{tr("Désactivé")}</span>}
+            </div>
+            <p className="small muted" style={{ margin: 0 }}>
+              {tr("Préférez désactiver un élément plutôt que le supprimer : les fiches qui l’utilisent continueraient d’afficher son identifiant.")}
+            </p>
+            <SheetActions>
+              <Button kind="s" icon={openTag.active ? 'eye' : 'check'} full={false}
+                onClick={() => { const t = openTag; setOpenTag(null); void toggle(t); }}>
+                {tr(openTag.active ? 'Désactiver' : 'Réactiver')}
+              </Button>
+              <Button kind="d" icon="trash" full={false}
+                onClick={() => { const t = openTag; setOpenTag(null); void remove(t); }}>
+                {tr("Supprimer du catalogue")}
+              </Button>
+            </SheetActions>
+          </AdminSheet>
+        )}
       </div>
     </>
   );

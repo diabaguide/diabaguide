@@ -4,9 +4,10 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catLabel, cityName, type Cat, type City, type Freight, type Provider } from '../../data';
 import { useStore } from '../../store';
 import { newProviderId, validateProvider } from '../../lib/providers';
-import { Button, DemoNote, Field, Icon, Section, Select, StoredPhoto, TextArea } from '../../ui';
+import { Button, DemoNote, Field, Icon, Section, Select, StoredPhoto, TextArea, useWide } from '../../ui';
 import { FilePick, MAX_PHOTOS } from '../Contribute';
 import { SortTh, compare, useSort } from './tableSort';
+import { AdminCard, AdminSheet, SheetActions } from './mobile';
 
 /* Gestion des fiches par l'équipe : ajout, modification, demande de suppression.
    La suppression définitive est validée par l'administrateur (page « Suppressions »). */
@@ -22,6 +23,8 @@ const shown = (iso?: string) => (iso ? new Date(iso).toLocaleDateString('fr-FR',
 export function FichesList() {
   const { tr } = useI18n();
   const { s } = useStore();
+  const wide = useWide();
+  const nav = useNavigate();
   const [q, setQ] = useState('');
   const [city, setCity] = useState<'' | City>('');
   const [cat, setCat] = useState<'' | Cat>('');
@@ -46,6 +49,7 @@ export function FichesList() {
           <div className="grow"><Field id="fq" label={tr("Recherche")} type="search" value={q} onChange={setQ} placeholder={tr("Nom, téléphone, WeChat…")} /></div>
           {filtered && <Button kind="s" icon="x" full={false} onClick={() => { setCity(''); setCat(''); setQ(''); }}>{tr("Réinitialiser")}</Button>}
         </div>
+        {wide ? (
         <div className="table dense"><table>
           <thead><tr><th className="thumb" />
             <SortTh k="name" label="Fiche" sort={sort} onSort={toggle} /><SortTh k="cat" label="Catégorie" sort={sort} onSort={toggle} /><SortTh k="city" label="Ville" sort={sort} onSort={toggle} /><SortTh k="verified" label="Vérifiée le" sort={sort} onSort={toggle} /><th /></tr></thead>
@@ -69,6 +73,27 @@ export function FichesList() {
             {rows.length + pending.length === 0 && <tr><td colSpan={6} className="center muted">{tr("Aucune fiche ne correspond aux filtres.")}</td></tr>}
           </tbody>
         </table></div>
+        ) : rows.length + pending.length === 0 ? (
+          <p className="muted">{tr("Aucune fiche ne correspond aux filtres.")}</p>
+        ) : (
+          <div className="acards">
+            {rows.map((p) => (
+              <AdminCard key={p.id} toneSeed={undefined}
+                title={<>{p.name}{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}</>}
+                sub={<>{tr(catLabel(p.cat))} · {tr(cityName(p.city))}{p.verified ? ` · ${tr("vérifiée le")} ${p.verified}` : ''}</>}
+                thumb={<span className="acard-thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={46} w={46} round={12} /></span>}
+                onOpen={() => nav(`/equipe/fiches/${p.id}`)} />
+            ))}
+            {pending.map((p) => (
+              <AdminCard key={p.id}
+                title={p.name}
+                sub={<>{tr(catLabel(p.cat))} · {tr(cityName(p.city))}</>}
+                thumb={<span className="acard-thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={46} w={46} round={12} /></span>}
+                badge={<span className="tag tag-warn"><Icon name="clock" size={15} sw={2.2} />{tr(isAdmin ? 'À valider' : 'Suppression demandée')}</span>}
+                onOpen={() => nav(`/equipe/fiches/${p.id}`)} />
+            ))}
+          </div>
+        )}
         <DemoNote />
       </div>
     </>
@@ -233,14 +258,16 @@ export function FicheEdit() {
 export function Deletions() {
   const { tr } = useI18n();
   const { s, api } = useStore();
+  const wide = useWide();
   const [target, setTarget] = useState<Provider | null>(null);
+  const [openRow, setOpenRow] = useState<Provider | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const rows = s.pendingDeletion;
   const run = async (fn: () => Promise<string | null>) => {
     setBusy(true); setErr(null);
     const e = await fn();
-    setBusy(false); setTarget(null);
+    setBusy(false); setTarget(null); setOpenRow(null);
     if (e) setErr(e);
   };
   return (
@@ -248,6 +275,7 @@ export function Deletions() {
       <Head title="Suppressions" sub={`${rows.length} demande${rows.length > 1 ? 's' : ''} en attente. Seul l’administrateur peut supprimer définitivement une fiche.`} />
       <div className="admin-body">
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+        {wide ? (
         <div className="table dense"><table>
           <thead><tr><th>{tr("Fiche")}</th><th>{tr("Demandée par")}</th><th>{tr("Motif")}</th><th /></tr></thead>
           <tbody>
@@ -265,8 +293,36 @@ export function Deletions() {
             {rows.length === 0 && <tr><td colSpan={4} className="center muted">{tr("Aucune demande de suppression en attente.")}</td></tr>}
           </tbody>
         </table></div>
+        ) : rows.length === 0 ? (
+          <p className="muted">{tr("Aucune demande de suppression en attente.")}</p>
+        ) : (
+          <div className="acards">
+            {rows.map((p) => (
+              <AdminCard key={p.id} title={p.name}
+                sub={<>{tr(catLabel(p.cat))} · {tr(cityName(p.city))} · {tr("demandée par")} {p.deletionRequestedBy ?? '—'}</>}
+                badge={<span className="tag tag-warn"><Icon name="clock" size={15} sw={2.2} />{tr("À valider")}</span>}
+                onOpen={() => setOpenRow(p)} />
+            ))}
+          </div>
+        )}
         <DemoNote />
       </div>
+      {openRow && (
+        <AdminSheet title={openRow.name} sub={`${tr(catLabel(openRow.cat))} · ${tr(cityName(openRow.city))}`} onClose={() => setOpenRow(null)}>
+          <div className="small muted zh">{openRow.cn}</div>
+          <p className="small muted" style={{ margin: 0 }}>
+            {tr("Demandée par")} {openRow.deletionRequestedBy ?? '—'} · {shown(openRow.deletionRequestedAt)}
+          </p>
+          <div>
+            <span className="small muted">{tr("Motif")}</span>
+            <p style={{ margin: '4px 0 0' }}>{openRow.deletionReason ?? '—'}</p>
+          </div>
+          <SheetActions>
+            <Button kind="s" icon="check" full={false} disabled={busy} onClick={() => run(() => api.restoreProvider(openRow.id))}>{tr("Conserver la fiche")}</Button>
+            <Button kind="d" icon="trash" full={false} disabled={busy} onClick={() => setTarget(openRow)}>{tr("Supprimer définitivement")}</Button>
+          </SheetActions>
+        </AdminSheet>
+      )}
       {target && (
         <div className="overlay" onClick={() => setTarget(null)}>
           <div className="dialog" role="dialog" aria-modal="true" aria-label={tr("Supprimer cette fiche ?")} onClick={(e) => e.stopPropagation()}>
