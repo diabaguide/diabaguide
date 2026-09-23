@@ -225,7 +225,7 @@ export function ReviewsAdmin() {
                 {ouverte.status === 'hidden'
                   ? <Button kind="p" icon="check" disabled={busy} onClick={() => void run(ouverte, 'publié')}>{tr("Republier l’avis")}</Button>
                   : <Button kind="s" icon="eye" disabled={busy} onClick={() => void run(ouverte, 'cache')}>{tr("Masquer l’avis")}</Button>}
-                <Link className="btn btn-s" to={`/fiche/${ouverte.providerId}`}><Icon name="compass" size={20} />{tr("Voir la fiche")}</Link>
+                <Link className="btn btn-s" to={`/adresses/${ouverte.providerId}`}><Icon name="compass" size={20} />{tr("Voir la fiche")}</Link>
                 <SheetDanger>{tr("Supprimer définitivement cet avis ?")}</SheetDanger>
                 <Button kind="d" icon="trash" disabled={busy} onClick={() => void run(ouverte, 'supprimé')}>
                   {tr(busy ? 'Suppression…' : 'Supprimer l’avis')}
