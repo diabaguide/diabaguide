@@ -16,6 +16,7 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
   const { tr } = useI18n();
   const { s, d } = useStore();
   const fav = s.favorites.includes(p.id);
+  const mention = meta ?? (p.verified ? `Vérifiée le ${p.verified}` : '');
   return (
     <article className="rcard">
       <Link to={`/adresses/${p.id}`} className="rcard-link" aria-label={p.name} />
@@ -31,11 +32,14 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
           </span>
           <span className="small muted zh">{p.cn}</span>
           <span className="small row" style={{ gap: 6 }}><Icon name={catIcon(p.cat)} size={16} sw={2} />{tr(catLabel(p.cat))} · {tr(p.district)}</span>
+          {/* Mention de vérification : sous la catégorie, au milieu de la carte.
+              Rien à afficher quand la fiche n'a pas encore de date de vérification
+              (mieux vaut rien qu'un « Vérifiée le » suivi d'un blanc). */}
+          {mention ? <span className="small rcard-verified"><Icon name="check" size={14} sw={2.4} />{tr(mention)}</span> : null}
           <Stars avg={p.ratingAvg} count={p.ratingCount} size={14} />
         </div>
       </div>
       <div className="rcard-foot">
-        <span className="rcard-verified"><Icon name="check" size={15} sw={2.4} />{tr(meta ?? `Vérifiée le ${p.verified}`)}</span>
         <span className="rcard-more">{tr("Fiche complète")} →</span>
         {/* Lien en bas à gauche de la carte : ouvre la carte de visite à montrer
             au chauffeur ou au fournisseur (lien direct /adresses/:id/carte). */}
@@ -150,7 +154,10 @@ export function Search() {
         ) : q.view === 'carte' && !wide ? (
           <MapView list={list} sel={sel} setSel={setSel} />
         ) : (
-          list.map(({ p, km }) => <ResultCard key={p.id} p={p} meta={`${km !== null ? fmtKm(km) + ' · ' : ''}Vérifiée le ${p.verified}`} />)
+          list.map(({ p, km }) => (
+            <ResultCard key={p.id} p={p}
+              meta={[km !== null ? fmtKm(km) : null, p.verified ? `Vérifiée le ${p.verified}` : null].filter(Boolean).join(' · ')} />
+          ))
         )}
         {q.view === 'carte' && !wide && list.length > 0 && <Button kind="t" icon="list" onClick={() => set('view', null)}>{tr("Afficher les résultats en liste")}</Button>}
         <DemoNote />

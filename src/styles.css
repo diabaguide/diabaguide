@@ -137,7 +137,7 @@ h1, h2, h3, p { margin: 0; }
    du lien qui recouvre toute la carte (z-index), sinon le clic ouvrirait la fiche. */
 .rcard-visite { flex-basis: 100%; position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-weight: 600; text-decoration: none; }
 .rcard-verified { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-weight: 600; }
-.rcard-more { position: relative; z-index: 1; color: var(--accent); font-weight: 700; white-space: nowrap; }
+.rcard-more { position: relative; z-index: 1; margin-left: auto; color: var(--accent); font-weight: 700; white-space: nowrap; }
 
 /* Écrans spécifiques */
 .hero { background: linear-gradient(140deg, var(--hero-a) 0%, var(--hero-b) 100%); color: #fff; padding: 20px; border-radius: 0 0 28px 28px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 8px 24px rgba(21, 62, 159, 0.15); }
