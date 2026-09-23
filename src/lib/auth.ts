@@ -92,14 +92,26 @@ export async function signUp(
   return { user: await profileFor(data.user!.id, identifiant, name, phone) };
 }
 
+/** Identifiant de connexion associé à un numéro (voir supabase/phone_login.sql). */
+export async function loginForPhone(phone: string): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.rpc('login_for_phone', { p_phone: phone });
+  return error ? null : ((data as string | null) ?? null);
+}
+
 export async function signIn(
   identifiant: string, password: string,
 ): Promise<{ user?: AuthUser; error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
-  /* Connexion par e-mail ou par téléphone : les comptes créés avec leur seul
-     numéro n'ont pas d'adresse, et l'application ne doit pas la demander. */
+  /* Connexion par e-mail ou par téléphone. Pour un numéro, la base indique
+     l'identifiant du compte : les comptes créés sans adresse se connectent
+     avec leur numéro, et ceux créés avec une adresse — souvent plus anciens —
+     se connectent tout autant avec leur numéro, maintenant que l'équipe y a
+     ajouté leur téléphone. */
   const saisie = identifiant.trim();
-  const email = identifiantEstUnNumero(saisie) ? phoneLoginId(saisie) : saisie.toLowerCase();
+  const email = identifiantEstUnNumero(saisie)
+    ? (await loginForPhone(saisie)) ?? phoneLoginId(saisie)
+    : saisie.toLowerCase();
   if (!email) return { error: 'Vérifiez votre numéro de téléphone : il manque des chiffres.' };
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: translate(error.message) };
