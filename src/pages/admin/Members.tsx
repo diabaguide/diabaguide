@@ -1,6 +1,7 @@
 import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useStore } from '../../store';
+import { contient } from '../../lib/texte';
 import { Button, Field, Icon, Select, useWide } from '../../ui';
 import { SortTh, compare, useSort } from './tableSort';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
@@ -72,7 +73,7 @@ export function Members() {
   const { sort, toggle } = useSort<'name' | 'role'>({ k: 'name', dir: 1 });
   const [pq, setPq] = useState('');
   const shown = (showAll ? members : staff)
-    .filter((m) => !pq || `${m.name ?? ''} ${m.email}`.toLowerCase().includes(pq.toLowerCase()))
+    .filter((m) => contient(`${m.name ?? ''} ${m.email}`, pq))
     .sort((a, b) => compare(sort.k === 'role' ? a.role : (a.name ?? a.email).toLowerCase(), sort.k === 'role' ? b.role : (b.name ?? b.email).toLowerCase(), sort.dir));
 
   const invite = async (e: FormEvent) => {

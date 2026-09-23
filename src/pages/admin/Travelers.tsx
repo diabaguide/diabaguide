@@ -4,6 +4,7 @@ import { Button, DemoNote, Field, Icon, NotProvided, useWide } from '../../ui';
 import { SortTh, compare, useSort } from './tableSort';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { AccountStatus } from '../../lib/auth';
+import { contient } from '../../lib/texte';
 import {
   STATUS_LABEL, deleteTraveler, fetchMembers, fetchTravelerFiles, purgeTravelerFiles, setTravelerStatus, updateTraveler,
   type Member, type VoyageurFile,
@@ -165,7 +166,7 @@ export function Travelers() {
 
   const rows = travelers
     .filter((m) => (!state || m.status === state)
-      && (!pq || `${m.name ?? ''} ${m.email}`.toLowerCase().includes(pq.toLowerCase())))
+      && contient(`${m.name ?? ''} ${m.email}`, pq))
     .sort((a, b) => compare(sort.k === 'createdAt' ? a.createdAt : (a.name ?? a.email).toLowerCase(), sort.k === 'createdAt' ? b.createdAt : (b.name ?? b.email).toLowerCase(), sort.dir));
 
   const suspended = travelers.filter((m) => m.status === 'suspended').length;

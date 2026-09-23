@@ -6,6 +6,7 @@ import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
 import { Button, Chip, DemoNote, Field, Icon, Screen, Stars, StoredPhoto, useWide } from '../ui';
 import { logSearch } from '../lib/searchLogs';
+import { sansAccent } from '../lib/texte';
 
 /* Termes déjà signalés pendant cette visite : on n'enregistre pas deux fois la
    même recherche quand le voyageur va et vient entre les résultats. */
@@ -36,6 +37,11 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
       <div className="rcard-foot">
         <span className="rcard-verified"><Icon name="check" size={15} sw={2.4} />{tr(meta ?? `Vérifiée le ${p.verified}`)}</span>
         <span className="rcard-more">{tr("Fiche complète")} →</span>
+        {/* Lien en bas à gauche de la carte : ouvre la carte de visite à montrer
+            au chauffeur ou au fournisseur (lien direct /adresses/:id/carte). */}
+        <Link className="rcard-visite" to={`/adresses/${p.id}/carte`}>
+          <Icon name="qr" size={14} sw={2} />{tr("Carte de visite")}
+        </Link>
       </div>
     </article>
   );
@@ -59,13 +65,13 @@ export function useQuery() {
 
 function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provider[]) {
   const pos = getPos();
-  const term = q.q.trim().toLowerCase();
+  const term = sansAccent(q.q.trim());
   let list = providers.filter((p) => p.city === q.city).map((p) => ({ p, km: pos ? distanceKm(pos, p) : null }));
   if (q.cat) list = list.filter((x) => x.p.cat === q.cat);
   if (term) {
     list = list.filter(({ p }) =>
-      [p.name, p.cn, p.district, p.desc, ...(p.products ?? []), ...(p.services ?? []),
-        ...(p.productTags ?? []).map(tagLabel), p.cuisine ?? '', p.goods ?? ''].join(' ').toLowerCase().includes(term));
+      sansAccent([p.name, p.cn, p.district, p.desc, ...(p.products ?? []), ...(p.services ?? []),
+        ...(p.productTags ?? []).map(tagLabel), p.cuisine ?? '', p.goods ?? ''].join(' ')).includes(term));
   }
   if (q.fret && q.fret !== 'both') list = list.filter((x) => x.p.freight?.includes(q.fret as Freight));
   if (q.prox && Number(q.prox) > 0) list = list.filter((x) => x.km === null || x.km <= Number(q.prox));
@@ -95,7 +101,7 @@ export function Search() {
     if (loading) return;
     const terme = q.q.trim();
     if (terme.length < 2) return;
-    const cle = `${terme.toLowerCase()}|${q.city}|${q.cat ?? ''}|${list.length}`;
+    const cle = `${sansAccent(terme)}|${q.city}|${q.cat ?? ''}|${list.length}`;
     if (DEJA_LOGGES.has(cle)) return;
     const t = setTimeout(() => {
       DEJA_LOGGES.add(cle);
