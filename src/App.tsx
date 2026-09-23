@@ -10,6 +10,7 @@ import { Fiche, Driver, Card, Contact, Report } from './pages/Fiche';
 import { Favorites, Profile, Downloads } from './pages/Account';
 import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contribute';
 import { ShoppingLists, ShoppingListPage } from './pages/Shopping';
+import { ReviewsAdminPage } from './pages/Reviews';
 
 const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminDashboard })));
@@ -88,6 +89,7 @@ export default function App() {
               <Route path="/equipe/suppressions" element={<Deletions />} />
               <Route path="/equipe/membres" element={<Members />} />
               <Route path="/equipe/voyageurs" element={<Travelers />} />
+              <Route path="/equipe/avis" element={<ReviewsAdminPage />} />
               <Route path="/equipe/villes" element={<AdminCities />} />
               <Route path="/equipe/categories" element={<AdminCategories />} />
               <Route path="/equipe/produits" element={<AdminProductTags />} />
