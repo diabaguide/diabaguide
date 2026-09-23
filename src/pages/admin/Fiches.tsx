@@ -22,7 +22,7 @@ const today = () => new Date().toLocaleDateString('fr-FR', { day: 'numeric', mon
 const shown = (iso?: string) => (iso ? new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
 export function FichesList() {
-  const { tr } = useI18n();
+  const { tr, t } = useI18n();
   const { s } = useStore();
   const wide = useWide();
   const nav = useNavigate();
@@ -41,7 +41,7 @@ export function FichesList() {
   const pending = s.pendingDeletion.filter(match);
   return (
     <>
-      <Head title="Fiches" sub={`${rows.length} fiche${rows.length > 1 ? 's' : ''} publiée${rows.length > 1 ? 's' : ''}. Ajoutez, modifiez ou demandez la suppression d’une fiche.`}
+      <Head title={tr("Fiches")} sub={t(rows.length > 1 ? '{0} fiches publiées. Ajoutez, modifiez ou demandez la suppression d’une fiche.' : '{0} fiche publiée. Ajoutez, modifiez ou demandez la suppression d’une fiche.', { 0: rows.length })}
         right={<Button to="/equipe/fiches/nouvelle" icon="plus" full={false}>{tr("Nouvelle fiche")}</Button>} />
       <div className="admin-body">
         <div className="filters sticky">

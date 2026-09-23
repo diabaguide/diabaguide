@@ -3116,5 +3116,7 @@
 "Fiches": {"en": "Listings", "zh": "信息", "ar": "البطاقات"},
 "Suppressions": {"en": "Deletions", "zh": "删除", "ar": "عمليات الحذف"},
 "Suppressions ({0})": {"en": "Deletions ({0})", "zh": "删除（{0}）", "ar": "عمليات الحذف ({0})"},
-"La fiche est conservée.": {"en": "The listing is kept.", "zh": "信息已保留。", "ar": "تم الإبقاء على البطاقة."}
+"La fiche est conservée.": {"en": "The listing is kept.", "zh": "信息已保留。", "ar": "تم الإبقاء على البطاقة."},
+"{0} fiche publiée. Ajoutez, modifiez ou demandez la suppression d’une fiche.": {"en": "{0} listing published. Add, edit or request the deletion of a listing.", "zh": "已发布 {0} 条信息。可添加、修改或申请删除信息。", "ar": "{0} بطاقة منشورة. أضيفوا أو عدّلوا أو اطلبوا حذف بطاقة."},
+"{0} fiches publiées. Ajoutez, modifiez ou demandez la suppression d’une fiche.": {"en": "{0} listings published. Add, edit or request the deletion of a listing.", "zh": "已发布 {0} 条信息。可添加、修改或申请删除信息。", "ar": "{0} بطاقات منشورة. أضيفوا أو عدّلوا أو اطلبوا حذف بطاقة."}
 }
