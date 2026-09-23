@@ -40,12 +40,14 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
         </div>
       </div>
       <div className="rcard-foot">
-        <span className="rcard-more">{tr("Fiche complète")} →</span>
         {/* Lien en bas à gauche de la carte : ouvre la carte de visite à montrer
-            au chauffeur ou au fournisseur (lien direct /adresses/:id/carte). */}
+            au chauffeur ou au fournisseur (lien direct /adresses/:id/carte).
+            Placé avant « Fiche complète » pour que les deux textes s'alignent
+            sur la même ligne : carte de visite à gauche, fiche complète à droite. */}
         <Link className="rcard-visite" to={`/adresses/${p.id}/carte`}>
           <Icon name="qr" size={14} sw={2} />{tr("Carte de visite")}
         </Link>
+        <span className="rcard-more">{tr("Fiche complète")} →</span>
       </div>
     </article>
   );
