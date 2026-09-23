@@ -132,7 +132,10 @@ h1, h2, h3, p { margin: 0; }
 .rcard-fav { position: relative; z-index: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: -6px -4px 0 0; border-radius: 999px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
 .rcard-fav:hover { background: var(--danger-bg); color: var(--danger); }
 .rcard-fav[aria-pressed="true"] { color: var(--danger); }
-.rcard-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding: 10px 14px; background: var(--info-bg); border-top: 1px solid var(--card-line); font-size: 12px; }
+.rcard-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; margin-top: auto; padding: 10px 14px; background: var(--info-bg); border-top: 1px solid var(--card-line); font-size: 12px; }
+/* Carte de visite : sous la vérification, alignée à gauche. Elle passe au-dessus
+   du lien qui recouvre toute la carte (z-index), sinon le clic ouvrirait la fiche. */
+.rcard-visite { flex-basis: 100%; position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-weight: 600; text-decoration: none; }
 .rcard-verified { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-weight: 600; }
 .rcard-more { position: relative; z-index: 1; color: var(--accent); font-weight: 700; white-space: nowrap; }
 

@@ -3,6 +3,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catLabel, cityName, type Cat, type City, type Freight, type Provider } from '../../data';
 import { useStore } from '../../store';
+import { contient } from '../../lib/texte';
 import { newProviderId, validateProvider } from '../../lib/providers';
 import { Button, DemoNote, Field, Icon, Section, Select, StoredPhoto, TextArea, useWide } from '../../ui';
 import { FilePick, MAX_PHOTOS } from '../Contribute';
@@ -31,7 +32,7 @@ export function FichesList() {
   const isAdmin = s.user?.role === 'admin';
   const { sort, toggle } = useSort<'name' | 'cat' | 'city' | 'verified'>({ k: 'name', dir: 1 });
   const match = (p: Provider) => (!city || p.city === city) && (!cat || p.cat === cat)
-    && (!q || `${p.name} ${p.cn} ${p.tel ?? ''} ${p.wechat ?? ''}`.toLowerCase().includes(q.toLowerCase()));
+    && contient(`${p.name} ${p.cn} ${p.tel ?? ''} ${p.wechat ?? ''}`, q);
   const rows = useMemo(() => s.providers.filter(match).sort((a, b) => {
     const v = (p: Provider) => (sort.k === 'cat' ? catLabel(p.cat) : sort.k === 'city' ? cityName(p.city) : sort.k === 'verified' ? (p.verified ?? '') : p.name).toLowerCase();
     return compare(v(a), v(b), sort.dir);

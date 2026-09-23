@@ -100,3 +100,42 @@ end; $$;
 
 revoke all on function public.admin_prune_search_logs(integer) from public, anon;
 grant execute on function public.admin_prune_search_logs(integer) to authenticated;
+-- ============================================================
+-- Recherche : casse et accents ignorés
+--
+-- « Médina », « MEDINA » et « medina » doivent mener à la même fiche ; côté
+-- équipe, « médina » et « medina » doivent compter comme un seul besoin dans le
+-- journal des recherches.
+--
+-- Règle ci-dessous = miroir exact de `sansAccent()` (src/lib/texte.ts) :
+-- minuscules, accents retirés (composés comme décomposés), ligatures
+-- simplifiées, apostrophes typographiques supprimées. Un test compare les deux
+-- implémentations sur une batterie de mots (0 écart exigé) : toute modification
+-- d'un côté doit être répercutée de l'autre.
+-- ============================================================
+
+create or replace function public.sans_accent(p_texte text)
+returns text language sql immutable as $$
+  with nettoye as (
+    select replace(replace(replace(replace(coalesce(p_texte, ''),
+             'œ', 'oe'), 'æ', 'ae'), 'ß', 'ss'), '’', '') as t
+  )
+  select translate(
+           translate(lower(t),
+             'àáâãäåāăąçćčďđèéêëēĕėęěìíîïĩīįłñńňòóôõöøōŏőùúûüũūŭůűųýÿżźžšśşțţř',
+             'aaaaaaaacccddeeeeeeeeeiiiiiiilnnnooooooooooouuuuuuuuuyzzzsssttr'),
+           '̧̨̣̀́̂̃̈̄̆̇̌', '')
+  from nettoye
+$$;
+
+comment on function public.sans_accent(text) is
+  'Texte comparable : minuscules, sans accents ni ligatures. Miroir de sansAccent() dans src/lib/texte.ts.';
+
+alter table public.search_logs drop column if exists term_norm;
+alter table public.search_logs
+  add column term_norm text generated always as (public.sans_accent(term)) stored;
+
+create index if not exists search_logs_terme_idx on public.search_logs (term_norm, city);
+
+revoke all on function public.sans_accent(text) from public;
+grant execute on function public.sans_accent(text) to anon, authenticated;

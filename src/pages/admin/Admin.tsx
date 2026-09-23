@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } 
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { STATUSES, catLabel, cityName, type Cat, type City, type Provider, type Proposal, type Status } from '../../data';
 import { useStore } from '../../store';
+import { contient } from '../../lib/texte';
 import { signOut } from '../../lib/auth';
 import { FilePick, MAX_PHOTOS } from '../Contribute';
 import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, StoredPhoto, Tag, TextArea, useWide } from '../../ui';
@@ -24,7 +25,7 @@ const ageLabel = (h: number) => (h < 24 ? `Il y a ${h} h` : `Il y a ${Math.round
 function dupCandidates(p: Proposal, providers: Provider[], term?: string) {
   const t = (term ?? p.name.split(' ')[0]).trim().toLowerCase();
   if (!t) return [];
-  return providers.filter((x) => `${x.name} ${x.cn} ${x.tel ?? ''} ${x.wechat ?? ''}`.toLowerCase().includes(t))
+  return providers.filter((x) => contient(`${x.name} ${x.cn} ${x.tel ?? ''} ${x.wechat ?? ''}`, t))
     .map((x) => ({ x, why: p.tel && x.tel === p.tel ? 'Même numéro de téléphone' : 'Nom proche · même quartier ou même ville' }));
 }
 
@@ -208,7 +209,7 @@ export function AdminList() {
     };
     return all
       .filter((p) => (!city || p.city === city) && (!cat || p.cat === cat) && (!st || p.status === st) &&
-        (!q || `${p.name} ${p.cn} ${p.tel} ${p.wechat}`.toLowerCase().includes(q.toLowerCase())))
+        contient(`${p.name} ${p.cn} ${p.tel} ${p.wechat}`, q))
       .sort((a, b) => {
         if (sort.k === 'date' && actionable(a) !== actionable(b)) return actionable(a) ? -1 : 1;
         const x = val(a), y = val(b);
