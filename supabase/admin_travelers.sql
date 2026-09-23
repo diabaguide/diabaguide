@@ -64,7 +64,10 @@ begin
   if p_name is null or length(trim(p_name)) < 2 then
     raise exception 'Le nom doit contenir au moins 2 caractères.';
   end if;
-  if v_phone is not null and v_phone !~ '[0-9]{6,}' then
+  -- Les numéros sont saisis librement (espaces, indicatif) : on ne compte que
+  -- les chiffres, sans imposer de format.
+  if v_phone is not null
+     and length(regexp_replace(v_phone, '[^0-9]', '', 'g')) < 6 then
     raise exception 'Numéro de téléphone invalide.';
   end if;
 
@@ -144,7 +147,12 @@ begin
   -- proposals.user_id ne se supprime pas en cascade : on détache les
   -- contributions pour ne pas perdre l'historique (elles restent visibles
   -- par l'équipe, sans auteur).
+  -- Le trigger guard_proposal_write (security_fixes.sql) réécrit toujours
+  -- user_id pour empêcher un changement de propriétaire : il faut le
+  -- neutraliser le temps du détachement (opération transactionnelle).
+  alter table public.proposals disable trigger guard_proposal_write;
   update public.proposals set user_id = null where user_id = p_id;
+  alter table public.proposals enable trigger guard_proposal_write;
 
   -- profiles et ratings sont nettoyés par les contraintes
   -- (on delete cascade) ; reports et team_invitations par « set null ».
