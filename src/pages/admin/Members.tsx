@@ -6,9 +6,11 @@ import { SortTh, compare, useSort } from './tableSort';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { Role } from '../../lib/auth';
 import {
-  fetchInvitations, fetchMembers, inviteMember, revokeInvitation, setMemberRole,
+  fetchInvitations, fetchMembers, inviteMember, resetPasswordFor, revokeInvitation, setMemberRole,
   ROLE_LABEL, type Invitation, type Member,
 } from '../../lib/members';
+import { formatPhone, phoneKey } from '../../lib/phone';
+import { whatsappUrl } from '../../lib/shopping';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -32,6 +34,19 @@ export function Members() {
   const { s } = useStore();
   const meId = s.user?.id;
   const wide = useWide();
+
+  /* Mot de passe temporaire créé pour le compte ouvert (administrateurs). */
+  const [mdp, setMdp] = useState<string | null>(null);
+  const [mdpErr, setMdpErr] = useState<string | null>(null);
+  const [mdpBusy, setMdpBusy] = useState(false);
+  const [mdpCopie, setMdpCopie] = useState(false);
+  const reinitialiser = async (m: Member) => {
+    setMdpBusy(true); setMdpErr(null); setMdp(null); setMdpCopie(false);
+    const res = await resetPasswordFor(m.id);
+    setMdpBusy(false);
+    if (res.error) { setMdpErr(res.error); return; }
+    setMdp(res.motDePasse ?? null);
+  };
 
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invitation[]>([]);
@@ -213,7 +228,7 @@ export function Members() {
 
         {openMember && (
           <AdminSheet title={tr(openMember.name ?? '—')} sub={openMember.email}
-            onClose={() => { setConfirmId(null); setOpenMember(null); }}>
+            onClose={() => { setConfirmId(null); setOpenMember(null); setMdp(null); setMdpErr(null); }}>
             <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <RoleBadge role={openMember.role} />
               {openMember.id === meId && <span className="small muted">{tr("C’est votre compte")}</span>}
@@ -236,6 +251,41 @@ export function Members() {
                   </>
                 )}
             </SheetActions>
+
+            {/* Réinitialisation du mot de passe : réservée aux administrateurs.
+                Utile surtout pour les comptes créés avec un seul numéro, qui ne
+                peuvent recevoir aucun lien par e-mail. */}
+            {s.user?.role === 'admin' && openMember.id !== meId && (
+              <div className="stack" style={{ gap: 8 }}>
+                <SheetDanger>{tr("Mot de passe oublié")}</SheetDanger>
+                <p className="small muted" style={{ margin: 0 }}>{tr("Crée un mot de passe temporaire à transmettre à la personne. Elle devra le changer après sa première connexion.")}</p>
+                <Button kind="s" icon="lock" full={false} disabled={mdpBusy} onClick={() => void reinitialiser(openMember)}>
+                  {tr(mdpBusy ? 'Création…' : 'Réinitialiser le mot de passe')}
+                </Button>
+
+                {mdp && (
+                  <div role="status" className="notice">
+                    <Icon name="check" size={20} sw={2} />
+                    <div>
+                      <strong>{tr("Mot de passe temporaire")}</strong>
+                      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 20, letterSpacing: 1, margin: '4px 0' }}>{mdp}</div>
+                      <div className="small muted">{tr("Notez-le maintenant : il ne sera plus affiché.")}</div>
+                      <div className="row" style={{ gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                        <Button kind="s" icon="copy" full={false} onClick={() => {
+                          void navigator.clipboard?.writeText(mdp).then(() => setMdpCopie(true)).catch(() => setMdpCopie(false));
+                        }}>{tr(mdpCopie ? 'Copié' : 'Copier')}</Button>
+                        <Button kind="g" icon="chat" full={false} href={(() => {
+                          const message = tr("Bonjour") + ' ' + (openMember.name ?? '') + ', ' + tr("voici votre nouveau mot de passe Diaba Guide :") + ' ' + mdp + '. ' + tr("Changez-le après votre connexion.");
+                          const tel = phoneKey(openMember.phone ?? '');
+                          return tel.length >= 6 ? `https://wa.me/${tel}?text=${encodeURIComponent(message)}` : whatsappUrl(message);
+                        })()}>{tr("Envoyer par WhatsApp")}</Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {mdpErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(mdpErr)}</span></div>}
+              </div>
+            )}
           </AdminSheet>
         )}
 

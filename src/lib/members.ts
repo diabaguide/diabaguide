@@ -63,6 +63,36 @@ export async function setTravelerStatus(
   return { error: error ? humanize(error.message) : undefined };
 }
 
+/**
+ * Réinitialise le mot de passe d'un compte, par un administrateur.
+ *
+ * Passe par la fonction serveur `/api/reinitialiser-mot-de-passe` : changer le
+ * mot de passe de quelqu'un d'autre exige la clé privilégiée de Supabase, qui
+ * ne doit jamais se trouver dans le navigateur. La fonction vérifie elle-même
+ * que la personne qui demande est administratrice.
+ *
+ * Rend le mot de passe temporaire, à transmettre au voyageur (WhatsApp) : sans
+ * adresse e-mail, aucun envoi automatique n'est possible.
+ */
+export async function resetPasswordFor(id: string): Promise<{ motDePasse?: string; error?: string }> {
+  if (!supabase) return { error: 'Réinitialisation indisponible en mode démonstration.' };
+  const { data } = await supabase.auth.getSession();
+  const jeton = data.session?.access_token;
+  if (!jeton) return { error: 'Session expirée. Reconnectez-vous.' };
+  try {
+    const r = await fetch('/api/reinitialiser-mot-de-passe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${jeton}` },
+      body: JSON.stringify({ id }),
+    });
+    const corps = (await r.json().catch(() => ({}))) as { motDePasse?: string; error?: string };
+    if (!r.ok) return { error: corps.error ?? 'La réinitialisation a échoué. Réessayez.' };
+    return { motDePasse: corps.motDePasse };
+  } catch {
+    return { error: 'Connexion impossible. Vérifiez votre réseau et réessayez.' };
+  }
+}
+
 /** Supprime définitivement un compte voyageur (action irréversible). */
 export async function deleteTraveler(id: string): Promise<{ error?: string }> {
   if (!supabase) return {};
