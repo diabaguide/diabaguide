@@ -10,6 +10,7 @@ import { cancelProviderDeletion, deleteProvider, fetchProviders, requestProvider
 import { fetchMyRating, rateProvider } from './lib/ratings';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { isTeamRole, signOut, userFromSession, ACCOUNT_NOTICE_KEY, type AccountStatus, type Role } from './lib/auth';
+import { logSessionEvent, clesDeSessionEnMemoire } from './lib/sessionLog';
 import {
   complementProposal, decideProposal, logProviderEvent, fetchAllProposals, fetchDecisions, fetchMyProposals, saveProposal, updateProposalFields,
 } from './lib/contributions';
@@ -291,13 +292,36 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       d({ t: 'session', user: u });
     };
+    /* Diagnostic de la connexion persistante : on note ce que l'on trouve dans
+       le stockage du navigateur avant même d'interroger Supabase. Une clé
+       absente = le téléphone a effacé le stockage ; une clé présente mais une
+       session vide = le renouvellement du jeton a été refusé. Deux causes
+       opposées, que ce journal permet de distinguer (supabase/session_events.sql). */
+    const cles = clesDeSessionEnMemoire();
+    logSessionEvent('demarrage', `cles=${cles.length ? cles.join(' ') : 'aucune'}`);
+
     supabase.auth.getSession()
-      .then(({ data }) => hydrate(data.session))
+      .then(({ data, error }) => {
+        if (error) logSessionEvent('erreur_lecture_session', error.message);
+        if (!data.session) {
+          logSessionEvent(cles.length ? 'cle_presente_session_vide' : 'aucune_cle_en_memoire', error?.message ?? '');
+        }
+        return hydrate(data.session);
+      })
       // La vérification de la session ne doit jamais laisser l'application sur
       // l'écran d'attente : en cas d'échec, on repart de « personne connecté »
       // et le voyageur retrouve l'écran de connexion.
-      .catch(() => hydrate(null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => { void hydrate(session); });
+      .catch((e: unknown) => {
+        logSessionEvent('echec_lecture_session', String(e).slice(0, 200));
+        return hydrate(null);
+      });
+    const { data: sub } = supabase.auth.onAuthStateChange((evenement, session) => {
+      if (evenement === 'SIGNED_OUT') logSessionEvent('deconnexion', `cles=${clesDeSessionEnMemoire().length}`);
+      else if (evenement === 'SIGNED_IN') logSessionEvent('connexion');
+      else if (evenement === 'TOKEN_REFRESHED') logSessionEvent('jeton_renouvele');
+      else if (evenement === 'USER_UPDATED') logSessionEvent('compte_modifie');
+      void hydrate(session);
+    });
     return () => { alive = false; sub.subscription.unsubscribe(); };
   }, []);
 
