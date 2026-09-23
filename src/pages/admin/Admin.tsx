@@ -5,7 +5,8 @@ import { STATUSES, catLabel, cityName, type Cat, type City, type Provider, type 
 import { useStore } from '../../store';
 import { signOut } from '../../lib/auth';
 import { FilePick, MAX_PHOTOS } from '../Contribute';
-import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, StoredPhoto, Tag, TextArea } from '../../ui';
+import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, StoredPhoto, Tag, TextArea, useWide } from '../../ui';
+import { AdminCard, AdminSheet, SheetActions } from './mobile';
 
 /* Toutes les propositions vues par l’équipe (hors brouillons des voyageurs).
    Pour un compte équipe, `s.proposals` contient déjà toutes les propositions
@@ -103,6 +104,8 @@ const Head = ({ title, sub, right }: { title: string; sub: string; right?: React
 export function AdminDashboard() {
   const { tr } = useI18n();
   const all = useTeamAll();
+  const wide = useWide();
+  const nav = useNavigate();
   const n = (st: Status) => all.filter((p) => p.status === st).length;
   const queue = all.filter((p) => p.status === 'Soumise' || p.status === 'En vérification').sort((a, b) => ageHours(b) - ageHours(a)).slice(0, 5);
   const tiles: [Parameters<typeof Icon>[0]['name'], number, string, string][] = [
@@ -120,6 +123,7 @@ export function AdminDashboard() {
         </div>
         <section className="stack">
           <h2 className="display" style={{ fontSize: 20 }}>{tr("Propositions à traiter en priorité")}</h2>
+          {wide ? (
           <div className="table"><table>
             <thead><tr><th>{tr("Proposition")}</th><th>{tr("Catégorie et ville")}</th><th>{tr("Ancienneté")}</th><th /></tr></thead>
             <tbody>
@@ -137,6 +141,21 @@ export function AdminDashboard() {
               {queue.length === 0 && <tr><td colSpan={4} className="center muted">{tr("Rien à traiter pour le moment.")}</td></tr>}
             </tbody>
           </table></div>
+          ) : queue.length === 0 ? (
+            <p className="muted">{tr("Rien à traiter pour le moment.")}</p>
+          ) : (
+            <div className="acards">
+              {queue.map((p) => {
+                const h = ageHours(p);
+                return (
+                  <AdminCard key={p.id} toneSeed={p.name} title={p.name}
+                    sub={<>{tr(catLabel(p.cat))} · {tr(cityName(p.city))} · {tr(ageLabel(h))}</>}
+                    badge={h > 48 ? <span className="tag tag-warn"><Icon name="clock" size={15} sw={2.2} />{tr("48 h")}</span> : undefined}
+                    onOpen={() => nav(`/equipe/propositions/${p.id}`)} />
+                );
+              })}
+            </div>
+          )}
           <div className="small muted">{tr("L’objectif de 48 heures est indicatif.")}</div>
         </section>
         <DemoNote />
@@ -153,6 +172,8 @@ export function AdminList() {
   const { tr, t } = useI18n();
   const all = useTeamAll();
   const { s, api } = useStore();
+  const wide = useWide();
+  const nav = useNavigate();
   const [params] = useSearchParams();
   const [city, setCity] = useState<'' | City>('');
   const [cat, setCat] = useState<'' | Cat>('');
@@ -256,6 +277,7 @@ export function AdminList() {
             <Button kind="s" full={false} onClick={() => setSel(new Set())}>{tr("Tout désélectionner")}</Button>
           </div>
         )}
+        {wide ? (
         <div className="table dense"><table>
           <thead><tr>
             <th className="chk"><input type="checkbox" aria-label={tr("Tout sélectionner")} checked={allPicked} disabled={canSelect.length === 0} onChange={toggleAll} /></th>
@@ -276,6 +298,35 @@ export function AdminList() {
             {rows.length === 0 && <tr><td colSpan={8} className="center muted">{tr("Aucune proposition ne correspond aux filtres.")}</td></tr>}
           </tbody>
         </table></div>
+        ) : rows.length === 0 ? (
+          <p className="muted">{tr("Aucune proposition ne correspond aux filtres.")}</p>
+        ) : (
+          <div className="acards">
+            {rows.map((p) => {
+              const dup = dups.get(p.id) ?? false;
+              return (
+                <div key={p.id} className={`acard selectable${sel.has(p.id) ? ' picked' : ''}`}>
+                  <input type="checkbox" className="acard-chk" aria-label={`${tr("Sélectionner")} ${p.name}`}
+                    checked={sel.has(p.id)} disabled={!actionable(p)} onChange={() => toggleOne(p.id)} />
+                  <button type="button" className="acard-open" onClick={() => nav(`/equipe/propositions/${p.id}`)}
+                    aria-label={`${tr("Examiner")} ${p.name}`}>
+                    <span className="acard-main">
+                      <span className="acard-name">{p.name}</span>
+                      <span className="acard-sub">{tr(catLabel(p.cat))} · {tr(cityName(p.city))} · {p.date}</span>
+                      <span className="acard-tags">
+                        <StatusBadge status={p.status} />
+                        <span className="small" style={{ fontWeight: 600, color: dup ? '#8A4310' : 'var(--muted)' }}>
+                          <Icon name={dup ? 'alert' : 'check'} size={16} sw={2.2} />{tr(dup ? 'Doublon possible' : 'Aucun doublon')}
+                        </span>
+                      </span>
+                    </span>
+                    <Icon name="chevR" size={22} sw={2.2} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
         <DemoNote />
       </div>
       {bulk && dlgCfg && (
@@ -435,10 +486,14 @@ export function AdminVerify() {
 export function AdminHistory() {
   const { tr } = useI18n();
   const { s } = useStore();
+  const wide = useWide();
+  const [open, setOpen] = useState<number | null>(null);
+  const h = open != null ? s.decisions[open] : null;
   return (
     <>
       <Head title={tr("Historique des décisions")} sub={tr("Toutes les décisions, avec la date de dernière vérification de chaque fiche.")} />
       <div className="admin-body">
+        {wide ? (
         <div className="table"><table>
           <thead><tr><th>{tr("Date de la décision")}</th><th>{tr("Fiche")}</th><th>{tr("Décision")}</th><th>{tr("Commentaire ou motif")}</th><th>{tr("Par")}</th><th>{tr("Dernière vérification")}</th></tr></thead>
           <tbody>
@@ -447,6 +502,32 @@ export function AdminHistory() {
             ))}
           </tbody>
         </table></div>
+        ) : s.decisions.length === 0 ? (
+          <p className="muted">{tr("Aucune décision enregistrée pour le moment.")}</p>
+        ) : (
+          <div className="acards">
+            {s.decisions.map((x, i) => (
+              <AdminCard key={i} toneSeed={x.proposalName} title={tr(x.proposalName)}
+                sub={`${x.date} · ${tr(x.by)}`} badge={<StatusBadge status={x.decision} />}
+                onOpen={() => setOpen(i)} />
+            ))}
+          </div>
+        )}
+        {h && (
+          <AdminSheet title={tr(h.proposalName)} sub={`${h.date} · ${tr(h.by)}`} onClose={() => setOpen(null)}>
+            <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <StatusBadge status={h.decision} />
+              <span className="small muted">{tr("Dernière vérification")} · {tr(h.lastCheck)}</span>
+            </div>
+            <div>
+              <span className="small muted">{tr("Commentaire ou motif")}</span>
+              <p style={{ margin: '4px 0 0' }}>{h.note || '—'}</p>
+            </div>
+            <SheetActions>
+              <Button kind="s" icon="x" full={false} onClick={() => setOpen(null)}>{tr("Fermer")}</Button>
+            </SheetActions>
+          </AdminSheet>
+        )}
         <DemoNote />
       </div>
     </>

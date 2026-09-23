@@ -2,6 +2,7 @@ import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import { Button, DemoNote, Field, Icon, NotProvided, useWide } from '../../ui';
 import { SortTh, compare, useSort } from './tableSort';
+import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { AccountStatus } from '../../lib/auth';
 import {
   STATUS_LABEL, deleteTraveler, fetchMembers, setTravelerStatus, updateTraveler,
@@ -9,18 +10,6 @@ import {
 } from '../../lib/members';
 
 const shown = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-
-/* Pastilles d'initiales (présentation de la liste sur téléphone) : teinte déduite
-   du nom, donc stable d'un affichage à l'autre. */
-const AVATAR_TONES = ['#F3C6CE', '#CFC6F3', '#BFD8F5', '#BEE3D0', '#F5DFB8', '#C9D6EE'];
-const initiales = (nom: string, email: string) => {
-  const src = (nom || email).trim();
-  const mots = src.split(/\s+/).filter(Boolean);
-  const a = mots[0]?.[0] ?? '?';
-  const b = mots.length > 1 ? mots[mots.length - 1][0] : (mots[0]?.[1] ?? '');
-  return (a + b).toUpperCase();
-};
-const teinte = (s: string) => AVATAR_TONES[[...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 997, 7) % AVATAR_TONES.length];
 
 /** Statut du compte, écrit en toutes lettres : jamais signalé par la couleur seule. */
 function StatusTag({ status }: { status: AccountStatus }) {
@@ -46,11 +35,8 @@ function TravelerSheet({ m, onClose, onSaved }: { m: Member; onClose: () => void
   const off = m.status === 'suspended';
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
     document.getElementById('tv-name')?.focus();
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, []);
 
   /** Exécute une action en base : la fiche se ferme et la liste se recharge. */
   const run = async (kind: 'save' | 'status' | 'delete', action: () => Promise<{ error?: string }>, done: string) => {
@@ -67,18 +53,8 @@ function TravelerSheet({ m, onClose, onSaved }: { m: Member; onClose: () => void
   };
 
   return (
-    <div className="overlay trav-overlay" onClick={onClose}>
-      <div className="dialog trav-sheet" role="dialog" aria-modal="true" aria-label={t('Fiche de {0}', { 0: m.name ?? m.email })}
-        onClick={(e) => e.stopPropagation()}>
-        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-          <div style={{ minWidth: 0 }}>
-            <h2 style={{ margin: 0, fontSize: 22 }}>{tr(m.name ?? '—')}</h2>
-            <div className="small muted" style={{ overflowWrap: 'anywhere' }}>{m.email}</div>
-          </div>
-          <button type="button" className="iconbtn" aria-label={tr("Fermer")} onClick={onClose}><Icon name="x" size={22} sw={2.2} /></button>
-        </div>
-
-        <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+    <AdminSheet title={tr(m.name ?? '—')} sub={m.email} onClose={onClose}>
+      <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <StatusTag status={m.status} />
           <span className="small muted">{t('Inscrit le {0}', { 0: shown(m.createdAt) })}</span>
         </div>
@@ -100,10 +76,10 @@ function TravelerSheet({ m, onClose, onSaved }: { m: Member; onClose: () => void
           </Button>
         </div>
 
-        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <SheetActions>
           {confirming ? (
             <>
-              <h3 style={{ margin: 0, fontSize: 16, color: 'var(--danger)' }}>{tr("Supprimer définitivement ce compte ?")}</h3>
+              <SheetDanger>{tr("Supprimer définitivement ce compte ?")}</SheetDanger>
               <p className="small muted" style={{ margin: 0 }}>
                 {tr("Le compte, ses notes et ses favoris seront supprimés. Ses contributions sont conservées, sans auteur. Cette action est irréversible.")}
               </p>
@@ -122,9 +98,8 @@ function TravelerSheet({ m, onClose, onSaved }: { m: Member; onClose: () => void
               {tr("Supprimer le voyageur")}
             </Button>
           )}
-        </div>
-      </div>
-    </div>
+        </SheetActions>
+    </AdminSheet>
   );
 }
 
@@ -215,20 +190,11 @@ export function Travelers() {
               </tbody>
             </table></div>
           ) : (
-            <div className="trav-cards">
+            <div className="acards">
               {rows.map((m) => (
-                <button key={m.id} type="button" className="trav-card" onClick={() => setOpen(m)}
-                  aria-label={t('Ouvrir la fiche de {0}', { 0: m.name ?? m.email })}>
-                  <span className="tc-av" aria-hidden="true" style={{ background: teinte(m.name ?? m.email) }}>
-                    {initiales(m.name ?? '', m.email)}
-                  </span>
-                  <span className="tc-main">
-                    <span className="tc-name">{tr(m.name ?? '—')}</span>
-                    <span className="tc-phone">{m.phone ?? <NotProvided />}</span>
-                  </span>
-                  {m.status === 'suspended' && <StatusTag status={m.status} />}
-                  <Icon name="chevR" size={22} sw={2.2} />
-                </button>
+                <AdminCard key={m.id} toneSeed={m.name ?? m.email} title={tr(m.name ?? '—')}
+                  sub={m.phone ?? <NotProvided />} badge={m.status === 'suspended' ? <StatusTag status={m.status} /> : undefined}
+                  onOpen={() => setOpen(m)} ariaLabel={t('Ouvrir la fiche de {0}', { 0: m.name ?? m.email })} />
               ))}
             </div>
           )}
