@@ -1,6 +1,9 @@
 import { supabase } from './supabase';
 
-export type PhotoBucket = 'proposal-photos' | 'fiche-photos';
+export type PhotoBucket = 'proposal-photos' | 'fiche-photos' | 'review-photos';
+
+/** Buckets dont les règles d'accès exigent un dossier au nom du voyageur. */
+const dossierUtilisateur: PhotoBucket[] = ['proposal-photos', 'review-photos'];
 
 /**
  * Envoie une photo (déjà compressée) dans le bucket privé.
@@ -12,7 +15,7 @@ export async function uploadPhoto(blob: Blob, bucket: PhotoBucket = 'proposal-ph
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return { error: 'Connectez-vous pour envoyer une photo.' };
   const ext = blob.type === 'image/webp' ? 'webp' : 'jpg';
-  const path = `${bucket === 'proposal-photos' ? session.user.id + '/' : ''}${crypto.randomUUID()}.${ext}`;
+  const path = `${dossierUtilisateur.includes(bucket) ? session.user.id + '/' : ''}${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: blob.type });
   if (error) {
     if (import.meta.env.DEV) {

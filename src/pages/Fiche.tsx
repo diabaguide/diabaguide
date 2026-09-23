@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catIcon, catLabel, category, cityName, tagLabel, type Provider } from '../data';
 import { useProviderById, useStore } from '../store';
-import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, Stars, StarInput, StoredPhoto, Tag, TopBar, Verified } from '../ui';
+import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, StoredPhoto, Tag, TopBar, Verified } from '../ui';
 import { saveReport } from '../lib/reports';
 import { downloadCard, renderCard, shareCard } from '../lib/card';
 import { AddToListButton } from './Shopping';
+import { ReviewsSection } from './Reviews';
 
 async function copy(text: string) {
   try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
@@ -58,20 +59,11 @@ export function Fiche() {
   const nav = useNavigate();
   const [msg, setMsg] = useState('');
   const [photoIdx, setPhotoIdx] = useState(0);
-  const [rating, setRating] = useState(false);
   useEffect(() => { setPhotoIdx(0); }, [p?.id]);
-  useEffect(() => { if (p) void api.loadMyRating(p.id); }, [p?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!p) return <Navigate to="/recherche" replace />;
   const fav = s.favorites.includes(p.id);
   const dl = !!s.downloads[p.id];
   const photos = p.photoPaths ?? [];
-  const mine = s.myRatings[p.id] ?? null;
-  const rate = async (stars: number) => {
-    setRating(true);
-    const err = await api.rate(p.id, stars);
-    setRating(false);
-    if (err) setMsg(err);
-  };
   const share = async () => {
     const url = `${location.origin}/adresses/${p.id}`;
     if (navigator.share) { try { await navigator.share({ title: p.name, url }); return; } catch { /* annulé */ } }
@@ -111,11 +103,7 @@ export function Fiche() {
         </div>
         <div style={{ order: 2 }}>
         <Section title={tr("Avis des voyageurs")} icon="star">
-          {p.ratingCount ? <Stars avg={p.ratingAvg} count={p.ratingCount} size={20} /> : <span className="small muted">{tr("Aucun avis pour le moment.")}</span>}
-          <div className="stack" style={{ gap: 6 }}>
-            <span className="small muted">{tr(mine ? 'Votre note' : 'Donnez votre note')}</span>
-            <StarInput value={mine} onChange={rate} disabled={rating} />
-          </div>
+          <ReviewsSection providerId={p.id} />
         </Section>
         </div>
         <div className="stack" style={{ order: 6 }}>
