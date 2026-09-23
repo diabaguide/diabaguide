@@ -193,6 +193,10 @@ export function Login() {
         <Field id="mdp" label={tr("Mot de passe")} type="password" value={pw} onChange={setPw} />
         <div style={{ textAlign: 'right' }}><Link className="link" to="/mot-de-passe">{tr("Mot de passe oublié ?")}</Link></div>
         <Button type="submit" disabled={busy}>{tr(busy ? 'Connexion…' : (next?.startsWith('/adresses/') ? 'Se connecter et ouvrir la fiche' : 'Se connecter'))}</Button>
+        <div className="notice"><Icon name="lock" size={20} /><div>
+          <strong>{tr("Vous resterez connecté sur cet appareil")}</strong>
+          <div className="small">{tr("Pas besoin de ressaisir votre mot de passe la prochaine fois. Pour changer d’appareil ou fermer la session, utilisez « Se déconnecter » dans votre profil.")}</div>
+        </div></div>
         <p className="center">{tr("Pas encore de compte ? ")}<Link className="link" to="/inscription">{tr("Créer mon compte")}</Link></p>
         {!supabase && <p className="small muted center">{tr("Démo : toute adresse valide est acceptée ; une adresse contenant « equipe » ouvre l’espace équipe.")}</p>}
       </form>

@@ -291,7 +291,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       d({ t: 'session', user: u });
     };
-    supabase.auth.getSession().then(({ data }) => hydrate(data.session));
+    supabase.auth.getSession()
+      .then(({ data }) => hydrate(data.session))
+      // La vérification de la session ne doit jamais laisser l'application sur
+      // l'écran d'attente : en cas d'échec, on repart de « personne connecté »
+      // et le voyageur retrouve l'écran de connexion.
+      .catch(() => hydrate(null));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => { void hydrate(session); });
     return () => { alive = false; sub.subscription.unsubscribe(); };
   }, []);

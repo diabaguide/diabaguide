@@ -22,7 +22,31 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
   // l'ancien flux « implicit » (jeton dans le fragment d'URL), notamment
   // avec les protections anti-traçage (Safari, Brave, Firefox strict) qui
   // provoquaient parfois un échec nécessitant de relancer la connexion.
-  ? createClient(url!, anonKey!, { auth: { flowType: 'pkce' } })
+  //
+  // Connexions persistantes : une fois connecté, le voyageur le reste — c'est
+  // le comportement attendu, comme WhatsApp. Les trois réglages ci-dessous le
+  // garantissent explicitement, plutôt que de compter sur les valeurs par
+  // défaut de la bibliothèque, qu'une mise à jour pourrait changer :
+  //   • persistSession      → la session est écrite dans le stockage du
+  //                            navigateur (localStorage, clé `sb-<projet>-auth-token`)
+  //                            et non en mémoire : elle survit à la fermeture ;
+  //   • autoRefreshToken    → le jeton d'accès (1 h) est renouvelé tout seul
+  //                            grâce au jeton de rafraîchissement, y compris à
+  //                            la réouverture de l'application ;
+  //   • detectSessionInUrl  → la session est récupérée au retour d'une
+  //                            connexion externe (Google, lien reçu par e-mail).
+  //
+  // Ne jamais passer à `sessionStorage` ni désactiver `persistSession` : cela
+  // forcerait chaque visiteur à se reconnecter. Et ne pas changer `storageKey`
+  // sans migration : les sessions déjà enregistrées ne seraient plus trouvées.
+  ? createClient(url!, anonKey!, {
+    auth: {
+      flowType: 'pkce',
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  })
   : null;
 
 if (!isSupabaseConfigured && import.meta.env.DEV) {
