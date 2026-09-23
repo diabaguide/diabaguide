@@ -9,7 +9,7 @@ import { fetchTaxonomies } from './lib/taxonomies';
 import { cancelProviderDeletion, deleteProvider, fetchProviders, requestProviderDeletion, saveProvider as saveProviderRow } from './lib/providers';
 import { fetchMyRating, rateProvider } from './lib/ratings';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
-import { isTeamRole, userFromSession, type Role } from './lib/auth';
+import { isTeamRole, signOut, userFromSession, ACCOUNT_NOTICE_KEY, type AccountStatus, type Role } from './lib/auth';
 import {
   complementProposal, decideProposal, logProviderEvent, fetchAllProposals, fetchDecisions, fetchMyProposals, saveProposal, updateProposalFields,
 } from './lib/contributions';
@@ -18,7 +18,7 @@ export type Lang = 'fr' | 'en' | 'zh' | 'ar';
 export type LocPref = 'ask' | 'while' | 'never';
 export type Theme = 'system' | 'light' | 'dark';
 
-interface User { id?: string; name: string; phone: string; email: string; role: Role }
+interface User { id?: string; name: string; phone: string; email: string; role: Role; status: AccountStatus }
 interface State {
   user: User | null;
   authReady: boolean; // la session Supabase a-t-elle été vérifiée ?
@@ -280,6 +280,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const hydrate = async (session: Parameters<typeof userFromSession>[0]) => {
       const u = await userFromSession(session);
       if (!alive) return;
+      // Compte désactivé par un administrateur : la session est fermée et la
+      // raison est affichée sur l'écran de connexion.
+      if (u?.status === 'suspended') {
+        try { sessionStorage.setItem(ACCOUNT_NOTICE_KEY, 'suspended'); } catch { /* stockage indisponible */ }
+        await signOut();
+        if (!alive) return;
+        d({ t: 'session', user: null });
+        return;
+      }
       d({ t: 'session', user: u });
     };
     supabase.auth.getSession().then(({ data }) => hydrate(data.session));

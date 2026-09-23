@@ -1,8 +1,18 @@
 import { supabase } from './supabase';
-import type { Role } from './auth';
+import type { AccountStatus, Role } from './auth';
 
-export interface Member { id: string; name: string | null; phone: string | null; email: string; role: Role; createdAt: string }
+export interface Member {
+  id: string; name: string | null; phone: string | null; email: string; role: Role; createdAt: string;
+  /** État du compte (gestion par les administrateurs, voir supabase/admin_travelers.sql). */
+  status: AccountStatus;
+  suspendedAt: string | null;
+  suspendedReason: string | null;
+}
 export interface Invitation { email: string; role: Exclude<Role, 'traveler'>; createdAt: string }
+export const STATUS_LABEL: Record<AccountStatus, string> = {
+  active: 'Actif',
+  suspended: 'Désactivé',
+};
 
 export const ROLE_LABEL: Record<Role, string> = {
   traveler: 'Voyageur',
@@ -14,11 +24,47 @@ export const ROLE_LABEL: Record<Role, string> = {
 export async function fetchMembers(): Promise<Member[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from('profiles').select('id, name, phone, email, role, created_at').order('created_at', { ascending: true });
+    .from('profiles').select('id, name, phone, email, role, status, suspended_at, suspended_reason, created_at').order('created_at', { ascending: true });
   if (error) { warn('chargement des comptes', error); return []; }
-  return (data as { id: string; name: string | null; phone: string | null; email: string; role: Role; created_at: string }[])
-    .map((r) => ({ id: r.id, name: r.name, phone: r.phone, email: r.email, role: r.role, createdAt: r.created_at }));
+  return (data as {
+    id: string; name: string | null; phone: string | null; email: string; role: Role;
+    status: AccountStatus | null; suspended_at: string | null; suspended_reason: string | null; created_at: string;
+  }[]).map((r) => ({
+    id: r.id, name: r.name, phone: r.phone, email: r.email, role: r.role, createdAt: r.created_at,
+    status: r.status ?? 'active', suspendedAt: r.suspended_at, suspendedReason: r.suspended_reason,
+  }));
 }
+
+/* ------------------------------------------------------------------ */
+/* Gestion des comptes voyageurs (réservée aux administrateurs).       */
+/* Les garde-fous sont en base : supabase/admin_travelers.sql.         */
+/* ------------------------------------------------------------------ */
+
+/** Modifie le nom et le téléphone d'un compte voyageur. */
+export async function updateTraveler(id: string, name: string, phone: string): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { error } = await supabase.rpc('admin_update_traveler', { p_id: id, p_name: name, p_phone: phone });
+  return { error: error ? humanize(error.message) : undefined };
+}
+
+/** Désactive ou réactive un compte voyageur (bloque aussi la connexion). */
+export async function setTravelerStatus(
+  id: string, status: AccountStatus, reason = '',
+): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { error } = await supabase.rpc('admin_set_traveler_status', {
+    p_id: id, p_status: status, p_reason: reason || null,
+  });
+  return { error: error ? humanize(error.message) : undefined };
+}
+
+/** Supprime définitivement un compte voyageur (action irréversible). */
+export async function deleteTraveler(id: string): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { error } = await supabase.rpc('admin_delete_traveler', { p_id: id });
+  return { error: error ? humanize(error.message) : undefined };
+}
+
 
 /** Invitations en attente (personne pas encore inscrite). */
 export async function fetchInvitations(): Promise<Invitation[]> {
