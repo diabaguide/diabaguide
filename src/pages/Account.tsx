@@ -96,6 +96,7 @@ export function Profile() {
           
         </section>
         <section className="card" style={{ padding: 0 }}>
+          <Link className="listrow" to="/liste-achats"><Icon name="list" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Ma liste d'achats")}</div><div className="small muted">{tr("Produits à acheter, à partager ou à imprimer")}</div></div><Icon name="chevR" size={20} /></Link>
           <Link className="listrow" to="/profil/telechargements"><Icon name="download" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Fiches téléchargées")}</div><div className="small muted">{tr(Object.keys(s.downloads).length)} {tr(" fiche(s) disponibles hors connexion")}</div></div><Icon name="chevR" size={20} /></Link>
           <Link className="listrow" to="/contributions"><Icon name="pen" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Mes contributions")}</div><div className="small muted">{tr(s.proposals.filter((p) => p.status === 'Complément demandé').length)} {tr(" complément demandé")}</div></div><Icon name="chevR" size={20} /></Link>
           {isTeamRole(s.user?.role) && <Link className="listrow" to="/equipe"><Icon name="shield" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Espace équipe Diaba")}</div></div><Icon name="chevR" size={20} /></Link>}
