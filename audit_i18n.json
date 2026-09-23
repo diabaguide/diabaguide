@@ -1,0 +1,139 @@
+{
+ "manquants": {
+  "WeChat": [
+   "src/pages/Fiche.tsx"
+  ],
+  "{0}. {0}": [
+   "src/pages/Search.tsx"
+  ],
+  "WhatsApp": [
+   "src/pages/Shopping.tsx"
+  ],
+  "Yiwu": [
+   "src/pages/admin/Taxonomies.tsx"
+  ],
+  "义乌": [
+   "src/pages/admin/Taxonomies.tsx"
+  ],
+  "29.30": [
+   "src/pages/admin/Taxonomies.tsx"
+  ],
+  "120.07": [
+   "src/pages/admin/Taxonomies.tsx"
+  ],
+  "中文": [
+   "src/pages/admin/Taxonomies.tsx"
+  ],
+  "皮鞋": [
+   "src/pages/admin/Taxonomies.tsx"
+  ],
+  "{0}{0}": [
+   "src/pages/admin/Taxonomies.tsx"
+  ],
+  "{0} — {0}": [
+   "src/pages/admin/Taxonomies.tsx"
+  ],
+  "Diaba": [
+   "src/ui.tsx"
+  ]
+ },
+ "incomplets": [
+  [
+   "Contributions",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Restaurants",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Photo",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Photos",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Services",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Contact",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Actions",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Latitude",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Longitude",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Pharmacies",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Photo {0}",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "{0} photo(s)",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Menu",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Date",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Description",
+   [
+    "en: identique au français"
+   ]
+  ],
+  [
+   "Note",
+   [
+    "en: identique au français"
+   ]
+  ]
+ ],
+ "en_clair": {}
+}

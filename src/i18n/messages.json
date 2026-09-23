@@ -92,12 +92,12 @@
   "s sont": {
     "en": " need",
     "zh": "需要",
-    "ar": ""
+    "ar": "هي"
   },
   "est": {
     "en": "needs",
     "zh": "需要",
-    "ar": ""
+    "ar": "هو"
   },
   "à corriger avant de continuer.": {
     "en": "to be corrected before continuing.",
@@ -2848,5 +2848,29 @@
     "en": "Available offline since ",
     "zh": "自 ",
     "ar": "متاح بدون اتصال منذ "
-  }
+  },
+"Acheté": {"en": "Bought", "zh": "已购", "ar": "تم الشراء"},
+"acheté(s)": {"en": "bought", "zh": "已购买", "ar": "تم شراؤه"},
+"Actifs": {"en": "Active", "zh": "已启用", "ar": "نشط"},
+"Avis": {"en": "Reviews", "zh": "评价", "ar": "التقييمات"},
+"chez": {"en": "at", "zh": "位于", "ar": "عند"},
+"Date": {"en": "Date", "zh": "日期", "ar": "التاريخ"},
+"Dernière": {"en": "Last", "zh": "最近", "ar": "الأخير"},
+"Description": {"en": "Description", "zh": "描述", "ar": "الوصف"},
+"Désactivée": {"en": "Disabled", "zh": "已停用", "ar": "معطّل"},
+"Désactivés": {"en": "Disabled", "zh": "已停用", "ar": "معطّلة"},
+"Fournisseur": {"en": "Supplier", "zh": "供应商", "ar": "المورّد"},
+"Masquer": {"en": "Hide", "zh": "隐藏", "ar": "إخفاء"},
+"Motif": {"en": "Reason", "zh": "原因", "ar": "السبب"},
+"Note": {"en": "Note", "zh": "备注", "ar": "ملاحظة"},
+"Produit": {"en": "Product", "zh": "商品", "ar": "المنتج"},
+"Quantité": {"en": "Quantity", "zh": "数量", "ar": "الكمية"},
+"Rafraîchir": {"en": "Refresh", "zh": "刷新", "ar": "تحديث"},
+"Recherches": {"en": "Searches", "zh": "搜索次数", "ar": "عمليات البحث"},
+"Republier": {"en": "Republish", "zh": "重新发布", "ar": "إعادة النشر"},
+"Utile": {"en": "Helpful", "zh": "有用", "ar": "مفيد"},
+"nom@exemple.com": {"en": "name@example.com", "zh": "姓名@example.com", "ar": "name@example.com"},
+"{0} information à corriger avant de continuer.": {"en": "{0} field to fix before continuing.", "zh": "继续之前还需修改 {0} 项。", "ar": "يجب تصحيح حقل واحد ({0}) قبل المتابعة."},
+"{0} informations à corriger avant de continuer.": {"en": "{0} fields to fix before continuing.", "zh": "继续之前还需修改 {0} 项。", "ar": "يجب تصحيح {0} حقول قبل المتابعة."},
+"Liste préparée sur Diaba Guide — www.diabaguide.com": {"en": "List prepared with Diaba Guide — www.diabaguide.com", "zh": "清单由 Diaba Guide 生成 — www.diabaguide.com", "ar": "قائمة أُعدَّت عبر Diaba Guide — www.diabaguide.com"}
 }

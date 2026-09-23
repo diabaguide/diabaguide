@@ -50,7 +50,7 @@ export function Welcome() {
 }
 
 export function Signup() {
-  const { tr } = useI18n();
+  const { tr, t } = useI18n();
   const { d } = useStore();
   const nav = useNavigate();
   const [f, setF] = useState({ name: '', phone: '', email: '', pw: '', terms: false });
@@ -93,7 +93,7 @@ export function Signup() {
     <Screen nav={false}>
       <TopBar title={tr("Créer mon compte")} back="/" />
       <form className="main" onSubmit={submit} noValidate>
-        {tried && count > 0 && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(count)} {tr(" information")}{tr(count > 1 ? 's sont' : ' est')} {tr(" à corriger avant de continuer.")}</span></div>}
+        {tried && count > 0 && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{t(count > 1 ? '{0} informations à corriger avant de continuer.' : '{0} information à corriger avant de continuer.', { 0: count })}</span></div>}
         {apiErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(apiErr)}</span></div>}
         {info && <div role="status" className="notice"><Icon name="check" size={20} sw={2} /><span>{tr(info)}</span></div>}
         <p className="muted small">{tr("Un compte est nécessaire pour consulter les adresses et en proposer. Les champs marqués * sont obligatoires.")}</p>
