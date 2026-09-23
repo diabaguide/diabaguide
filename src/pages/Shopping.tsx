@@ -310,7 +310,7 @@ export function ShoppingListPage() {
               ))}
             </tbody>
           </table>
-          <p className="small">Liste préparée sur Diaba Guide — www.diabaguide.com</p>
+          <p className="small">{tr("Liste préparée sur Diaba Guide — www.diabaguide.com")}</p>
         </div>
       </div>
     </Screen>
