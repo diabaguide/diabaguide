@@ -5,6 +5,11 @@ import { catIcon, catLabel, isFreight, tagLabel, type Cat, type City, type Freig
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
 import { Button, Chip, DemoNote, Field, Icon, Screen, Stars, StoredPhoto, useWide } from '../ui';
+import { logSearch } from '../lib/searchLogs';
+
+/* Termes déjà signalés pendant cette visite : on n'enregistre pas deux fois la
+   même recherche quand le voyageur va et vient entre les résultats. */
+const DEJA_LOGGES = new Set<string>();
 
 export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
   const { tr } = useI18n();
@@ -80,6 +85,24 @@ export function Search() {
   const key = sp.toString();
   useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 350); return () => clearTimeout(t); }, [key]);
   const list = useMemo(() => filterProviders(q, s.providers), [key, s.providers]);
+
+  /* Journal des recherches (supabase/search_logs.sql) : on enregistre le terme
+     et le nombre d'adresses trouvées, une fois qu'il s'est stabilisé — assez
+     pour qu'une recherche tapée en entier soit comptée, sans compter chaque
+     lettre. Le terme voyage avec sa ville et sa catégorie : c'est ce qui permet
+     à l'équipe de voir quelles fiches manquent, et où. */
+  useEffect(() => {
+    if (loading) return;
+    const terme = q.q.trim();
+    if (terme.length < 2) return;
+    const cle = `${terme.toLowerCase()}|${q.city}|${q.cat ?? ''}|${list.length}`;
+    if (DEJA_LOGGES.has(cle)) return;
+    const t = setTimeout(() => {
+      DEJA_LOGGES.add(cle);
+      void logSearch(terme, q.city, q.cat, list.length);
+    }, 700);
+    return () => clearTimeout(t);
+  }, [loading, q.q, q.city, q.cat, list.length]);
   const nFilters = [q.cat, q.fret, q.prox].filter(Boolean).length;
   const set = (k: string, v: string | null) => { const n = new URLSearchParams(sp); v ? n.set(k, v) : n.delete(k); setSp(n, { replace: true }); };
   const patch = (o: Record<string, string | null>) => { const n = new URLSearchParams(sp); for (const [k, v] of Object.entries(o)) { if (v) n.set(k, v); else n.delete(k); } setSp(n, { replace: true }); };

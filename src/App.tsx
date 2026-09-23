@@ -20,6 +20,7 @@ const AdminHistory = lazy(() => import('./pages/admin/Admin').then(m => ({ defau
 const FichesList = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.FichesList })));
 const FicheEdit = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.FicheEdit })));
 const Deletions = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.Deletions })));
+const SearchLogs = lazy(() => import('./pages/admin/SearchLogs').then(m => ({ default: m.SearchLogs })));
 const Members = lazy(() => import('./pages/admin/Members').then(m => ({ default: m.Members })));
 const Travelers = lazy(() => import('./pages/admin/Travelers').then(m => ({ default: m.Travelers })));
 const AdminCities = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminCities })));
@@ -83,6 +84,7 @@ export default function App() {
             <Route path="/equipe/propositions/:id" element={<AdminVerify />} />
             <Route path="/equipe/historique" element={<AdminHistory />} />
             <Route path="/equipe/fiches" element={<FichesList />} />
+            <Route path="/equipe/recherches" element={<SearchLogs />} />
             <Route path="/equipe/fiches/:id" element={<FicheEdit />} />
             {/* Administration : réservée au rôle admin */}
             <Route element={<RequireAuth need="admin" />}>
