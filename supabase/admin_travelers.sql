@@ -156,8 +156,9 @@ begin
 
   -- profiles et ratings sont nettoyés par les contraintes
   -- (on delete cascade) ; reports et team_invitations par « set null ».
-  -- Les photos du dossier storage <user_id>/ restent : à nettoyer
-  -- manuellement depuis Storage si nécessaire (pas de clé service_role ici).
+  -- Les photos du dossier storage <user_id>/ sont retirées juste avant cet
+  -- appel, par l'API Storage avec la session de l'administrateur
+  -- (voir supabase/storage_cleanup.sql) : aucune clé service_role.
   delete from auth.users where id = p_id;
 end; $$;
 
