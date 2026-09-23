@@ -26,7 +26,11 @@ declare
 begin
   if length(k) < 6 then return null; end if;
 
-  select email into v_email from public.profiles where phone_key = k limit 1;
+  select email into v_email
+    from public.profiles
+   where phone_key = k
+   order by created_at
+   limit 1;
   if v_email is not null then return v_email; end if;
 
   return public.email_for_phone(k);
