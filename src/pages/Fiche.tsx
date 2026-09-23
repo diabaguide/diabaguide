@@ -6,6 +6,7 @@ import { useProviderById, useStore } from '../store';
 import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, Stars, StarInput, StoredPhoto, Tag, TopBar, Verified } from '../ui';
 import { saveReport } from '../lib/reports';
 import { downloadCard, renderCard, shareCard } from '../lib/card';
+import { AddToListButton } from './Shopping';
 
 async function copy(text: string) {
   try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
@@ -147,6 +148,7 @@ export function Fiche() {
           <button type="button" className={`btn btn-tog ${dl ? 'on' : ''}`} aria-pressed={dl}
             onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Cette fiche est maintenant disponible hors connexion, sans qu’aucun fichier ne soit enregistré sur l’appareil.'); }}><Icon name="download" size={20} />{tr(dl ? 'Disponible hors connexion' : 'Rendre disponible hors connexion')}</button>
           <button type="button" className="btn btn-tog" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
+          <AddToListButton providerId={p.id} providerName={p.name} />
           <Link to={`/adresses/${p.id}/signaler`} className="btn btn-tog"><Icon name="edit" size={20} />{tr("Proposer une correction")}</Link>
         </div>
         </div>

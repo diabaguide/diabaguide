@@ -9,6 +9,7 @@ import { Search, Filters } from './pages/Search';
 import { Fiche, Driver, Card, Contact, Report } from './pages/Fiche';
 import { Favorites, Profile, Downloads } from './pages/Account';
 import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contribute';
+import { ShoppingLists, ShoppingListPage } from './pages/Shopping';
 
 const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminDashboard })));
@@ -64,6 +65,8 @@ export default function App() {
           <Route path="/adresses/:id/contact" element={<Contact />} />
           <Route path="/adresses/:id/signaler" element={<Report />} />
           <Route path="/favoris" element={<Favorites />} />
+          <Route path="/liste-achats" element={<ShoppingLists />} />
+          <Route path="/liste-achats/:id" element={<ShoppingListPage />} />
           <Route path="/contributions" element={<Contributions />} />
           <Route path="/contributions/nouvelle/envoyee" element={<Sent />} />
           <Route path="/contributions/nouvelle/:step" element={<Wizard />} />
