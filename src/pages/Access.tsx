@@ -5,6 +5,7 @@ import { Button, Field, Icon, Logo, Photo, Screen, TopBar } from '../ui';
 import { useStore, type Lang } from '../store';
 import { supabase } from '../lib/supabase';
 import { isTeamRole, sendPasswordReset, signIn, signOut, signUp, updatePassword, ACCOUNT_NOTICE_KEY } from '../lib/auth';
+import { EMAIL, PHONE } from '../lib/phone';
 
 const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }, { v: 'ar', l: 'العربية', flag: '🇸🇦' }];
 export function LangSwitch({ dark = false }: { dark?: boolean }) {
@@ -48,9 +49,6 @@ export function Welcome() {
   );
 }
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE = /^[+]?[\d\s().-]{6,20}$/;
-
 export function Signup() {
   const { tr } = useI18n();
   const { d } = useStore();
@@ -63,7 +61,7 @@ export function Signup() {
   const errs = {
     name: f.name.trim() ? null : 'Saisissez votre nom.',
     phone: PHONE.test(f.phone.trim()) ? null : 'Saisissez un numéro de téléphone valide.',
-    email: EMAIL.test(f.email) ? null : 'Saisissez une adresse e-mail complète, par exemple nom@exemple.com.',
+    email: !f.email.trim() || EMAIL.test(f.email.trim()) ? null : 'Saisissez une adresse e-mail complète, par exemple nom@exemple.com.',
     pw: f.pw.length >= 8 ? null : 'Le mot de passe doit contenir au moins 8 caractères.',
     terms: f.terms ? null : 'Acceptez les conditions pour créer votre compte.',
   };
@@ -75,7 +73,7 @@ export function Signup() {
     setInfo(null);
     if (count) return;
     if (!supabase) {
-      d({ t: 'login', user: { name: f.name, phone: f.phone, email: f.email, role: 'traveler', status: 'active' } });
+      d({ t: 'login', user: { name: f.name, phone: f.phone, email: f.email || f.phone, role: 'traveler', status: 'active' } });
       nav('/inscription/confirmation');
       return;
     }
@@ -100,9 +98,9 @@ export function Signup() {
         {info && <div role="status" className="notice"><Icon name="check" size={20} sw={2} /><span>{tr(info)}</span></div>}
         <p className="muted small">{tr("Un compte est nécessaire pour consulter les adresses et en proposer. Les champs marqués * sont obligatoires.")}</p>
         <Field id="nom" label={tr("Nom complet")} value={f.name} onChange={(v) => setF({ ...f, name: v })} req error={tr(show('name'))} />
-        <Field id="mail" label={tr("Adresse e-mail")} type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} req error={tr(show('email'))} />
-        <Field id="tel" label={tr("Numéro de téléphone")} type="tel" value={f.phone} onChange={(v) => setF({ ...f, phone: v })} req hint={tr("Utilisé par l’équipe Diaba pour vous contacter si besoin.")} error={tr(show('phone'))} />
+        <Field id="tel" label={tr("Numéro de téléphone")} type="tel" value={f.phone} onChange={(v) => setF({ ...f, phone: v })} req hint={tr("C’est votre identifiant : vous vous connecterez avec ce numéro. L’équipe Diaba peut aussi vous joindre dessus.")} error={tr(show('phone'))} />
         <Field id="mdp" label={tr("Mot de passe")} type="password" value={f.pw} onChange={(v) => setF({ ...f, pw: v })} req hint={tr("Au moins 8 caractères.")} error={tr(show('pw'))} />
+        <Field id="mail" label={tr("Adresse e-mail (facultatif)")} type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} hint={tr("Utile seulement pour récupérer votre mot de passe si vous l’oubliez.")} error={tr(show('email'))} />
         <div>
           <label className="check">
             <input type="checkbox" checked={f.terms} onChange={(e) => setF({ ...f, terms: e.target.checked })} />
@@ -189,7 +187,7 @@ export function Login() {
           <div role="alert" className="notice warn"><Icon name="alert" size={20} sw={2} /><div><strong>{tr("Compte désactivé")}</strong><div className="small">{tr("Votre compte a été désactivé par l’équipe Diaba Guide. Écrivez-nous si vous pensez qu’il s’agit d’une erreur.")}</div></div></div>
         )}
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-        <Field id="mail" label={tr("Adresse e-mail")} type="email" value={email} onChange={setEmail} placeholder={tr("nom@exemple.com")} />
+        <Field id="mail" label={tr("E-mail ou numéro de téléphone")} value={email} onChange={setEmail} placeholder={tr("nom@exemple.com ou 77 123 45 67")} />
         <Field id="mdp" label={tr("Mot de passe")} type="password" value={pw} onChange={setPw} />
         <div style={{ textAlign: 'right' }}><Link className="link" to="/mot-de-passe">{tr("Mot de passe oublié ?")}</Link></div>
         <Button type="submit" disabled={busy}>{tr(busy ? 'Connexion…' : (next?.startsWith('/adresses/') ? 'Se connecter et ouvrir la fiche' : 'Se connecter'))}</Button>
@@ -207,15 +205,19 @@ export function Login() {
 export function Forgot() {
   const { tr } = useI18n();
   const [sent, setSent] = useState(false);
+  const [sansEmail, setSansEmail] = useState(false);
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState('');
+  const valide = EMAIL.test(email.trim()) || PHONE.test(email.trim());
   const send = async () => {
-    if (!EMAIL.test(email)) return;
+    if (!valide) return;
     setBusy(true);
     // On ignore volontairement l'éventuelle erreur : message neutre pour ne pas
     // révéler si un compte existe pour cette adresse.
-    if (supabase) await sendPasswordReset(email);
+    const res = supabase ? await sendPasswordReset(email) : {};
     setBusy(false);
+    // Compte créé avec son seul numéro : aucun lien ne peut être envoyé.
+    if (res.sansEmail) { setSansEmail(true); setSent(true); return; }
     setSent(true);
   };
   return (
@@ -224,9 +226,17 @@ export function Forgot() {
       <div className="main" style={{ gap: 18 }}>
         {!sent ? (
           <>
-            <p className="muted">{tr("Saisissez l’adresse e-mail de votre compte. Nous vous enverrons un lien pour choisir un nouveau mot de passe.")}</p>
-            <Field id="mail" label={tr("Adresse e-mail")} type="email" value={email} onChange={setEmail} placeholder={tr("nom@exemple.com")} />
-            <Button icon="send" onClick={send} disabled={busy}>{tr(busy ? 'Envoi…' : 'Envoyer le lien')}</Button>
+            <p className="muted">{tr("Saisissez l’adresse e-mail de votre compte — ou votre numéro de téléphone si vous vous êtes inscrit avec lui. Nous vous enverrons un lien pour choisir un nouveau mot de passe.")}</p>
+            <Field id="mail" label={tr("E-mail ou numéro de téléphone")} value={email} onChange={setEmail} placeholder={tr("nom@exemple.com ou 77 123 45 67")} />
+            <Button icon="send" onClick={send} disabled={busy || !valide}>{tr(busy ? 'Envoi…' : 'Envoyer le lien')}</Button>
+          </>
+        ) : sansEmail ? (
+          <>
+            <div role="status" className="notice warn"><Icon name="alert" size={20} sw={2} /><div>
+              <strong>{tr("Compte ouvert avec un numéro de téléphone")}</strong>
+              <div className="small">{tr("Ce compte n’a pas d’adresse e-mail : aucun lien ne peut vous être envoyé. Écrivez à l’équipe Diaba Guide depuis le numéro utilisé pour vous inscrire, et elle vous redonnera l’accès.")}</div>
+            </div></div>
+            <Button to="/connexion" kind="s">{tr("Retour à la connexion")}</Button>
           </>
         ) : (
           <>

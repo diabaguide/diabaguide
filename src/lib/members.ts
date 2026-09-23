@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { AccountStatus, Role } from './auth';
+import { isInternalEmail, phoneOf } from './phone';
 
 export interface Member {
   id: string; name: string | null; phone: string | null; email: string; role: Role; createdAt: string;
@@ -30,7 +31,11 @@ export async function fetchMembers(): Promise<Member[]> {
     id: string; name: string | null; phone: string | null; email: string; role: Role;
     status: AccountStatus | null; suspended_at: string | null; suspended_reason: string | null; created_at: string;
   }[]).map((r) => ({
-    id: r.id, name: r.name, phone: r.phone, email: r.email, role: r.role, createdAt: r.created_at,
+    id: r.id, name: r.name, phone: r.phone,
+    // Compte inscrit avec son seul numéro : l'adresse interne n'est jamais
+    // montrée, on affiche le téléphone à la place.
+    email: isInternalEmail(r.email) ? phoneOf(r.phone, r.email) : r.email,
+    role: r.role, createdAt: r.created_at,
     status: r.status ?? 'active', suspendedAt: r.suspended_at, suspendedReason: r.suspended_reason,
   }));
 }
