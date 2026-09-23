@@ -65,6 +65,56 @@ export async function deleteTraveler(id: string): Promise<{ error?: string }> {
   return { error: error ? humanize(error.message) : undefined };
 }
 
+/* ------------------------------------------------------------------ */
+/* Photos du voyageur (supabase/storage_cleanup.sql)                   */
+/*                                                                     */
+/* storage.objects ne peut pas être vidé en SQL (déclencheur           */
+/* storage.protect_delete) et retirer la seule fiche laisserait le     */
+/* fichier dans le stockage : on supprime par l'API Storage, avec la   */
+/* session de l'administrateur — aucune clé service_role.              */
+/* ------------------------------------------------------------------ */
+
+export type BucketVoyageur = 'proposal-photos' | 'review-photos';
+
+export interface VoyageurFile {
+  bucket: BucketVoyageur;
+  name: string;
+  taille: number;
+  /** Vrai si le fichier n'est plus référencé : il part avec le compte. */
+  supprimable: boolean;
+}
+
+/** Photos déposées par un voyageur, et celles qui lui survivront. */
+export async function fetchTravelerFiles(userId: string): Promise<VoyageurFile[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc('admin_traveler_files', { p_user: userId });
+  if (error) { warn('chargement des photos du voyageur', error); return []; }
+  return (data as VoyageurFile[]) ?? [];
+}
+
+/**
+ * Supprime les fichiers qu'aucune donnée ne référence plus. À appeler juste
+ * avant `deleteTraveler` : les avis disparaissent avec le compte, leurs photos
+ * deviennent inatteignables ; les photos des contributions conservées restent.
+ */
+export async function purgeTravelerFiles(userId: string): Promise<{ supprimes: number; conserves: number; error?: string }> {
+  if (!supabase) return { supprimes: 0, conserves: 0 };
+  const files = await fetchTravelerFiles(userId);
+  const parBucket = new Map<BucketVoyageur, string[]>();
+  for (const f of files.filter((x) => x.supprimable)) {
+    parBucket.set(f.bucket, [...(parBucket.get(f.bucket) ?? []), f.name]);
+  }
+  let supprimes = 0;
+  for (const [bucket, paths] of parBucket) {
+    const { error } = await supabase.storage.from(bucket).remove(paths);
+    if (error) {
+      return { supprimes, conserves: files.length - supprimes, error: humanize(error.message) };
+    }
+    supprimes += paths.length;
+  }
+  return { supprimes, conserves: files.length - supprimes };
+}
+
 
 /** Invitations en attente (personne pas encore inscrite). */
 export async function fetchInvitations(): Promise<Invitation[]> {

@@ -5,8 +5,8 @@ import { SortTh, compare, useSort } from './tableSort';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { AccountStatus } from '../../lib/auth';
 import {
-  STATUS_LABEL, deleteTraveler, fetchMembers, setTravelerStatus, updateTraveler,
-  type Member,
+  STATUS_LABEL, deleteTraveler, fetchMembers, fetchTravelerFiles, purgeTravelerFiles, setTravelerStatus, updateTraveler,
+  type Member, type VoyageurFile,
 } from '../../lib/members';
 
 const shown = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -32,11 +32,42 @@ function TravelerSheet({ m, onClose, onSaved }: { m: Member; onClose: () => void
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState<'save' | 'status' | 'delete' | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [files, setFiles] = useState<VoyageurFile[] | null>(null);
   const off = m.status === 'suspended';
 
   useEffect(() => {
     document.getElementById('tv-name')?.focus();
   }, []);
+
+  /** Photos du voyageur : ce qui part avec le compte, ce qui lui survit. */
+  useEffect(() => {
+    if (!confirming) return;
+    let live = true;
+    void fetchTravelerFiles(m.id).then((f) => { if (live) setFiles(f); });
+    return () => { live = false; };
+  }, [confirming, m.id]);
+
+  const aSupprimer = (files ?? []).filter((f) => f.supprimable).length;
+  const poids = () => {
+    const octets = (files ?? []).filter((f) => f.supprimable).reduce((s, f) => s + (f.taille || 0), 0);
+    if (octets >= 1048576) return `${(octets / 1048576).toFixed(1)} Mo`;
+    return `${Math.max(1, Math.round(octets / 1024))} Ko`;
+  };
+
+  /** Supprime le compte, puis les fichiers devenus inutiles.
+      Dans cet ordre : un échec de la suppression du compte ne laisse pas des
+      photos manquantes sur un compte encore vivant. */
+  const supprimer = async () => {
+    setErr(null); setBusy('delete');
+    const { error } = await deleteTraveler(m.id);
+    if (error) { setBusy(null); setErr(error); return; }
+    const p = await purgeTravelerFiles(m.id);
+    setBusy(null);
+    if (p.error) { onSaved(`Compte supprimé. Le retrait des photos a échoué : ${p.error}`); return; }
+    onSaved(p.supprimes > 0
+      ? `Compte supprimé, ${p.supprimes} photo(s) retirée(s) du stockage.`
+      : 'Compte supprimé.');
+  };
 
   /** Exécute une action en base : la fiche se ferme et la liste se recharge. */
   const run = async (kind: 'save' | 'status' | 'delete', action: () => Promise<{ error?: string }>, done: string) => {
@@ -83,10 +114,15 @@ function TravelerSheet({ m, onClose, onSaved }: { m: Member; onClose: () => void
               <p className="small muted" style={{ margin: 0 }}>
                 {tr("Le compte, ses notes et ses favoris seront supprimés. Ses contributions sont conservées, sans auteur. Cette action est irréversible.")}
               </p>
+              {files && files.length > 0 && <p className="small muted" style={{ margin: 0 }}>
+                {t('{0} photo(s) : {1} retirée(s) avec le compte, {2} conservée(s) pour ses contributions ({3}).', {
+                  0: files.length, 1: aSupprimer, 2: files.length - aSupprimer, 3: poids(),
+                })}
+              </p>}
               <Field id="tv-confirm" label={t('Saisissez {0} pour confirmer', { 0: m.email })} type="email" value={typed} onChange={setTyped} />
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <Button kind="d" icon="trash" full={false} disabled={busy !== null || typed.trim().toLowerCase() !== m.email.toLowerCase()}
-                  onClick={() => void run('delete', () => deleteTraveler(m.id), 'Compte supprimé.')}>
+                  onClick={() => void supprimer()}>
                   {tr(busy === 'delete' ? 'Suppression…' : 'Supprimer définitivement')}
                 </Button>
                 <Button kind="t" icon="x" full={false} disabled={busy !== null}
