@@ -138,7 +138,7 @@ h1, h2, h3, p { margin: 0; }
 .rcard-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; margin-top: auto; padding: 10px 14px; background: var(--info-bg); border-top: 1px solid var(--card-line); font-size: 12px; }
 /* Carte de visite : sous la vérification, alignée à gauche. Elle passe au-dessus
    du lien qui recouvre toute la carte (z-index), sinon le clic ouvrirait la fiche. */
-.rcard-visite { flex-basis: 100%; position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 5px; color: var(--seal); font-weight: 700; text-decoration: none; }
+.rcard-visite { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 5px; color: var(--seal); font-weight: 700; text-decoration: none; }
 .rcard-verified { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-weight: 600; }
 .rcard-more { position: relative; z-index: 1; margin-left: auto; color: var(--accent); font-weight: 700; white-space: nowrap; }
 
