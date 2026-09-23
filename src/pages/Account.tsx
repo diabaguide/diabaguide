@@ -90,7 +90,7 @@ export function Profile() {
       <div className="main" style={{ gap: 20 }}>
         <div className="card row" style={{ padding: 16, gap: 14 }}>
           <span className="avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: 20 }}>{tr(initials)}</span>
-          <div><div style={{ fontWeight: 700, fontSize: 18 }}>{s.user?.name}</div><div className="small muted">{s.user?.email}</div></div>
+          <div><div style={{ fontWeight: 700, fontSize: 18 }}>{s.user?.name}</div><div className="small muted">{s.user?.email || s.user?.phone}</div></div>
         </div>
         <section className="stack"><h2 className="row" style={{ fontSize: 17 }}><Icon name="globe" size={20} />{tr("Langue")}</h2><LangSwitch />
           
