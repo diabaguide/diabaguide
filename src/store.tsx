@@ -305,6 +305,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (error) logSessionEvent('erreur_lecture_session', error.message);
         if (!data.session) {
           logSessionEvent(cles.length ? 'cle_presente_session_vide' : 'aucune_cle_en_memoire', error?.message ?? '');
+        } else {
+          // Session retrouvée : on note sa validité restante (jamais le jeton).
+          const reste = Math.max(0, Math.round((data.session.expires_at ?? 0) - Date.now() / 1000));
+          logSessionEvent('session_retrouvee', `valable=${reste}s`);
         }
         return hydrate(data.session);
       })

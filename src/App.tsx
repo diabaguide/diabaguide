@@ -1,4 +1,5 @@
 import { useI18n } from './i18n';
+import { logSessionEvent } from './lib/sessionLog';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useStore } from './store';
 import { isTeamRole } from './lib/auth';
@@ -39,9 +40,30 @@ function RequireAuth({ need = 'user' }: { need?: 'user' | 'team' | 'admin' }) {
   if (!s.authReady) {
     return <div className="center-screen" style={{ minHeight: '60vh' }} role="status" aria-live="polite">{tr("Chargement…")}</div>;
   }
-  if (!s.user) return <Navigate to={`/connexion?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
+  if (!s.user) {
+    /* Noté au journal : c'est ICI que l'on voit si un voyageur est renvoyé vers
+       l'écran de connexion alors qu'il croyait rester connecté. */
+    logSessionEvent('rejet_vers_connexion', loc.pathname);
+    return <Navigate to={`/connexion?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
+  }
   if (need === 'team' && !isTeamRole(s.user.role)) return <Navigate to="/accueil" replace />;
   if (need === 'admin' && s.user.role !== 'admin') return <Navigate to="/equipe" replace />;
+  return <Outlet />;
+}
+
+/* Pages publiques (accueil de présentation, connexion, inscription, mot de passe
+   oublié) : un voyageur DÉJÀ CONNECTÉ n'a rien à y faire. Sans ce garde, le
+   bouton « précédent » du téléphone ramenait sur l'écran de connexion alors que
+   la session était intacte — d'où l'impression de devoir se reconnecter sans
+   cesse. On attend d'avoir vérifié la session avant de trancher, sinon l'écran
+   de connexion apparaîtrait une fraction de seconde avant la redirection. */
+function GuestOnly() {
+  const { tr } = useI18n();
+  const { s } = useStore();
+  if (!s.authReady) {
+    return <div className="center-screen" style={{ minHeight: '60vh' }} role="status" aria-live="polite">{tr("Chargement…")}</div>;
+  }
+  if (s.user) return <Navigate to="/accueil" replace />;
   return <Outlet />;
 }
 
@@ -49,11 +71,15 @@ export default function App() {
   return (
     <Suspense fallback={<div className="center-screen" style={{ minHeight: '60vh' }} role="status">Chargement…</div>}>
       <Routes>
-        <Route path="/" element={<Welcome />} />
-        <Route path="/inscription" element={<Signup />} />
+        <Route element={<GuestOnly />}>
+          <Route path="/" element={<Welcome />} />
+          <Route path="/inscription" element={<Signup />} />
+          <Route path="/connexion" element={<Login />} />
+          <Route path="/mot-de-passe" element={<Forgot />} />
+        </Route>
         <Route path="/inscription/confirmation" element={<SignupDone />} />
-        <Route path="/connexion" element={<Login />} />
-        <Route path="/mot-de-passe" element={<Forgot />} />
+        {/* Réinitialisation : le lien reçu par e-mail ouvre une session de
+            récupération — cette page doit rester accessible même connecté. */}
         <Route path="/reinitialiser" element={<ResetPassword />} />
 
         <Route element={<RequireAuth />}>
