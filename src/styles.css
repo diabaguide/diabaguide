@@ -2,6 +2,9 @@
   --primary: #153E9F; --primary-light: #2F63D6; --bg: #F4F7FC; --surface: #fff; --ink: #0F1A30; --muted: #4A5870;
   --line: #D5DDEC; --info-bg: #E7EEFB; --gold: #B48A2C; --gold-fill: #E6BC4B; --gold-text: #6F5010;
   --ok: #1B6B3E; --ok-bg: #E0F0E6; --warn-bg: #FBF1D6; --danger: #A1261F; --danger-bg: #FBE6E3;
+  /* Vermillon du cachet de la carte de visite (src/lib/card.ts) : sert au
+     lien « Carte de visite », sans emprunter au rouge d'alerte (--danger). */
+  --seal: #C62A18;
   --input-border: #7787A6; --chip-border: #A3B0CB;
   --accent: #153E9F; --page: #E8EDF8; --nav-bg: rgba(255,255,255,.85); --skel: #DDE4F2; --th: #E8EDF8; --card-line: rgba(213,221,236,.55);
   --hero-a: #123794; --hero-b: #2F63D6; --shadow-sm: 0 1px 2px rgba(15,26,48,.04), 0 4px 14px rgba(21,62,159,.06); --shadow-md: 0 2px 4px rgba(15,26,48,.04), 0 12px 28px rgba(21,62,159,.12);
@@ -135,7 +138,7 @@ h1, h2, h3, p { margin: 0; }
 .rcard-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; margin-top: auto; padding: 10px 14px; background: var(--info-bg); border-top: 1px solid var(--card-line); font-size: 12px; }
 /* Carte de visite : sous la vérification, alignée à gauche. Elle passe au-dessus
    du lien qui recouvre toute la carte (z-index), sinon le clic ouvrirait la fiche. */
-.rcard-visite { flex-basis: 100%; position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-weight: 600; text-decoration: none; }
+.rcard-visite { flex-basis: 100%; position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 5px; color: var(--seal); font-weight: 700; text-decoration: none; }
 .rcard-verified { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-weight: 600; }
 .rcard-more { position: relative; z-index: 1; margin-left: auto; color: var(--accent); font-weight: 700; white-space: nowrap; }
 
@@ -322,6 +325,7 @@ body { -webkit-font-smoothing: antialiased; }
   --input-border: #4B5C7E; --chip-border: #3A4A6B;
   --hero-a: #0F2C7A; --hero-b: #2450BE;
   --ok: #62D08F; --ok-bg: #12301F; --warn-bg: #33290F; --gold-text: #F0CF7A; --danger: #FF8A80; --danger-bg: #3A1614;
+  --seal: #FF7A66;
   --shadow-sm: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25); --shadow-md: 0 2px 4px rgba(0,0,0,.35), 0 14px 30px rgba(0,0,0,.45);
 }
 :root[data-theme="dark"] .photo { background: repeating-linear-gradient(135deg, #1B2846 0 14px, #223159 14px 28px); color: var(--accent); }
