@@ -72,14 +72,12 @@
   background: var(--surface); border: 1.5px solid var(--card-line); border-radius: 4px; box-shadow: 4px 4px 0 rgba(26,35,80,.12);
   font-family: var(--font-display); font-size: 19px; line-height: 1.1; color: var(--ink); transition: background .2s, color .2s, transform .2s, box-shadow .2s;
 }
-.sceau .cattile .num { position: absolute; top: 12px; inset-inline-end: 14px; font-family: var(--font-body); font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--seal); }
 .sceau .cattile .ico { width: 46px; height: 46px; margin-bottom: 10px; border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 1.5px var(--card-line); color: var(--accent); transition: all .2s; }
 .sceau .cattile-sub { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--gold-text); }
 .sceau .cattile.wide { flex-direction: row; align-items: center; justify-content: flex-start; min-height: 84px; }
 .sceau .cattile.wide .ico { margin-bottom: 0; }
 .sceau .cattile:hover, .sceau .cattile:active { background: var(--hero-a); color: #FBF3E2; border-color: var(--hero-a); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--seal); }
 .sceau .cattile:hover .ico { background: transparent; box-shadow: inset 0 0 0 1.5px var(--gold-fill); color: var(--gold-fill); }
-.sceau .cattile:hover .num { color: var(--gold-fill); }
 .sceau .cattile:hover .cattile-sub { color: var(--gold-fill); }
 
 /* Fiches, avantages, boutons */
@@ -103,7 +101,6 @@
 }
 :root[data-theme="dark"] .sceau .cattile { box-shadow: 4px 4px 0 rgba(0,0,0,.4); }
 :root[data-theme="dark"] .sceau .cattile:hover, :root[data-theme="dark"] .sceau .cattile:active { background: var(--seal); color: #fff; border-color: var(--seal); box-shadow: 6px 6px 0 rgba(0,0,0,.5); }
-:root[data-theme="dark"] .sceau .cattile:hover .num { color: #fff; }
 :root[data-theme="dark"] .sceau .cattile:hover .cattile-sub { color: #fff; }
 :root[data-theme="dark"] .sceau .rcard { box-shadow: 4px 4px 0 rgba(0,0,0,.4); }
 :root[data-theme="dark"] .sceau .rcard:hover, :root[data-theme="dark"] .sceau .rcard:active { border-color: var(--seal); box-shadow: 6px 6px 0 rgba(0,0,0,.5); }

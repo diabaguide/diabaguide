@@ -104,7 +104,6 @@ export function Home() {
               const n = s.providers.filter((p) => p.cat === c.id && p.city === s.city).length;
               return (
                 <Link key={c.id} to={`/recherche?cat=${c.id}&ville=${s.city}`} className={`cattile ${arr.length % 2 === 1 && i === arr.length - 1 ? 'wide' : ''}`}>
-                  <span className="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
                   <span className="ico"><Icon name={c.icon} size={24} /></span>
                   <span>{tr(c.label)}</span>
                   <span className="cattile-sub">{c.labelCn && <span className="zh">{c.labelCn} · </span>}{t('{0} lieu(x)', { 0: n })}</span>
