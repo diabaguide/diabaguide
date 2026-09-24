@@ -76,7 +76,7 @@ export function Home() {
         </div>
         {/* Recherche d'abord, en pastille pleine largeur ; les villes ensuite, en pastilles. */}
         <Link to={`/recherche?ville=${s.city}`} className="searchfake" aria-label={tr("Rechercher un produit ou un service")}>
-          <Icon name="search" /><span>{tr("Quel produit ou service cherchez-vous ?")}</span>
+          <Icon name="search" /><span>{tr("Produit ou service ?")}</span>
         </Link>
         <CitySwitch />
       </header>
