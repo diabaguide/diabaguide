@@ -73,3 +73,34 @@ create index if not exists expedition_etapes_idx
 create unique index if not exists expedition_etapes_shipsgo_uniq
   on public.expedition_etapes (expedition_id, ref_shipsgo)
   where ref_shipsgo is not null;
+
+-- ------------------------------------------------------------
+-- 4. Le statut du lot = le plus avancé de ses étapes.
+--    « plus avancé » s'appuie sur l'ORDRE de l'enum : max() suffit.
+-- ------------------------------------------------------------
+create or replace function public.refresh_expedition_statut()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_exp uuid := coalesce(new.expedition_id, old.expedition_id);
+  v_statut public.statut_expedition;
+begin
+  select coalesce(max(statut), 'preparation') into v_statut
+    from public.expedition_etapes where expedition_id = v_exp;
+
+  update public.expeditions
+     set statut = v_statut, updated_at = now()
+   where id = v_exp and statut is distinct from v_statut;
+
+  return null;
+end; $$;
+
+drop trigger if exists on_expedition_etape_change on public.expedition_etapes;
+create trigger on_expedition_etape_change
+  after insert or update or delete on public.expedition_etapes
+  for each row execute function public.refresh_expedition_statut();
+
+-- updated_at d'une expédition : tenu par la base, jamais par le client.
+drop trigger if exists on_expedition_update on public.expeditions;
+create trigger on_expedition_update
+  before update on public.expeditions
+  for each row execute function public.touch_updated_at();
