@@ -131,3 +131,60 @@ create policy "expedition_etapes_owner_read" on public.expedition_etapes
 drop policy if exists "expedition_etapes_staff_read" on public.expedition_etapes;
 create policy "expedition_etapes_staff_read" on public.expedition_etapes
   for select to authenticated using (public.is_team());
+
+-- ------------------------------------------------------------
+-- 6. Création d'un lot (équipe uniquement)
+--    Le code est genere en base, sous verrou, pour que deux
+--    creations simultanees ne produisent pas le meme numero.
+-- ------------------------------------------------------------
+create or replace function public.admin_creer_expedition(
+  p_user_id        uuid,
+  p_fret           text,
+  p_origine        text,
+  p_provider_id    text    default null,
+  p_conteneur      text    default null,
+  p_articles       text    default null,
+  p_poids          text    default null,
+  p_depart_le      date    default null,
+  p_arrivee_prevue date    default null,
+  p_list_id        uuid    default null,
+  p_notes          text    default null
+) returns table (id uuid, code text)
+language plpgsql security definer set search_path = public as $$
+declare
+  v_code text;
+  v_id   uuid;
+begin
+  if not public.is_admin() then
+    raise exception 'Réservé à l''administration';
+  end if;
+  if p_fret not in ('air', 'sea') then
+    raise exception 'Type de fret invalide : %', p_fret;
+  end if;
+  if p_origine not in ('Guangzhou', 'Shenzhen') then
+    raise exception 'Ville d''origine invalide : %', p_origine;
+  end if;
+
+  -- Sérialise la génération des codes : deux appels simultanés
+  -- ne peuvent pas lire le même « dernier numéro ».
+  perform pg_advisory_xact_lock(hashtext('fret_code_' || to_char(now(), 'YYYY')));
+
+  select 'DIA-' || to_char(now(), 'YYYY') || '-' ||
+         lpad((coalesce(max(substring(e.code from '[0-9]{4}$')::int), 0) + 1)::text, 4, '0')
+    into v_code
+    from public.expeditions e
+   where e.code like 'DIA-' || to_char(now(), 'YYYY') || '-%';
+
+  insert into public.expeditions
+    (code, user_id, provider_id, fret, origine, conteneur, articles, poids,
+     depart_le, arrivee_prevue, list_id, notes)
+  values
+    (v_code, p_user_id, p_provider_id, p_fret, p_origine, p_conteneur, p_articles, p_poids,
+     p_depart_le, p_arrivee_prevue, p_list_id, p_notes)
+  returning expeditions.id into v_id;
+
+  return query select v_id, v_code;
+end; $$;
+
+revoke all on function public.admin_creer_expedition(uuid, text, text, text, text, text, text, date, date, uuid, text) from public, anon;
+grant execute on function public.admin_creer_expedition(uuid, text, text, text, text, text, text, date, date, uuid, text) to authenticated;
