@@ -27,6 +27,7 @@ const Travelers = lazy(() => import('./pages/admin/Travelers').then(m => ({ defa
 const AdminCities = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminCities })));
 const AdminCategories = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminCategories })));
 const AdminProductTags = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminProductTags })));
+const AdminAnnonces = lazy(() => import('./pages/admin/Annonces').then(m => ({ default: m.AdminAnnonces })));
 
 /* Compte obligatoire : toute page de contenu redirige vers la connexion.
    L’URL demandée est conservée (?next=) : lien partagé > connexion > fiche. */
@@ -112,6 +113,8 @@ export default function App() {
             <Route path="/equipe/fiches" element={<FichesList />} />
             <Route path="/equipe/recherches" element={<SearchLogs />} />
             <Route path="/equipe/fiches/:id" element={<FicheEdit />} />
+            {/* Annonces de services : l'équipe consulte, l'administration rédige. */}
+            <Route path="/equipe/annonces" element={<AdminAnnonces />} />
             {/* Administration : réservée au rôle admin */}
             <Route element={<RequireAuth need="admin" />}>
               <Route path="/equipe/suppressions" element={<Deletions />} />
