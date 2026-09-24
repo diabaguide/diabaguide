@@ -331,6 +331,36 @@ body { -webkit-font-smoothing: antialiased; }
 :root[data-theme="dark"] .photo { background: repeating-linear-gradient(135deg, #1B2846 0 14px, #223159 14px 28px); color: var(--accent); }
 :root[data-theme="dark"] .btn-tog.on, :root[data-theme="dark"] .seg .on, :root[data-theme="dark"] .chip.on { color: #fff; }
 :root[data-theme="dark"] .hero .seg .on { color: #123794; }
+
+/* Annonces de services (accueil du voyageur ; console : /equipe/annonces).
+   Fond volontairement distinct des autres cartes de l'accueil : un dégradé
+   bleu → doré qui reprend les deux couleurs de la marque, un liseré doré à
+   l'entrée du bloc et une lueur discrète dans le coin. Les deux thèmes sont
+   couverts ; le liseré est à l'entrée du bloc (inline-start) pour rester
+   juste en arabe, qui se lit de droite à gauche. */
+.annonce {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #DEE9FB 0%, #F1F6FE 55%, #F8EBCB 100%);
+  border-color: var(--card-line);
+  border-inline-start: 4px solid var(--gold-fill);
+}
+.annonce::after {
+  content: '';
+  position: absolute;
+  width: 170px; height: 170px;
+  inset-inline-end: -60px; top: -90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 188, 75, .3), transparent 70%);
+  pointer-events: none;
+}
+.annonce > * { position: relative; z-index: 1; }
+:root[data-theme="dark"] .annonce {
+  background: linear-gradient(135deg, #1B2B4F 0%, #121B2E 58%, #33290F 100%);
+}
+:root[data-theme="dark"] .annonce::after {
+  background: radial-gradient(circle, rgba(240, 207, 122, .22), transparent 70%);
+}
 :root[data-theme="dark"] .tag-fav { background: #3A1826; color: #FF9DB7; } :root[data-theme="dark"] .tag-muted { background: #202C46; color: #C3CFE6; }
 :root[data-theme="dark"] .notice.warn { border-color: #5C4A1A; }
 :root[data-theme="dark"] .overlay { background: rgba(2,6,16,.75); }

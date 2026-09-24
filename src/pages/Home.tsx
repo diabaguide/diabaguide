@@ -63,7 +63,7 @@ function AnnoncesDiaba() {
     <section className="stack" aria-label={tr("Annonces de Diaba Guide")}>
       <h2 className="display" style={{ fontSize: 19 }}><Icon name="send" size={22} />{tr("Les services Diaba Guide")}</h2>
       {annonces.map((a) => (
-        <article key={a.id} className="card sec">
+        <article key={a.id} className="card sec annonce">
           <h3 className="display" style={{ fontSize: 17, margin: 0 }}>{tr(a.titre)}</h3>
           <p className="muted small" style={{ fontSize: 15, margin: 0, whiteSpace: 'pre-line' }}>{tr(a.texte)}</p>
           {a.lienUrl && <Button href={a.lienUrl} icon="link" full={false}>{tr(a.lienLibelle || 'En savoir plus')}</Button>}
