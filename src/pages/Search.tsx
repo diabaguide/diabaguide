@@ -19,9 +19,13 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
   const mention = meta ?? (p.verified ? `Vérifiée le ${p.verified}` : '');
   return (
     <article className="rcard">
-      <Link to={`/adresses/${p.id}`} className="rcard-link" aria-label={p.name} />
+      {/* Seule la photo est cliquable : elle ouvre la fiche. Le reste de la carte
+          (titre, catégorie, étoiles) ne réagit plus au clic — le pied garde ses
+          deux liens, « Carte de visite » et « Fiche complète ». */}
       <div className="rcard-body">
-        <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={104} w={104} round={12} />
+        <Link to={`/adresses/${p.id}`} className="rcard-photo" aria-label={p.name}>
+          <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={104} w={104} round={12} />
+        </Link>
         <div className="stack grow" style={{ gap: 3 }}>
           <span className="row" style={{ justifyContent: 'space-between', gap: 6 }}>
             <span className="name">{p.name}</span>
@@ -47,7 +51,7 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
         <Link className="rcard-visite" to={`/adresses/${p.id}/carte`}>
           <Icon name="qr" size={14} sw={2} />{tr("Carte de visite")}
         </Link>
-        <span className="rcard-more">{tr("Fiche complète")} →</span>
+        <Link className="rcard-more" to={`/adresses/${p.id}`}>{tr("Fiche complète")} →</Link>
       </div>
     </article>
   );
