@@ -188,3 +188,60 @@ end; $$;
 
 revoke all on function public.admin_creer_expedition(uuid, text, text, text, text, text, text, date, date, uuid, text) from public, anon;
 grant execute on function public.admin_creer_expedition(uuid, text, text, text, text, text, text, date, date, uuid, text) to authenticated;
+
+-- ------------------------------------------------------------
+-- 7. Ajout d'une étape (équipe uniquement)
+--    Règle métier : une étape automatique (ShipsGo) ne fait JAMAIS
+--    reculer le statut — le voyageur ne voit pas son lot redescendre.
+--    Un mouvement déjà connu est ignoré (ShipsGo réessaie).
+-- ------------------------------------------------------------
+create or replace function public.admin_ajouter_etape(
+  p_expedition_id uuid,
+  p_statut        public.statut_expedition,
+  p_lieu          text    default null,
+  p_note          text    default null,
+  p_photo         text    default null,
+  p_publique      boolean default true,
+  p_source        text    default 'equipe',
+  p_ref_shipsgo   text    default null
+) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare
+  v_id     uuid;
+  v_statut public.statut_expedition;
+begin
+  if not public.is_admin() then
+    raise exception 'Réservé à l''administration';
+  end if;
+  if p_source not in ('equipe', 'shipsgo') then
+    raise exception 'Source inconnue : %', p_source;
+  end if;
+
+  select statut into v_statut from public.expeditions where id = p_expedition_id;
+  if not found then
+    raise exception 'Expédition introuvable';
+  end if;
+
+  -- déjà connue ? (mouvement rejoué) : rien à faire
+  if p_ref_shipsgo is not null and exists (
+    select 1 from public.expedition_etapes
+     where expedition_id = p_expedition_id and ref_shipsgo = p_ref_shipsgo) then
+    return null;
+  end if;
+
+  -- mise à jour automatique qui reculerait le statut : ignorée
+  if p_source = 'shipsgo' and p_statut < v_statut then
+    return null;
+  end if;
+
+  insert into public.expedition_etapes
+    (expedition_id, statut, lieu, note, photo, publique, source, ref_shipsgo)
+  values
+    (p_expedition_id, p_statut, p_lieu, p_note, p_photo, p_publique, p_source, p_ref_shipsgo)
+  returning expedition_etapes.id into v_id;
+
+  return v_id;
+end; $$;
+
+revoke all on function public.admin_ajouter_etape(uuid, public.statut_expedition, text, text, text, boolean, text, text) from public, anon;
+grant execute on function public.admin_ajouter_etape(uuid, public.statut_expedition, text, text, text, boolean, text, text) to authenticated;
