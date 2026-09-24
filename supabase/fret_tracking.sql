@@ -306,3 +306,39 @@ end; $$;
 
 revoke all on function public.admin_supprimer_expedition(uuid) from public, anon;
 grant execute on function public.admin_supprimer_expedition(uuid) to authenticated;
+
+-- ------------------------------------------------------------
+-- 10. Suivi public : la SEULE fonction ouverte à anon.
+--     Elle ne rend que ce qu'un tiers peut voir : statut, dates,
+--     frise des étapes publiques, transitaire. Jamais le voyageur,
+--     jamais les notes internes ni le détail des articles.
+-- ------------------------------------------------------------
+create or replace function public.suivi_public(p_code text)
+returns jsonb language sql stable security definer set search_path = public as $$
+  select jsonb_build_object(
+           'code', e.code,
+           'fret', e.fret,
+           'origine', e.origine,
+           'statut', e.statut,
+           'depart_le', e.depart_le,
+           'arrivee_prevue', e.arrivee_prevue,
+           'arrivee_le', e.arrivee_le,
+           'transitaire', case when p.id is null then null else
+             jsonb_build_object('nom', p.name, 'telephone', p.tel) end,
+           'etapes', coalesce((
+             select jsonb_agg(jsonb_build_object(
+                      'statut', t.statut,
+                      'lieu', t.lieu,
+                      'note', t.note,
+                      'date', t.created_at)
+                    order by t.created_at)
+               from public.expedition_etapes t
+              where t.expedition_id = e.id and t.publique), '[]'::jsonb)
+         )
+    from public.expeditions e
+    left join public.providers p on p.id = e.provider_id
+   where e.code = upper(btrim(p_code));
+$$;
+
+revoke all on function public.suivi_public(text) from public;
+grant execute on function public.suivi_public(text) to anon, authenticated;
