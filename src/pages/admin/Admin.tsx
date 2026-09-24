@@ -43,7 +43,7 @@ export function AdminLayout() {
   const searchRef = useRef<HTMLInputElement>(null);
   const isAdmin = s.user?.role === 'admin';
   const items: [string, string, Parameters<typeof Icon>[0]['name'], boolean][] = [
-    ['/equipe', 'Tableau de bord', 'grid', true], ['/equipe/propositions', 'Propositions', 'inbox', false], ['/equipe/fiches', 'Fiches', 'list', false], ['/equipe/recherches', 'Recherches des voyageurs', 'search', false], ['/equipe/historique', 'Historique des décisions', 'history', false],
+    ['/equipe', 'Tableau de bord', 'grid', true], ['/equipe/propositions', 'Propositions', 'inbox', false], ['/equipe/fiches', 'Fiches', 'list', false], ['/equipe/recherches', 'Recherches des voyageurs', 'search', false], ['/equipe/historique', 'Historique des décisions', 'history', false], ['/equipe/expeditions', 'Suivi de fret', 'truck', false],
     // Annonces de services : l'équipe consulte, l'administration rédige.
     ['/equipe/annonces', 'Annonces', 'send', false],
     // Administration : réservée au rôle admin.
