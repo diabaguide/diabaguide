@@ -74,10 +74,11 @@ export function Home() {
           <Logo height={30} tail="GUIDE" />
           <span className="seal seal-sm" aria-hidden="true"><span>指</span><span>南</span></span>
         </div>
-        <CitySwitch />
+        {/* Recherche d'abord, en pastille pleine largeur ; les villes ensuite, en pastilles. */}
         <Link to={`/recherche?ville=${s.city}`} className="searchfake" aria-label={tr("Rechercher un produit ou un service")}>
           <Icon name="search" /><span>{tr("Quel produit ou service cherchez-vous ?")}</span>
         </Link>
+        <CitySwitch />
       </header>
       <main className="main" style={{ gap: 22, paddingTop: 20 }}>
         {!s.installDismissed && (

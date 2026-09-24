@@ -460,3 +460,12 @@ body { -webkit-font-smoothing: antialiased; }
   .print-only th, .print-only td { text-align: start; padding: 6pt 4pt; border-bottom: 1px solid #ccc; font-size: 11pt; }
   .print-only .bought { color: #555 !important; text-decoration: line-through; }
 }
+
+/* En-tête : la recherche en pastille pleine largeur, les villes en pastilles dessous. */
+.hero .searchfake { min-height: 60px; padding: 0 20px; gap: 14px; border-radius: 999px; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.18); color: rgba(255,255,255,.78); box-shadow: none; font-size: 16px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.hero .searchfake svg { width: 22px; height: 22px; color: rgba(255,255,255,.88); }
+.hero .seg { background: transparent; border: 0; padding: 0; gap: 10px; overflow-x: auto; scrollbar-width: none; }
+.hero .seg::-webkit-scrollbar { display: none; }
+.hero .seg button, .hero .seg a { flex: 0 0 auto; min-height: 46px; padding: 0 18px; border: 1px solid rgba(255,255,255,.32); border-radius: 999px; font-weight: 600; box-shadow: none; }
+.hero .seg .on { background: #fff; color: #123794; border-color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.18); }
+
