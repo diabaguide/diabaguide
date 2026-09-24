@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export type PhotoBucket = 'proposal-photos' | 'fiche-photos' | 'review-photos';
+export type PhotoBucket = 'proposal-photos' | 'fiche-photos' | 'review-photos' | 'fret-photos';
 
 /** Buckets dont les règles d'accès exigent un dossier au nom du voyageur. */
 const dossierUtilisateur: PhotoBucket[] = ['proposal-photos', 'review-photos'];

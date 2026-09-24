@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { PROVIDERS, type Provider } from '../data';
+import { PROVIDERS, type City, type Provider } from '../data';
 
 /** Ligne telle que renvoyée par la table Supabase `providers` (snake_case). */
 interface ProviderRow {
@@ -141,6 +141,31 @@ export function validateProvider(p: Provider): string | null {
   if (!Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return 'Latitude et longitude doivent être des nombres.';
   if (p.name.length > 100 || p.cn.length > 100) return 'Les noms ne doivent pas dépasser 100 caractères.';
   return null;
+}
+
+/**
+ * Crée une fiche de transitaire en trois champs (nom, ville, téléphone),
+ * depuis la console de fret — sans passer par le formulaire complet.
+ *
+ * `cn` (nom chinois) et `district` sont obligatoires en base : ils sont
+ * laissés VIDES plutôt qu'inventés — c'est la règle du projet pour les noms
+ * chinois non confirmés (voir supabase/insert_gz_sz_providers.sql). Les
+ * coordonnées sont celles de la ville choisie : la fiche n'apparaît donc pas
+ * sur une carte au large du golfe de Guinée. La RLS `providers_insert_team`
+ * autorise l'équipe à écrire.
+ */
+export async function creerTransitaire(f: {
+  nom: string; city: City; lat: number; lng: number; tel?: string;
+}): Promise<{ id?: string; error?: string }> {
+  if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
+  const nom = f.nom.trim();
+  if (!nom) return { error: 'Saisissez le nom du transitaire.' };
+  const id = newProviderId(nom);
+  const { error } = await supabase.from('providers').insert({
+    id, name: nom, cn: '', cat: 'transitaire', city: f.city, district: '',
+    lat: f.lat, lng: f.lng, tel: nul(f.tel),
+  });
+  return error ? { error: error.message } : { id };
 }
 
 /** Crée ou met à jour une fiche (équipe). */
