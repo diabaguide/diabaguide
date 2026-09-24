@@ -19,6 +19,7 @@ const AdminList = lazy(() => import('./pages/admin/Admin').then(m => ({ default:
 const AdminVerify = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminVerify })));
 const AdminHistory = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminHistory })));
 const FichesList = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.FichesList })));
+const Expeditions = lazy(() => import('./pages/admin/Expeditions').then(m => ({ default: m.Expeditions })));
 const FicheEdit = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.FicheEdit })));
 const Deletions = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.Deletions })));
 const SearchLogs = lazy(() => import('./pages/admin/SearchLogs').then(m => ({ default: m.SearchLogs })));
@@ -110,6 +111,7 @@ export default function App() {
             <Route path="/equipe/propositions/:id" element={<AdminVerify />} />
             <Route path="/equipe/historique" element={<AdminHistory />} />
             <Route path="/equipe/fiches" element={<FichesList />} />
+            <Route path="/equipe/expeditions" element={<Expeditions />} />
             <Route path="/equipe/recherches" element={<SearchLogs />} />
             <Route path="/equipe/fiches/:id" element={<FicheEdit />} />
             {/* Administration : réservée au rôle admin */}
