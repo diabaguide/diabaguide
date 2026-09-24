@@ -34,8 +34,6 @@
 .sceau .searchfake { border-radius: 4px; background: #FBF3E2; color: #4a4c6a; box-shadow: 4px 4px 0 rgba(210,56,31,.85); min-height: 56px; }
 .sceau .searchfake:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(210,56,31,.85); }
 .sceau .logo-pill { border-radius: 4px; box-shadow: none; }
-.sceau .hero-eyebrow { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 4px; background: rgba(251,243,226,.08); border: 1px solid rgba(230,188,75,.4); color: var(--gold-fill); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.sceau .hero-eyebrow i { font-style: normal; opacity: .5; color: #FBF3E2; }
 .sceau .hello { font-size: 28px; line-height: 1.05; color: #FBF3E2; }
 .sceau .hero h1.display { font-size: 42px !important; line-height: 1.02; text-wrap: balance; color: #FBF3E2; }
 .sceau .hero .gold-rule { background: var(--seal); width: 64px; height: 4px; }
@@ -114,7 +112,6 @@
 
 /* Rythme plus ample sur ordinateur, à l'image d'une conciergerie éditoriale. */
 @media (min-width: 1024px) {
-  .sceau .hero-eyebrow { font-size: 12px; padding: 6px 14px; }
   .sceau .hello { font-size: 34px; }
   .sceau .hero h1.display { font-size: 52px !important; }
   .sceau .cattile { min-height: 168px; padding: 20px; }
