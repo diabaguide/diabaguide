@@ -157,20 +157,20 @@ function LotSheet({ lot, nomVoyageur, admin, transitaires, onClose, onSaved }: {
         )}
 
       {/* Champs modifiables */}
-      <Field id="fr-conteneur" label={lot.fret === 'air' ? 'Numéro AWB' : 'Numéro de conteneur'}
+      <Field id="fr-conteneur" label={tr(lot.fret === 'air' ? 'Numéro AWB' : 'Numéro de conteneur')}
         value={conteneur} onChange={setConteneur} placeholder="Non renseigné"
         hint={tr("Modifiable seulement : un champ vidé ici garde sa valeur précédente.")} />
-      <Field id="fr-poids" label="Poids" value={poids} onChange={setPoids} placeholder="Non renseigné" />
-      <TextArea id="fr-articles" label="Articles transportés" value={articles} onChange={setArticles}
+      <Field id="fr-poids" label={tr("Poids")} value={poids} onChange={setPoids} placeholder="Non renseigné" />
+      <TextArea id="fr-articles" label={tr("Articles transportés")} value={articles} onChange={setArticles}
         rows={2} placeholder={tr("Un article par ligne")} />
-      <Select id="fr-transitaire" label="Transitaire" value={providerId} onChange={setProviderId}
+      <Select id="fr-transitaire" label={tr("Transitaire")} value={providerId} onChange={setProviderId}
         options={[{ v: '', l: tr("Aucun") }, ...transitaires.map((p) => ({ v: p.id, l: p.nom }))]} />
-      <Field id="fr-depart" label="Date de départ" type="date" value={depart} onChange={setDepart} />
-      <Field id="fr-prevue" label="Arrivée prévue" type="date" value={arriveePrevue} onChange={setArriveePrevue} />
-      <Field id="fr-arrivee" label="Arrivée réelle" type="date" value={arriveeLe} onChange={setArriveeLe} />
+      <Field id="fr-depart" label={tr("Date de départ")} type="date" value={depart} onChange={setDepart} />
+      <Field id="fr-prevue" label={tr("Arrivée prévue")} type="date" value={arriveePrevue} onChange={setArriveePrevue} />
+      <Field id="fr-arrivee" label={tr("Arrivée réelle")} type="date" value={arriveeLe} onChange={setArriveeLe} />
 
       {/* Notes internes : jamais montrées au voyageur */}
-      <TextArea id="fr-notes" label="Notes internes (jamais visibles du voyageur)" value={notes ?? ''}
+      <TextArea id="fr-notes" label={tr("Notes internes (jamais visibles du voyageur)")} value={notes ?? ''}
         onChange={setNotes} rows={2} hint={tr("Visible de l’équipe seulement.")} />
 
       {admin && (
@@ -188,11 +188,11 @@ function LotSheet({ lot, nomVoyageur, admin, transitaires, onClose, onSaved }: {
       {admin && (
         <>
           <h3 style={{ marginBottom: 0 }}>{tr("Ajouter une étape")}</h3>
-          <Select id="fr-statut" label="Statut" value={statut} onChange={(v) => setStatut(v as Statut)} options={options} />
-          <Field id="fr-lieu" label="Lieu" value={lieu} onChange={setLieu} placeholder="Dakar, Anvers…" />
-          <Field id="fr-survenu" label="Date du mouvement" type="date" value={survenu} onChange={setSurvenu}
+          <Select id="fr-statut" label={tr("Statut")} value={statut} onChange={(v) => setStatut(v as Statut)} options={options} />
+          <Field id="fr-lieu" label={tr("Lieu")} value={lieu} onChange={setLieu} placeholder="Dakar, Anvers…" />
+          <Field id="fr-survenu" label={tr("Date du mouvement")} type="date" value={survenu} onChange={setSurvenu}
             hint={tr("Laissez vide pour maintenant.")} />
-          <TextArea id="fr-note" label="Note visible du voyageur" value={note} onChange={setNote} rows={2} />
+          <TextArea id="fr-note" label={tr("Note visible du voyageur")} value={note} onChange={setNote} rows={2} />
           <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
             <label className="small" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <input type="checkbox" checked={publique} onChange={(e) => setPublique(e.target.checked)} />
@@ -282,21 +282,21 @@ function NouveauLotSheet({ voyageurs, transitaires, onClose, onSaved }: {
           <span>{tr("Aucun compte voyageur lisible : la liste des comptes est réservée à l’administration.")}</span>
         </div>
       )}
-      <Select id="nl-voyageur" label="Voyageur" value={userId} onChange={setUserId}
+      <Select id="nl-voyageur" label={tr("Voyageur")} value={userId} onChange={setUserId}
         options={[{ v: '', l: tr("Choisir un voyageur") }, ...voyageurs.map((v) => ({ v: v.id, l: v.email ? `${v.nom} — ${v.email}` : v.nom }))]} req />
-      <Select id="nl-fret" label="Type de fret" value={fret} onChange={(v) => setFret(v as Fret)}
+      <Select id="nl-fret" label={tr("Type de fret")} value={fret} onChange={(v) => setFret(v as Fret)}
         options={(Object.keys(FRET_LABEL) as Fret[]).map((f) => ({ v: f, l: tr(FRET_LABEL[f]) }))} />
-      <Select id="nl-origine" label="Ville d’origine" value={origine} onChange={setOrigine}
+      <Select id="nl-origine" label={tr("Ville d’origine")} value={origine} onChange={setOrigine}
         options={ORIGINES.map((o) => ({ v: o, l: o }))} />
-      <Select id="nl-transitaire" label="Transitaire" value={providerId} onChange={setProviderId}
+      <Select id="nl-transitaire" label={tr("Transitaire")} value={providerId} onChange={setProviderId}
         options={[{ v: '', l: tr("Aucun") }, ...transitaires.map((p) => ({ v: p.id, l: p.nom }))]} />
-      <Field id="nl-conteneur" label={fret === 'air' ? 'Numéro AWB' : 'Numéro de conteneur'} value={conteneur} onChange={setConteneur} />
-      <Field id="nl-poids" label="Poids" value={poids} onChange={setPoids} />
-      <TextArea id="nl-articles" label="Articles transportés" value={articles} onChange={setArticles} rows={2}
+      <Field id="nl-conteneur" label={tr(fret === 'air' ? 'Numéro AWB' : 'Numéro de conteneur')} value={conteneur} onChange={setConteneur} />
+      <Field id="nl-poids" label={tr("Poids")} value={poids} onChange={setPoids} />
+      <TextArea id="nl-articles" label={tr("Articles transportés")} value={articles} onChange={setArticles} rows={2}
         placeholder={tr("Un article par ligne")} />
-      <Field id="nl-depart" label="Date de départ" type="date" value={depart} onChange={setDepart} />
-      <Field id="nl-prevue" label="Arrivée prévue" type="date" value={arriveePrevue} onChange={setArriveePrevue} />
-      <TextArea id="nl-notes" label="Notes internes (jamais visibles du voyageur)" value={notes} onChange={setNotes} rows={2} />
+      <Field id="nl-depart" label={tr("Date de départ")} type="date" value={depart} onChange={setDepart} />
+      <Field id="nl-prevue" label={tr("Arrivée prévue")} type="date" value={arriveePrevue} onChange={setArriveePrevue} />
+      <TextArea id="nl-notes" label={tr("Notes internes (jamais visibles du voyageur)")} value={notes} onChange={setNotes} rows={2} />
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <Button icon="check" full={false} disabled={busy} onClick={() => void creer()}>
@@ -394,9 +394,9 @@ export function Expeditions() {
             : wide ? (
               <div className="table dense"><table>
                 <thead><tr>
-                  <SortTh k="code" label="Code" sort={sort} onSort={toggle} />
+                  <SortTh k="code" label={tr("Code")} sort={sort} onSort={toggle} />
                   <th>{tr("Voyageur")}</th>
-                  <SortTh k="statut" label="Statut" sort={sort} onSort={toggle} />
+                  <SortTh k="statut" label={tr("Statut")} sort={sort} onSort={toggle} />
                   <th>{tr("Fret")}</th>
                   <th>{tr("Arrivée prévue")}</th>
                   <th>{tr("Actions")}</th>
