@@ -205,6 +205,7 @@ export function Driver() {
 
 export function Card() {
   const { tr } = useI18n();
+  const nav = useNavigate();
   const p = useProvider();
   const [blob, setBlob] = useState<Blob | null>(null);
   const [src, setSrc] = useState('');
@@ -226,7 +227,11 @@ export function Card() {
   };
   return (
     <Screen>
-      <TopBar title={tr("Carte de visite")} back={`/adresses/${p.id}`} />
+      {/* Deux sorties : le chevron ramène à la fiche, la croix ferme la carte et
+          rend l'écran précédent (la liste de résultats quand on vient de la recherche). */}
+      <TopBar title={tr("Carte de visite")} back={`/adresses/${p.id}`}
+        right={<button type="button" className="iconbtn" aria-label={tr("Fermer")} title={tr("Fermer")}
+          onClick={() => (window.history.length > 1 ? nav(-1) : nav('/recherche'))}><Icon name="x" size={20} sw={2.2} /></button>} />
       <div className="main">
         <div className="notice"><Icon name="info" size={22} /><div style={{ fontWeight: 500 }}>{tr("Envoyez cette carte par WhatsApp ou WeChat, ou montrez-la au chauffeur pour qu’il vous emmène chez le prestataire.")}</div></div>
         {failed ? <div role="alert" className="notice"><Icon name="info" size={22} /><span>{tr("La carte n’a pas pu être générée. Réessayez.")}</span></div>
