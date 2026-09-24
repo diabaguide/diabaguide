@@ -1,7 +1,7 @@
 -- ============================================================
 -- Diaba Guide — Suivi de fret Chine / Sénégal
--- Lot 1 : schéma. À exécuter après security_fixes.sql (is_team()).
--- Idempotent : peut être relancé sans risque.
+-- Lot 1 : schéma. À exécuter après auth.sql (is_team(), profiles) et
+-- shopping_lists.sql (touch_updated_at). Idempotent : relançable sans risque.
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -64,6 +64,15 @@ create table if not exists public.expedition_etapes (
   ref_shipsgo   text,
   created_at    timestamptz not null default now()
 );
+
+-- Un mouvement ShipsGo arrive avec SA date et peut être estimé : sans ces
+-- deux colonnes, un webhook en retard serait daté de son insertion et
+-- s'afficherait après des mouvements plus récents.
+alter table public.expedition_etapes add column if not exists survenu_le timestamptz;
+alter table public.expedition_etapes add column if not exists estime boolean not null default false;
+
+update public.expedition_etapes set survenu_le = created_at where survenu_le is null;
+alter table public.expedition_etapes alter column survenu_le set default now();
 
 create index if not exists expedition_etapes_idx
   on public.expedition_etapes (expedition_id, created_at desc);
@@ -132,6 +141,29 @@ drop policy if exists "expedition_etapes_staff_read" on public.expedition_etapes
 create policy "expedition_etapes_staff_read" on public.expedition_etapes
   for select to authenticated using (public.is_team());
 
+-- La RLS est au niveau LIGNE, pas colonne : elle ne peut pas cacher `notes`
+-- au voyageur propriétaire. On retire donc le droit de lire la table en
+-- entier et on l'accorde colonne par colonne — `notes` (notes internes de
+-- l'équipe) n'y figure pas. L'équipe les lit par admin_notes_expedition().
+revoke select on public.expeditions from authenticated, anon;
+grant select (id, code, user_id, provider_id, fret, origine, conteneur,
+              shipsgo_id, shipsgo_type, sync_le, articles, poids, depart_le,
+              arrivee_prevue, arrivee_le, statut, list_id, created_at, updated_at)
+  on public.expeditions to authenticated;
+
+create or replace function public.admin_notes_expedition(p_id uuid)
+returns table (notes text)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Réservé à l''administration';
+  end if;
+  return query select e.notes from public.expeditions e where e.id = p_id;
+end; $$;
+
+revoke all on function public.admin_notes_expedition(uuid) from public, anon;
+grant execute on function public.admin_notes_expedition(uuid) to authenticated;
+
 -- ------------------------------------------------------------
 -- 6. Création d'un lot (équipe uniquement)
 --    Le code est genere en base, sous verrou, pour que deux
@@ -163,6 +195,12 @@ begin
   end if;
   if p_origine not in ('Guangzhou', 'Shenzhen') then
     raise exception 'Ville d''origine invalide : %', p_origine;
+  end if;
+  -- La fiche désignée doit être un transitaire : `suivi_public` publiera
+  -- son nom et son téléphone, on ne veut pas y exposer un grossiste.
+  if p_provider_id is not null and not exists (
+       select 1 from public.providers pr where pr.id = p_provider_id and pr.cat = 'transitaire') then
+    raise exception 'Le prestataire % n''est pas un transitaire', p_provider_id;
   end if;
 
   -- Sérialise la génération des codes : deux appels simultanés
@@ -203,7 +241,9 @@ create or replace function public.admin_ajouter_etape(
   p_photo         text    default null,
   p_publique      boolean default true,
   p_source        text    default 'equipe',
-  p_ref_shipsgo   text    default null
+  p_ref_shipsgo   text    default null,
+  p_survenu_le    timestamptz default null,
+  p_estime        boolean default false
 ) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare
@@ -235,16 +275,18 @@ begin
   end if;
 
   insert into public.expedition_etapes
-    (expedition_id, statut, lieu, note, photo, publique, source, ref_shipsgo)
+    (expedition_id, statut, lieu, note, photo, publique, source, ref_shipsgo,
+     survenu_le, estime)
   values
-    (p_expedition_id, p_statut, p_lieu, p_note, p_photo, p_publique, p_source, p_ref_shipsgo)
+    (p_expedition_id, p_statut, p_lieu, p_note, p_photo, p_publique, p_source, p_ref_shipsgo,
+     coalesce(p_survenu_le, now()), p_estime)
   returning expedition_etapes.id into v_id;
 
   return v_id;
 end; $$;
 
-revoke all on function public.admin_ajouter_etape(uuid, public.statut_expedition, text, text, text, boolean, text, text) from public, anon;
-grant execute on function public.admin_ajouter_etape(uuid, public.statut_expedition, text, text, text, boolean, text, text) to authenticated;
+revoke all on function public.admin_ajouter_etape(uuid, public.statut_expedition, text, text, text, boolean, text, text, timestamptz, boolean) from public, anon;
+grant execute on function public.admin_ajouter_etape(uuid, public.statut_expedition, text, text, text, boolean, text, text, timestamptz, boolean) to authenticated;
 
 -- ------------------------------------------------------------
 -- 8. Mise à jour d'un lot. Un paramètre nul laisse la colonne
@@ -268,6 +310,12 @@ language plpgsql security definer set search_path = public as $$
 begin
   if not public.is_admin() then
     raise exception 'Réservé à l''administration';
+  end if;
+  -- Même garde qu'à la création : seules les fiches de transitaire sont
+  -- publiées par `suivi_public`.
+  if p_provider_id is not null and not exists (
+       select 1 from public.providers pr where pr.id = p_provider_id and pr.cat = 'transitaire') then
+    raise exception 'Le prestataire % n''est pas un transitaire', p_provider_id;
   end if;
 
   update public.expeditions set
@@ -323,15 +371,17 @@ returns jsonb language sql stable security definer set search_path = public as $
            'depart_le', e.depart_le,
            'arrivee_prevue', e.arrivee_prevue,
            'arrivee_le', e.arrivee_le,
-           'transitaire', case when p.id is null then null else
+           'transitaire', case when p.id is null or p.cat <> 'transitaire' then null else
              jsonb_build_object('nom', p.name, 'telephone', p.tel) end,
            'etapes', coalesce((
              select jsonb_agg(jsonb_build_object(
                       'statut', t.statut,
                       'lieu', t.lieu,
                       'note', t.note,
+                      'survenu_le', t.survenu_le,
+                      'estime', t.estime,
                       'date', t.created_at)
-                    order by t.created_at)
+                    order by t.survenu_le, t.created_at, t.id)
                from public.expedition_etapes t
               where t.expedition_id = e.id and t.publique), '[]'::jsonb)
          )

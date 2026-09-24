@@ -100,8 +100,14 @@ Ordre du cycle de vie, tel qu'affiché dans la frise :
 | `photo` | text | chemin Storage, facultatif |
 | `publique` | boolean not null default true | si faux, l'étape n'apparaît pas sur la page publique |
 | `created_at` | timestamptz not null default now() | horodatage affiché |
+| `survenu_le` | timestamptz not null default now() | **date du mouvement** (celle de ShipsGo), distincte de la date d'insertion |
+| `estime` | boolean not null default false | mouvement estimé (`EST`) plutôt que réel (`ACT`) |
 | `source` | text not null default 'equipe' check (source in ('equipe','shipsgo')) | qui a produit l'étape |
 | `ref_shipsgo` | text | identifiant du mouvement ShipsGo (déduplication) |
+
+La frise se trie sur `survenu_le` (puis `created_at`, puis `id` pour départager
+deux étapes d'une même transaction) : un webhook arrivé en retard se place à sa
+vraie date au lieu de passer pour le plus récent.
 
 Contraintes à tester :
 
@@ -118,9 +124,21 @@ Contraintes à tester :
 
 | Table | select | insert / update / delete |
 |---|---|---|
-| `expeditions` | `auth.uid() = user_id`, plus une politique `<table>_staff_read` pour l'équipe (`is_admin()`), comme `shopping_lists_staff_read` | aucune politique : uniquement les fonctions `admin_*` |
+| `expeditions` | `auth.uid() = user_id`, plus une politique `<table>_staff_read` pour l'équipe (`is_team()`), comme `shopping_lists_staff_read` | aucune politique : uniquement les fonctions `admin_*` |
 | `expedition_etapes` | via son expédition (propriétaire ou équipe) | idem |
 | `shopping_lists` | déjà en place | inchangé |
+
+**Les notes internes ne sont pas lisibles par le voyageur.** La RLS est au
+niveau ligne, pas colonne : la politique propriétaire laisserait passer `notes`
+avec la ligne. Le droit de lecture est donc accordé **colonne par colonne** à
+`authenticated` (tout sauf `notes`), et l'équipe lit les notes par
+`public.admin_notes_expedition(id)`. Conséquence pour les écrans : ne jamais
+faire `select *` sur `expeditions` — nommer les colonnes.
+
+Le transitaire désigné doit être une fiche `providers.cat = 'transitaire'` : les
+fonctions de création et de mise à jour le vérifient, et `suivi_public` ne
+publie le nom et le téléphone que dans ce cas — jamais ceux d'un grossiste ou
+d'un restaurant désigné par erreur.
 
 Fonctions `security definer`, convention maison
 (`if not public.is_admin() then raise exception ...` puis
