@@ -123,11 +123,28 @@ export function Field(p: {
   hint?: string; error?: string | null; placeholder?: string;
 }) {
   const { tr } = useI18n();
+  const [visible, setVisible] = useState(false);
   return (
     <div className="field">
       <label htmlFor={p.id}>{tr(p.label)}{p.req && <span className="req" aria-hidden="true"> *</span>}</label>
-      <input id={p.id} type={p.type ?? 'text'} value={p.value} placeholder={tr(p.placeholder)} aria-invalid={!!p.error}
+      <input id={p.id} type={p.type === 'password' ? (visible ? 'text' : 'password') : (p.type ?? 'text')} value={p.value} placeholder={tr(p.placeholder)} aria-invalid={!!p.error}
         aria-describedby={p.error ? p.id + '-err' : undefined} className={p.error ? 'err' : ''} onChange={(e) => p.onChange?.(e.target.value)} />
+      {p.type === 'password' && (
+        <button type="button" className="linklike"
+          aria-controls={p.id}
+          aria-label={tr(visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe')}
+          title={tr(visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe')}
+          style={{ width: 44, height: 44, display: 'grid', placeItems: 'center', padding: 0 }}
+          onClick={() => setVisible((v) => !v)}>
+          <svg width="22" height="22" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="1.8"
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+            <circle cx="12" cy="12" r="3" />
+            {visible && <path d="m3 3 18 18" />}
+          </svg>
+        </button>
+      )}
       {p.hint && !p.error && <div className="hint">{tr(p.hint)}</div>}
       {p.error && <div id={p.id + '-err'} className="error"><Icon name="alert" size={16} sw={2} /><span>{tr(p.error)}</span></div>}
     </div>

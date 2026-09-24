@@ -1,3 +1,4 @@
+import { supabase } from '../../lib/supabase';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../../i18n';
 import { Button, Field, Icon, Select, StoredPhoto, TextArea, useWide } from '../../ui';
@@ -156,6 +157,7 @@ function LignesArticles(p: {
 }
 
 /** La photo du lot : prise ou choix, compression, envoi dans `fret-photos`. */
+
 function PhotoLot({ expeditionId, photoInitiale, admin, onNotee }: {
   expeditionId: string;
   photoInitiale: string;
@@ -163,36 +165,83 @@ function PhotoLot({ expeditionId, photoInitiale, admin, onNotee }: {
   onNotee: (msg: string) => void;
 }) {
   const { tr } = useI18n();
-  const [photo, setPhoto] = useState(photoInitiale);
+  const [photos, setPhotos] = useState([photoInitiale, '', '']);
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const enregistrer = async (chemin: string) => {
-    setBusy(true); setErr(null);
-    const { error } = await majExpedition({ id: expeditionId, photo: chemin });
-    setBusy(false);
-    if (error) { setErr(error); return; }
-    setPhoto(chemin);
-    onNotee(chemin ? 'Photo du lot enregistrée.' : 'Photo du lot retirée.');
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setErr(null);
+    if (!supabase) {
+      setErr('Connectez la base pour modifier les photos.');
+      return;
+    }
+    void supabase.from('expeditions')
+      .select('photo, photo2, photo3')
+      .eq('id', expeditionId).single()
+      .then(({ data, error }) => {
+        if (!alive) return;
+        if (error) {
+          setErr('Chargement des photos impossible.');
+          return;
+        }
+        setPhotos([data.photo ?? '', data.photo2 ?? '', data.photo3 ?? '']);
+        setLoading(false);
+      });
+    return () => { alive = false; };
+  }, [expeditionId]);
+
+  const enregistrer = async (index: number, chemin: string) => {
+    if (!supabase) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const { error } = await supabase.rpc('admin_photo_expedition', {
+        p_id: expeditionId,
+        p_position: index + 1,
+        p_chemin: chemin,
+      });
+      if (error) throw error;
+      setPhotos((old) => old.map((v, i) => i === index ? chemin : v));
+      onNotee(chemin ? 'Photo du lot enregistrée.' : 'Photo du lot retirée.');
+    } catch {
+      setErr('Enregistrement impossible. Réessayez.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <>
-      <h3 style={{ marginBottom: 0 }}>{tr("Photo du lot")}</h3>
-      <StoredPhoto bucket="fret-photos" path={photo || undefined} label={tr("Photo du lot")} h={140} round={12} />
-      {admin && (
-        <>
-          <FilePick label={tr("Photo du lot")} done={!!photo} bucket="fret-photos"
-            onPick={(_img, chemin) => void enregistrer(chemin ?? '')} />
-          {photo && (
-            <Button kind="t" icon="trash" full={false} disabled={busy} onClick={() => void enregistrer('')}>
-              {tr("Retirer la photo")}
-            </Button>
+    <section className="stack">
+      <h3 style={{ marginBottom: 0 }}>{tr("Photo du lot")} (3 max.)</h3>
+      {err && <div role="alert" className="notice err">{tr(err)}</div>}
+      {photos.map((photo, i) => (
+        <fieldset key={i} disabled={loading ? true : busy}
+          style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+          className="stack">
+          <legend>{tr("Photo du lot")} {i + 1}/3</legend>
+          <StoredPhoto bucket="fret-photos" path={photo ? photo : undefined}
+            label={tr("Photo du lot") + ' ' + (i + 1)} h={140} round={12} />
+          {admin && !loading && (
+            <>
+              <FilePick label={tr("Photo du lot") + ' ' + (i + 1)}
+                done={!!photo} bucket="fret-photos"
+                onPick={(_img, chemin) => {
+                  if (chemin) void enregistrer(i, chemin);
+                }} />
+              {photo && (
+                <Button kind="t" icon="trash" disabled={busy}
+                  onClick={() => void enregistrer(i, '')}>
+                  {tr("Retirer la photo")}
+                </Button>
+              )}
+            </>
           )}
-        </>
-      )}
-      {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-    </>
+        </fieldset>
+      ))}
+    </section>
   );
 }
 

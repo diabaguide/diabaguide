@@ -161,7 +161,7 @@ export function Login() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setErr(null);
-    if (!EMAIL.test(email) || !pw) { setErr('Vérifiez votre adresse e-mail et votre mot de passe.'); return; }
+    if (!PHONE.test(email.trim()) || !pw) { setErr('Vérifiez votre numéro de téléphone et votre mot de passe.'); return; }
     if (!supabase) {
       // Repli démo : tout compte est accepté ; « equipe » ouvre l’espace équipe.
       const team = email.toLowerCase().includes('equipe');
@@ -187,7 +187,7 @@ export function Login() {
           <div role="alert" className="notice warn"><Icon name="alert" size={20} sw={2} /><div><strong>{tr("Compte désactivé")}</strong><div className="small">{tr("Votre compte a été désactivé par l’équipe Diaba Guide. Écrivez-nous si vous pensez qu’il s’agit d’une erreur.")}</div></div></div>
         )}
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-        <Field id="mail" label={tr("E-mail ou numéro de téléphone")} value={email} onChange={setEmail} placeholder={tr("nom@exemple.com ou 77 123 45 67")} />
+        <Field id="tel" label={tr("Numéro de téléphone")} type="tel" value={email} onChange={setEmail} placeholder="+221 77 123 45 67" req />
         <Field id="mdp" label={tr("Mot de passe")} type="password" value={pw} onChange={setPw} />
         <div style={{ textAlign: 'right' }}><Link className="link" to="/mot-de-passe">{tr("Mot de passe oublié ?")}</Link></div>
         <Button type="submit" disabled={busy}>{tr(busy ? 'Connexion…' : (next?.startsWith('/adresses/') ? 'Se connecter et ouvrir la fiche' : 'Se connecter'))}</Button>
