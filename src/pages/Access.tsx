@@ -31,7 +31,7 @@ export function Welcome() {
         <Logo height={56} tail="GUIDE" />
         <div className="gold-rule" />
         <h1 className="display" style={{ fontSize: 34 }}>{tr("Vos adresses professionnelles en Chine")}</h1>
-        <p>{tr("Fournisseurs en gros, hôtels, restaurants et transporteurs à Guangzhou et Shenzhen, pour préparer vos déplacements d’affaires.")}</p>
+        <p>{tr("Fournisseurs en gros, hôtels et restaurants à Guangzhou et Shenzhen, pour préparer vos déplacements d’affaires.")}</p>
         <span className="seal seal-lg" aria-hidden="true"><span>指</span><span>南</span></span>
       </div>
       <div className="stack" style={{ padding: '20px 20px 4px' }}>
