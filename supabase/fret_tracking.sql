@@ -104,3 +104,30 @@ drop trigger if exists on_expedition_update on public.expeditions;
 create trigger on_expedition_update
   before update on public.expeditions
   for each row execute function public.touch_updated_at();
+
+-- ------------------------------------------------------------
+-- 5. Accès
+--    Lecture : le voyageur propriétaire, l'équipe en support.
+--    Écriture : AUCUNE politique → uniquement les fonctions admin_*
+--    (security definer). Un voyageur ne peut pas écrire même chez lui.
+-- ------------------------------------------------------------
+alter table public.expeditions enable row level security;
+alter table public.expedition_etapes enable row level security;
+
+drop policy if exists "expeditions_owner_read" on public.expeditions;
+create policy "expeditions_owner_read" on public.expeditions
+  for select to authenticated using (auth.uid() = user_id);
+
+drop policy if exists "expeditions_staff_read" on public.expeditions;
+create policy "expeditions_staff_read" on public.expeditions
+  for select to authenticated using (public.is_team());
+
+drop policy if exists "expedition_etapes_owner_read" on public.expedition_etapes;
+create policy "expedition_etapes_owner_read" on public.expedition_etapes
+  for select to authenticated using (
+    exists (select 1 from public.expeditions e
+             where e.id = expedition_etapes.expedition_id and e.user_id = auth.uid()));
+
+drop policy if exists "expedition_etapes_staff_read" on public.expedition_etapes;
+create policy "expedition_etapes_staff_read" on public.expedition_etapes
+  for select to authenticated using (public.is_team());
