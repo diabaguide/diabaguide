@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { isInternalEmail } from './phone';
 
 /* Suivi de fret Chine / Sénégal, côté équipe : un lot par conteneur ou par
    envoi aérien, et ses étapes (préparation → livré).
@@ -48,6 +49,10 @@ export type Expedition = {
   conteneur: string;
   articles: string;
   poids: string;
+  /** Nombre de mètres cubes du lot (facultatif). */
+  cbm: number | null;
+  /** Chemin de la photo du lot dans le bucket privé `fret-photos` ('' si aucune). */
+  photo: string;
   departLe: string | null;
   arriveePrevue: string | null;
   arriveeLe: string | null;
@@ -80,6 +85,9 @@ export type NouveauLot = {
   conteneur?: string;
   articles?: string;
   poids?: string;
+  cbm?: number | null;
+  /** Photo déjà déposée dans `fret-photos` (l'envoi se fait avant la création). */
+  photo?: string;
   departLe?: string | null;
   arriveePrevue?: string | null;
   notes?: string;
@@ -102,6 +110,9 @@ export type ChampsLot = {
   conteneur?: string;
   articles?: string;
   poids?: string;
+  cbm?: number | null;
+  /** Un chemin VIDE retire la photo (la base ne sait pas écrire « nul »). */
+  photo?: string;
   providerId?: string;
   departLe?: string | null;
   arriveePrevue?: string | null;
@@ -111,9 +122,21 @@ export type ChampsLot = {
   shipsgoType?: string | null;
 };
 
+/** Une ligne d'article transporté : nom, quantité, poids (facultatif). */
+export type Article = {
+  id: string;
+  expeditionId: string;
+  nom: string;
+  quantite: number;
+  poids: number | null;
+};
+
+export type NouvelArticle = { expeditionId: string; nom: string; quantite: number; poids?: number | null };
+export type ChampsArticle = { id: string; nom: string; quantite: number; poids?: number | null };
+
 const LOCAL_KEY = 'diaba-fret';
 
-type LocalLot = Expedition & { notes: string; etapes: Etape[] };
+type LocalLot = Expedition & { notes: string; etapes: Etape[]; lignes: Article[] };
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
@@ -149,12 +172,22 @@ const rowToLot = (r: Record<string, unknown>): Expedition => ({
   conteneur: String(r.conteneur ?? ''),
   articles: String(r.articles ?? ''),
   poids: String(r.poids ?? ''),
+  cbm: r.cbm == null ? null : Number(r.cbm),
+  photo: String(r.photo ?? ''),
   departLe: (r.depart_le as string) ?? null,
   arriveePrevue: (r.arrivee_prevue as string) ?? null,
   arriveeLe: (r.arrivee_le as string) ?? null,
   statut: statutValide(r.statut),
   createdAt: String(r.created_at ?? ''),
   updatedAt: String(r.updated_at ?? ''),
+});
+
+const rowToArticle = (r: Record<string, unknown>): Article => ({
+  id: String(r.id),
+  expeditionId: String(r.expedition_id ?? ''),
+  nom: String(r.nom ?? ''),
+  quantite: Number(r.quantite ?? 1),
+  poids: r.poids == null ? null : Number(r.poids),
 });
 
 const rowToEtape = (r: Record<string, unknown>): Etape => ({
@@ -177,7 +210,7 @@ export async function fetchExpeditions(): Promise<Expedition[]> {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
   const { data, error } = await supabase.from('expeditions')
-    .select('id, code, user_id, provider_id, fret, origine, conteneur, articles, poids, depart_le, arrivee_prevue, arrivee_le, statut, created_at, updated_at')
+    .select('id, code, user_id, provider_id, fret, origine, conteneur, articles, poids, cbm, photo, depart_le, arrivee_prevue, arrivee_le, statut, created_at, updated_at')
     .order('created_at', { ascending: false });
   if (error || !data) return [];
   return (data as Record<string, unknown>[]).map(rowToLot);
@@ -197,7 +230,11 @@ export async function fetchVoyageurs(): Promise<Voyageur[]> {
     .select('id, name, email').eq('role', 'traveler').order('name');
   if (error || !data) return [];
   return (data as Record<string, unknown>[]).map((r) => ({
-    id: String(r.id), nom: String(r.name ?? '—'), email: String(r.email ?? ''),
+    id: String(r.id),
+    nom: String(r.name ?? '—'),
+    // Un compte créé avec un seul numéro porte une adresse interne : elle n'est
+    // jamais montrée, même à l'équipe (voir src/lib/phone.ts).
+    email: isInternalEmail(r.email as string) ? '' : String(r.email ?? ''),
   }));
 }
 
@@ -212,6 +249,75 @@ export async function fetchTransitaires(): Promise<{ id: string; nom: string; vi
   return (data as Record<string, unknown>[]).map((r) => ({
     id: String(r.id), nom: String(r.name ?? '—'), ville: String(r.city ?? ''),
   }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Les articles transportés : des lignes, plus un champ de texte.      */
+/* Lecture accordée au propriétaire du lot et à l'équipe ; AUCUNE      */
+/* politique d'écriture — tout passe par les fonctions admin_*.        */
+/* (voir supabase/fret_lot2b.sql)                                      */
+/* ------------------------------------------------------------------ */
+
+/** Les lignes d'articles d'un lot, dans leur ordre de saisie. */
+export async function fetchArticles(expeditionId: string): Promise<Article[]> {
+  if (!supabase) return (readLocal().find((x) => x.id === expeditionId)?.lignes ?? []);
+  const { data, error } = await supabase.from('expedition_articles')
+    .select('id, expedition_id, nom, quantite, poids, created_at')
+    .eq('expedition_id', expeditionId)
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true });
+  if (error || !data) return [];
+  return (data as Record<string, unknown>[]).map(rowToArticle);
+}
+
+export async function ajouterArticle(a: NouvelArticle): Promise<{ id?: string; error?: string }> {
+  if (!supabase) {
+    const lots = readLocal();
+    const l = lots.find((x) => x.id === a.expeditionId);
+    if (!l) return { error: 'Lot introuvable.' };
+    const id = uid();
+    l.lignes = [...(l.lignes ?? []),
+      { id, expeditionId: a.expeditionId, nom: a.nom, quantite: a.quantite, poids: a.poids ?? null }];
+    writeLocal(lots);
+    return { id };
+  }
+  const { data, error } = await supabase.rpc('admin_ajouter_article', {
+    p_expedition_id: a.expeditionId, p_nom: a.nom, p_quantite: a.quantite, p_poids: a.poids ?? null,
+  });
+  if (error) return { error: message(error) };
+  return { id: typeof data === 'string' ? data : undefined };
+}
+
+export async function majArticle(c: ChampsArticle): Promise<{ error?: string }> {
+  if (!supabase) {
+    const lots = readLocal();
+    for (const l of lots) {
+      const ligne = (l.lignes ?? []).find((x) => x.id === c.id);
+      if (ligne) {
+        ligne.nom = c.nom; ligne.quantite = c.quantite; ligne.poids = c.poids ?? null;
+        writeLocal(lots);
+        return {};
+      }
+    }
+    return { error: 'Article introuvable.' };
+  }
+  const { error } = await supabase.rpc('admin_maj_article', {
+    p_id: c.id, p_nom: c.nom, p_quantite: c.quantite, p_poids: c.poids ?? null,
+  });
+  return error ? { error: message(error) } : {};
+}
+
+export async function supprimerArticle(id: string): Promise<{ error?: string }> {
+  if (!supabase) {
+    const lots = readLocal();
+    for (const l of lots) {
+      const reste = (l.lignes ?? []).filter((x) => x.id !== id);
+      if (reste.length !== (l.lignes ?? []).length) { l.lignes = reste; writeLocal(lots); return {}; }
+    }
+    return { error: 'Article introuvable.' };
+  }
+  const { error } = await supabase.rpc('admin_supprimer_article', { p_id: id });
+  return error ? { error: message(error) } : {};
 }
 
 /** Les étapes d'un lot, dans l'ordre du voyage (date du mouvement, pas date
@@ -247,9 +353,10 @@ export async function creerExpedition(lot: NouveauLot): Promise<{ id?: string; c
     writeLocal([...readLocal(), {
       id, code, userId: lot.userId, providerId: lot.providerId ?? null, fret: lot.fret,
       origine: lot.origine, conteneur: lot.conteneur ?? '', articles: lot.articles ?? '',
-      poids: lot.poids ?? '', departLe: lot.departLe ?? null, arriveePrevue: lot.arriveePrevue ?? null,
+      poids: lot.poids ?? '', cbm: lot.cbm ?? null, photo: lot.photo ?? '',
+      departLe: lot.departLe ?? null, arriveePrevue: lot.arriveePrevue ?? null,
       arriveeLe: null, statut: 'preparation', createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(), notes: lot.notes ?? '', etapes: [],
+      updatedAt: new Date().toISOString(), notes: lot.notes ?? '', etapes: [], lignes: [],
     }]);
     return { id, code };
   }
@@ -268,6 +375,15 @@ export async function creerExpedition(lot: NouveauLot): Promise<{ id?: string; c
   });
   if (error) return { error: message(error) };
   const ligne = (Array.isArray(data) ? data[0] : data) as { id?: string; code?: string } | undefined;
+
+  /* `admin_creer_expedition` ne connaît pas le CBM ni la photo (le lot n'a pas
+     encore d'identifiant quand la console les choisit). On les pose juste
+     après, avec la fonction de modification : le lot est créé en une seule
+     fois du point de vue de l'utilisateur. */
+  if (ligne?.id && (lot.cbm != null || lot.photo)) {
+    const suite = await majExpedition({ id: ligne.id, cbm: lot.cbm ?? undefined, photo: lot.photo ?? undefined });
+    if (suite.error) return { id: ligne.id, code: ligne.code };
+  }
   return { id: ligne?.id, code: ligne?.code };
 }
 
@@ -308,6 +424,8 @@ export async function majExpedition(c: ChampsLot): Promise<{ error?: string }> {
     if (c.conteneur !== undefined) l.conteneur = c.conteneur;
     if (c.articles !== undefined) l.articles = c.articles;
     if (c.poids !== undefined) l.poids = c.poids;
+    if (c.cbm !== undefined) l.cbm = c.cbm;
+    if (c.photo !== undefined) l.photo = c.photo;
     if (c.providerId !== undefined) l.providerId = c.providerId;
     if (c.departLe !== undefined) l.departLe = c.departLe;
     if (c.arriveePrevue !== undefined) l.arriveePrevue = c.arriveePrevue;
@@ -329,6 +447,8 @@ export async function majExpedition(c: ChampsLot): Promise<{ error?: string }> {
     p_notes: c.notes ?? null,
     p_shipsgo_id: c.shipsgoId ?? null,
     p_shipsgo_type: c.shipsgoType ?? null,
+    p_cbm: c.cbm ?? null,
+    p_photo: c.photo ?? null,
   });
   return error ? { error: message(error) } : {};
 }

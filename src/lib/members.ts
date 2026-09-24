@@ -93,6 +93,45 @@ export async function resetPasswordFor(id: string): Promise<{ motDePasse?: strin
   }
 }
 
+/**
+ * Crée un compte voyageur, par un administrateur, depuis la console.
+ *
+ * Passe par la fonction serveur `/api/creer-voyageur` : créer un compte exige
+ * la clé privilégiée de Supabase, qui ne doit jamais se trouver dans le
+ * navigateur. La fonction vérifie elle-même que la personne qui demande est
+ * administratrice (son jeton, son rôle relu en base).
+ *
+ * Rend le mot de passe temporaire, à transmettre au voyageur (WhatsApp) : sans
+ * adresse e-mail, aucun envoi automatique n'est possible.
+ */
+export async function creerVoyageur(v: {
+  nom: string; telephone: string; email?: string;
+}): Promise<{ id?: string; motDePasse?: string; error?: string }> {
+  if (!supabase) return { error: 'Création de compte indisponible en mode démonstration.' };
+  const { data } = await supabase.auth.getSession();
+  const jeton = data.session?.access_token;
+  if (!jeton) return { error: 'Session expirée. Reconnectez-vous.' };
+  try {
+    const r = await fetch('/api/creer-voyageur', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${jeton}` },
+      body: JSON.stringify({ nom: v.nom, telephone: v.telephone, email: v.email ?? '' }),
+    });
+    const corps = (await r.json().catch(() => ({}))) as { id?: string; motDePasse?: string; error?: string };
+    if (!r.ok) {
+      // La fonction serveur n'existe pas en développement local : le dire
+      // clairement plutôt que d'afficher un écran cassé.
+      if (r.status === 404) {
+        return { error: 'La création de compte n’est pas disponible ici : la fonction serveur « /api/creer-voyageur » doit être déployée.' };
+      }
+      return { error: corps.error ?? 'La création du compte a échoué. Réessayez.' };
+    }
+    return { id: corps.id, motDePasse: corps.motDePasse };
+  } catch {
+    return { error: 'Création impossible. Vérifiez votre réseau et réessayez.' };
+  }
+}
+
 /** Supprime définitivement un compte voyageur (action irréversible). */
 export async function deleteTraveler(id: string): Promise<{ error?: string }> {
   if (!supabase) return {};
