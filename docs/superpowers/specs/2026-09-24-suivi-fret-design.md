@@ -35,14 +35,16 @@ revendeur au Sénégal, qui n'a pas de compte Diaba Guide.
 - Page publique de suivi par code, sans compte, sans donnée personnelle.
 - Rattachement facultatif d'une expédition à une liste d'achats.
 - Import des expéditions déjà en cours au moment de la mise en service.
+- **Suivi automatique** des segments maritimes et aériens via l'API ShipsGo v2
+  (webhooks), avec la saisie manuelle de l'équipe en repli et pour les étapes
+  de fin de parcours.
 
 **Hors périmètre (v1)**
 
 - Comptes transitaires et saisie par un partenaire extérieur (prévu plus tard,
   le modèle le permet).
 - Suivi article par article, scan de code-barres.
-- Intégration API d'une compagnie maritime ou aérienne.
-- Notifications automatiques (voir « Notifications » ci-dessous).
+- Notifications automatiques au voyageur (voir « Notifications » ci-dessous).
 
 ## Modèle de données
 
@@ -60,7 +62,10 @@ Editor, comme les autres migrations du projet.
 | `provider_id` | text → providers(id) on delete set null | transitaire désigné |
 | `fret` | text not null check (fret in ('air','sea')) | type de fret |
 | `origine` | text not null check (origine in ('Guangzhou','Shenzhen')) | ville de départ |
-| `conteneur` | text | n° de conteneur ou n° AWB, facultatif |
+| `conteneur` | text | n° de conteneur (maritime) ou n° AWB (aérien), facultatif |
+| `shipsgo_id` | integer unique | identifiant du shipment chez ShipsGo, nul si non branché |
+| `shipsgo_type` | text check (in ('ocean','air')) | branche ShipsGo utilisée |
+| `sync_le` | timestamptz | dernier rapprochement avec ShipsGo |
 | `articles` | text | description libre du lot (ce qui est dedans) |
 | `poids` | text | poids ou volume, saisie libre (« 3,2 m³ ») |
 | `depart_le` | date | départ réel |
@@ -95,6 +100,8 @@ Ordre du cycle de vie, tel qu'affiché dans la frise :
 | `photo` | text | chemin Storage, facultatif |
 | `publique` | boolean not null default true | si faux, l'étape n'apparaît pas sur la page publique |
 | `created_at` | timestamptz not null default now() | horodatage affiché |
+| `source` | text not null default 'equipe' check (source in ('equipe','shipsgo')) | qui a produit l'étape |
+| `ref_shipsgo` | text | identifiant du mouvement ShipsGo (déduplication) |
 
 Contraintes à tester :
 
@@ -135,6 +142,71 @@ Fonctions `security definer`, convention maison
 Généré en base (dans `admin_creer_expedition`) pour éviter deux codes égaux en
 cas de créations simultanées ; contrainte unique qui échoue proprement si
 nécessaire.
+
+## Suivi automatique via ShipsGo (API v2)
+
+Source : `https://api.shipsgo.com/docs/v2` (OpenAPI 2.0, vérifié le 24/09/2026).
+Authentification : en-tête `X-Shipsgo-User-Token`. Le jeton est un **secret
+serveur** : il vit dans une variable d'environnement Vercel, jamais dans le
+navigateur (règle du projet).
+
+### Création du suivi
+
+À la création d'une expédition, le serveur appelle ShipsGo :
+
+- maritime — `POST /ocean/shipments` avec `reference` = notre `code`
+  (5 à 128 caractères, donc `DIA-2026-0001` convient), `container_number`
+  (`^[A-Z]{4}[0-9]{7}$`) **ou** `booking_number` (l'un des deux est exigé), et
+  `carrier` (code SCAC, facultatif ; la liste vient de `GET /ocean/carriers`) ;
+- aérien — `POST /air/shipments` avec `awb_number` (obligatoire, format
+  `333-88888888`) et `reference`.
+
+La réponse donne `id` → colonnes `shipsgo_id` / `shipsgo_type`.
+
+### Correspondance des statuts
+
+| ShipsGo maritime | ShipsGo aérien | Statut Diaba |
+|---|---|---|
+| `BOOKED` | `BOOKED` | `regroupage` |
+| `LOADED` | `EN_ROUTE` | `embarque` |
+| `SAILING` | `EN_ROUTE` | `transit` |
+| `ARRIVED` | `LANDED` | `arrive` |
+| `DISCHARGED` | `DELIVERED` | `arrive` |
+| `NEW` / `INPROGRESS` / `UNTRACKED` | idem | pas de changement (silence) |
+
+Les codes de mouvement maritime (`EMSH`, `GTIN`, `LOAD`, `DEPA`, `ARRV`,
+`DISC`, `GTOT`, `EMRT`) alimentent la frise : chaque mouvement devient une
+étape, avec son horodatage et son caractère **estimé** (`EST`) ou **réel**
+(`ACT`).
+
+**Ce que ShipsGo ne donne pas** : le dédouanement à Dakar et la remise au
+voyageur. Ces deux étapes restent saisies par l'équipe ; un statut manuel
+postérieur (`douane`, `livre`) n'est **jamais** écrasé par une mise à jour
+automatique — le rapprochement ne fait reculer aucun statut.
+
+### Mutations serveur
+
+- `api/shipsgo-webhook.js` — reçoit les webhooks (ShipsGo recommande les
+  webhooks, pas l'interrogation périodique). Vérifie la signature
+  **HMAC-SHA256** de l'en-tête `X-Shipsgo-Webhook-Signature` avec la clé secrète
+  avant toute écriture ; répond 200 même sur un événement déjà connu
+  (idempotence par `ref_shipsgo`), sinon ShipsGo réessaie 3 fois (5 puis
+  10 minutes).
+- `api/shipsgo-sync.js` — rattrapage à la demande pour une expédition
+  (`GET /ocean/shipments/{id}` ou `/air/shipments/{id}`), utile quand un webhook
+  a été manqué, et bouton « Resynchroniser » dans la console équipe.
+- Les deux écrivent avec la clé `service_role`, en **revérifiant elles-mêmes**
+  que l'appelant est administrateur (jamais un rôle envoyé par le client), via
+  les fonctions `admin_ajouter_etape` / `admin_maj_expedition`.
+- `vercel.json` : la réécriture SPA doit exclure `/api/` (déjà en place dans le
+  projet, à vérifier lors du lot 5).
+
+### Développement sans jeton
+
+Le branchement ShipsGo arrive en **lot 5**. D'ici là, le module reste
+entièrement fonctionnel en saisie manuelle : `shipsgo_id` nul, aucune étape
+`source = 'shipsgo'`. Une expédition sans suivi automatique n'est pas une
+expédition cassée.
 
 ## Interfaces
 
@@ -198,6 +270,11 @@ en trou `{0}` ; jamais de phrase composée par morceaux.
 3. **Écrans voyageur + page publique** — frise, partage du lien, WhatsApp.
 4. **Finitions** — « Expédier cette liste », import des lots en cours,
    traductions, carte de visite du lot si utile.
+5. **ShipsGo** — variables d'environnement, `api/shipsgo-webhook.js` +
+   `api/shipsgo-sync.js`, création du suivi à la création d'une expédition,
+   mapping des statuts, bouton « Resynchroniser », déduplication des mouvements.
+   Nécessite le jeton API (disponible plus tard) et l'URL de webhook déclarée
+   sur le tableau de bord ShipsGo.
 
 Chaque lot passe par une branche et une PR ; `main` part en production à chaque
 fusion. Le SQL est exécuté par Abdoulaye dans le SQL Editor.
@@ -211,9 +288,18 @@ fusion. Le SQL est exécuté par Abdoulaye dans le SQL Editor.
 - Comportement : un voyageur ne voit jamais l'expédition d'un autre ; un
   anonyme n'obtient par `suivi_public` qu'un statut, des dates et des étapes
   publiques ; une étape marquée `publique = false` n'apparaît pas.
+- ShipsGo (lot 5), éprouvé **sans** consommer de quota : signature webhook
+  refusée si le HMAC ne correspond pas ; même événement livré deux fois →
+  une seule étape (idempotence) ; mise à jour automatique qui annoncerait un
+  statut antérieur à un statut manuel → ignorée ; payload sans `reference`
+  connue → 200 sans écriture.
 
 ## Points à trancher plus tard
 
 - Ouverture de la saisie aux transitaires partenaires (comptes dédiés).
-- Notification automatique à chaque changement de statut.
+- Notification automatique au voyageur à chaque changement de statut.
 - Suivi article par article, si un client le demande explicitement.
+- Jeton API ShipsGo et clé secrète du webhook : à installer dans les variables
+  d'environnement Vercel au moment du lot 5 (Abdoulaye a indiqué l'avoir).
+  Le nombre de conteneurs suivis consomme du quota chez ShipsGo — à surveiller
+  si les lots se multiplient.
