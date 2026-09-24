@@ -245,3 +245,64 @@ end; $$;
 
 revoke all on function public.admin_ajouter_etape(uuid, public.statut_expedition, text, text, text, boolean, text, text) from public, anon;
 grant execute on function public.admin_ajouter_etape(uuid, public.statut_expedition, text, text, text, boolean, text, text) to authenticated;
+
+-- ------------------------------------------------------------
+-- 8. Mise à jour d'un lot. Un paramètre nul laisse la colonne
+--    inchangée : la console n'envoie que ce qu'elle modifie.
+--    Le propriétaire (user_id) n'est jamais modifiable ici.
+-- ------------------------------------------------------------
+create or replace function public.admin_maj_expedition(
+  p_id             uuid,
+  p_conteneur      text    default null,
+  p_articles       text    default null,
+  p_poids          text    default null,
+  p_provider_id    text    default null,
+  p_depart_le      date    default null,
+  p_arrivee_prevue date    default null,
+  p_arrivee_le     date    default null,
+  p_notes          text    default null,
+  p_shipsgo_id     integer default null,
+  p_shipsgo_type   text    default null
+) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Réservé à l''administration';
+  end if;
+
+  update public.expeditions set
+    conteneur      = coalesce(p_conteneur, conteneur),
+    articles       = coalesce(p_articles, articles),
+    poids          = coalesce(p_poids, poids),
+    provider_id    = coalesce(p_provider_id, provider_id),
+    depart_le      = coalesce(p_depart_le, depart_le),
+    arrivee_prevue = coalesce(p_arrivee_prevue, arrivee_prevue),
+    arrivee_le     = coalesce(p_arrivee_le, arrivee_le),
+    notes          = coalesce(p_notes, notes),
+    shipsgo_id     = coalesce(p_shipsgo_id, shipsgo_id),
+    shipsgo_type   = coalesce(p_shipsgo_type, shipsgo_type)
+  where id = p_id;
+
+  if not found then
+    raise exception 'Expédition introuvable';
+  end if;
+end; $$;
+
+revoke all on function public.admin_maj_expedition(uuid, text, text, text, text, date, date, date, text, integer, text) from public, anon;
+grant execute on function public.admin_maj_expedition(uuid, text, text, text, text, date, date, date, text, integer, text) to authenticated;
+
+-- ------------------------------------------------------------
+-- 9. Suppression d'un lot : ses étapes partent avec lui
+--    (clé étrangère vers la table parente).
+-- ------------------------------------------------------------
+create or replace function public.admin_supprimer_expedition(p_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Réservé à l''administration';
+  end if;
+  delete from public.expeditions where id = p_id;
+end; $$;
+
+revoke all on function public.admin_supprimer_expedition(uuid) from public, anon;
+grant execute on function public.admin_supprimer_expedition(uuid) to authenticated;
