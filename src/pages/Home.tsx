@@ -74,7 +74,6 @@ export function Home() {
           <Logo height={30} tail="GUIDE" />
           <span className="seal seal-sm" aria-hidden="true"><span>指</span><span>南</span></span>
         </div>
-        <span className="hero-eyebrow">{tr("Conciergerie Diaba")}<i aria-hidden="true">•</i>{t('{0} ville(s)', { 0: s.cities.filter((c) => c.active).length })}</span>
         <div className="hello display">{tr("Bonjour ")}{s.user?.name.split(' ')[0]}</div>
         <CitySwitch />
         <Link to={`/recherche?ville=${s.city}`} className="searchfake" aria-label={tr("Rechercher un produit ou un service")}>
