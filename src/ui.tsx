@@ -227,6 +227,7 @@ const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: '/accueil', label: 'Accueil', icon: 'home' },
   { to: '/recherche', label: 'Explorer', icon: 'compass' },
   { to: '/favoris', label: 'Favoris', icon: 'heart' },
+  { to: '/mes-envois', label: 'Mes envois', icon: 'box' },
   { to: '/contributions', label: 'Contributions', icon: 'pen' },
   { to: '/profil', label: 'Profil', icon: 'user' },
 ];

@@ -12,7 +12,7 @@ import { Favorites, Profile, Downloads } from './pages/Account';
 import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contribute';
 import { ShoppingLists, ShoppingListPage } from './pages/Shopping';
 import { ReviewsAdminPage } from './pages/Reviews';
-import { Suivi } from './pages/Suivi';
+import { MesEnvois, FactureView } from './pages/Fret';
 
 const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminDashboard })));
@@ -20,7 +20,9 @@ const AdminList = lazy(() => import('./pages/admin/Admin').then(m => ({ default:
 const AdminVerify = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminVerify })));
 const AdminHistory = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminHistory })));
 const FichesList = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.FichesList })));
-const Expeditions = lazy(() => import('./pages/admin/Expeditions').then(m => ({ default: m.Expeditions })));
+const ExpeditionsList = lazy(() => import('./pages/admin/Expeditions').then(m => ({ default: m.ExpeditionsList })));
+const ExpeditionDetail = lazy(() => import('./pages/admin/Expeditions').then(m => ({ default: m.ExpeditionDetail })));
+const Tarifs = lazy(() => import('./pages/admin/Tarifs').then(m => ({ default: m.Tarifs })));
 const FicheEdit = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.FicheEdit })));
 const Deletions = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.Deletions })));
 const SearchLogs = lazy(() => import('./pages/admin/SearchLogs').then(m => ({ default: m.SearchLogs })));
@@ -84,10 +86,9 @@ export default function App() {
         {/* Réinitialisation : le lien reçu par e-mail ouvre une session de
             récupération — cette page doit rester accessible même connecté. */}
         <Route path="/reinitialiser" element={<ResetPassword />} />
-        {/* Suivi public d'un lot : sans compte (client resté à Dakar) comme avec compte,
-            donc hors des deux gardes. */}
-        <Route path="/suivi" element={<Suivi />} />
-        <Route path="/suivi/:code" element={<Suivi />} />
+        {/* L'ancien lien de suivi mène désormais au parcours par compte. */}
+        <Route path="/suivi" element={<Navigate to="/mes-envois" replace />} />
+        <Route path="/suivi/:code" element={<Navigate to="/mes-envois" replace />} />
 
         <Route element={<RequireAuth />}>
           <Route path="/accueil" element={<Home />} />
@@ -100,6 +101,8 @@ export default function App() {
           <Route path="/adresses/:id/contact" element={<Contact />} />
           <Route path="/adresses/:id/signaler" element={<Report />} />
           <Route path="/favoris" element={<Favorites />} />
+          <Route path="/mes-envois" element={<MesEnvois />} />
+          <Route path="/facture/:code" element={<FactureView />} />
           <Route path="/liste-achats" element={<ShoppingLists />} />
           <Route path="/liste-achats/:id" element={<ShoppingListPage />} />
           <Route path="/contributions" element={<Contributions />} />
@@ -117,13 +120,15 @@ export default function App() {
             <Route path="/equipe/propositions/:id" element={<AdminVerify />} />
             <Route path="/equipe/historique" element={<AdminHistory />} />
             <Route path="/equipe/fiches" element={<FichesList />} />
-            <Route path="/equipe/expeditions" element={<Expeditions />} />
+            <Route path="/equipe/expeditions" element={<ExpeditionsList />} />
+            <Route path="/equipe/expeditions/:code" element={<ExpeditionDetail />} />
             <Route path="/equipe/recherches" element={<SearchLogs />} />
             <Route path="/equipe/fiches/:id" element={<FicheEdit />} />
             {/* Annonces de services : l'équipe consulte, l'administration rédige. */}
             <Route path="/equipe/annonces" element={<AdminAnnonces />} />
             {/* Administration : réservée au rôle admin */}
             <Route element={<RequireAuth need="admin" />}>
+              <Route path="/equipe/tarifs" element={<Tarifs />} />
               <Route path="/equipe/suppressions" element={<Deletions />} />
               <Route path="/equipe/membres" element={<Members />} />
               <Route path="/equipe/voyageurs" element={<Travelers />} />
