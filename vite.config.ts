@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -6,10 +6,11 @@ export default defineConfig(({ mode }) => {
   // Sécurité : interdire un build de production sans Supabase configuré.
   // Sans Supabase, l'app utilise une authentification fictive (mode démo)
   // où n'importe quelle adresse e-mail donne accès — inacceptable en prod.
-  // Note : on lit process.env directement (pas loadEnv) car Vercel injecte
-  // les variables dans process.env, pas dans des fichiers .env.
+  // Vercel injecte les variables dans process.env ; en local, Vite les lit
+  // depuis .env. La compilation exige les deux valeurs dans les deux cas.
   if (mode === 'production') {
-    if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
+    const env = { ...loadEnv(mode, process.cwd(), 'VITE_'), ...process.env };
+    if (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY) {
       throw new Error(
         '[Diaba Guide] ERREUR DE SÉCURITÉ : VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY ' +
         'sont obligatoires en production. Configurez ces variables dans Vercel → Settings → ' +

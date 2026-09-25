@@ -1,897 +1,414 @@
-import { supabase } from '../../lib/supabase';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../../i18n';
-import { Button, Field, Icon, Select, StoredPhoto, TextArea, useWide } from '../../ui';
-import { useStore } from '../../store';
-import { cityName } from '../../data';
-import { contient } from '../../lib/texte';
-import { creerVoyageur } from '../../lib/members';
-import { creerTransitaire } from '../../lib/providers';
-import { FilePick } from '../Contribute';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { Button, Field, Icon, Select } from '../../ui';
 import { SortTh, compare, useSort } from './tableSort';
-import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import {
-  FRET_LABEL, ORIGINES, STATUTS, STATUT_LABEL,
-  ajouterArticle, ajouterEtape, creerExpedition, fetchArticles, fetchEtapes, fetchExpeditions,
-  fetchNotes, fetchTransitaires, fetchVoyageurs, majArticle, majExpedition,
-  supprimerArticle, supprimerExpedition,
-  type Article, type Etape, type Expedition, type Fret, type Statut, type Voyageur,
+  fetchExpeditions, fetchExpeditionTotaux, fetchColis, fetchWarehouses,
+  createExpedition, createColis, affecterColis, addEtape, creerVoyageurFret,
+  suggestExpeditionCode, suggestColisCode,
+  fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
+  MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL,
+  type Expedition, type ExpeditionTotaux, type Colis, type FretMode, type Warehouse, type EtapeType, type Facture, type ClientLite,
 } from '../../lib/fret';
 
-/* ==================================================================== */
-/* Console équipe du suivi de fret Chine / Sénégal                      */
-/*                                                                      */
-/* Un lot = un conteneur maritime ou un envoi aérien, suivi d'étape en  */
-/* étape jusqu'à la remise au voyageur.                                 */
-/*                                                                      */
-/* Deux règles de la base, respectées ici :                             */
-/*   • aucune écriture directe : tout passe par les fonctions admin_*   */
-/*     (la RLS refuse un insert depuis le navigateur) ;                 */
-/*   • les notes internes ne descendent jamais chez le voyageur : le    */
-/*     droit de lecture de `expeditions` est accordé colonne par        */
-/*     colonne, `notes` exclue — d'où `fetchNotes`.                     */
-/*                                                                      */
-/* L'équipe peut consulter, mais seuls les administrateurs écrivent :   */
-/* l'écran masque ce que la base refuserait.                            */
-/* ==================================================================== */
+const money = (n: number, d = 'FCFA') => `${n.toLocaleString('fr-FR')} ${d === 'XOF' ? 'FCFA' : d}`;
 
-const jour = (iso: string | null) => {
-  if (!iso) return '';
-  const d = new Date(iso.length <= 10 ? `${iso}T00:00:00` : iso);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-};
+const MODE_OPTIONS = (Object.keys(MODE_LABEL) as FretMode[]).map((v) => ({ v, l: MODE_LABEL[v] }));
+const TYPES = [
+  { v: 'general', l: 'Marchandise générale' }, { v: 'textile', l: 'Textile et confection' },
+  { v: 'electronique', l: 'Électronique et téléphones' }, { v: 'batterie', l: 'Batteries et produits à risque' },
+  { v: 'cosmetique', l: 'Cosmétiques' }, { v: 'liquide', l: 'Liquides' }, { v: 'alimentaire', l: 'Produits alimentaires' },
+];
+const toNum = (s: string): number | null => { const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? null : n; };
 
-/** Statut écrit en toutes lettres : jamais signalé par la couleur seule. */
-function StatutTag({ statut }: { statut: Statut }) {
+/* ============================================================
+   Liste des expéditions + réception d'un colis (le dispatching)
+   ============================================================ */
+export function ExpeditionsList() {
   const { tr } = useI18n();
-  const ton = statut === 'livre' ? 'ok' : statut === 'preparation' ? 'muted' : '';
-  return <span className={`tag${ton ? ` tag-${ton}` : ''}`}><Icon name="truck" size={15} sw={2} />{tr(STATUT_LABEL[statut])}</span>;
-}
-
-/** Nombre saisi à la main (« 12,5 » ou « 12.5 ») : `null` si le champ est vide. */
-const nombre = (v: string): number | null => {
-  const s = v.trim().replace(',', '.');
-  if (!s) return null;
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
-};
-
-/** Une ligne d'article en cours de saisie (pas encore enregistrée en base). */
-type Ligne = { id?: string; nom: string; quantite: string; poids: string };
-
-const enLigne = (a: Article): Ligne => ({
-  id: a.id, nom: a.nom, quantite: String(a.quantite), poids: a.poids == null ? '' : String(a.poids),
-});
-
-/**
- * Les articles transportés, en lignes : nom, quantité, poids. On ajoute, on
- * corrige et on retire une ligne ; le poids total se calcule en clair sur ce
- * qui est affiché (les lignes sans poids ne comptent pas, et on le dit).
- *
- * Le parent garde la liste et décide de ce qui part en base : à la création du
- * lot les lignes ne peuvent pas encore être enregistrées (le lot n'a pas
- * d'identifiant), dans la fiche elles le sont ligne par ligne.
- */
-function LignesArticles(p: {
-  lignes: Ligne[];
-  admin: boolean;
-  busy: boolean;
-  onPatch: (i: number, patch: Partial<Ligne>) => void;
-  onSupprimer: (i: number) => void;
-  onEnregistrer?: (i: number) => void;
-  onAjouter: (l: Ligne) => Promise<boolean>;
-}) {
-  const { tr, t } = useI18n();
-  const [brouillon, setBrouillon] = useState<Ligne>({ nom: '', quantite: '1', poids: '' });
-  const [ajout, setAjout] = useState(false);
-
-  const total = p.lignes.reduce((s, l) => {
-    const q = nombre(l.quantite);
-    const w = nombre(l.poids);
-    return s + (q != null && w != null ? q * w : 0);
-  }, 0);
-  const sansPoids = p.lignes.some((l) => nombre(l.poids) == null);
-
-  const ajouter = async () => {
-    setAjout(true);
-    const fait = await p.onAjouter(brouillon);
-    setAjout(false);
-    if (fait) setBrouillon({ nom: '', quantite: '1', poids: '' });
-  };
-
-  const champ = (v: string, aria: string, largeur: string, maj: (x: string) => void, type = 'text') => (
-    <div className="field" style={{ flex: largeur }}>
-      <input type={type} value={v} aria-label={tr(aria)} placeholder={tr(aria)}
-        min={type === 'number' ? 0 : undefined} step={type === 'number' ? 'any' : undefined}
-        disabled={!p.admin} onChange={(e) => maj(e.target.value)} />
-    </div>
-  );
-
-  return (
-    <>
-      <h3 style={{ marginBottom: 0 }}>{tr("Articles transportés")}</h3>
-      {p.lignes.length === 0
-        ? <p className="muted">{tr("Aucune ligne d’article pour le moment.")}</p>
-        : (
-          <ul className="stack" style={{ listStyle: 'none', margin: 0, padding: 0, gap: 10 }}>
-            {p.lignes.map((l, i) => (
-              <li key={l.id ?? `ligne-${i}`} className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                {champ(l.nom, "Nom de l’article", '2 1 160px', (x) => p.onPatch(i, { nom: x }))}
-                {champ(l.quantite, "Quantité", '1 1 80px', (x) => p.onPatch(i, { quantite: x }), 'number')}
-                {champ(l.poids, "Poids (kg)", '1 1 90px', (x) => p.onPatch(i, { poids: x }), 'number')}
-                {p.admin && (
-                  <div className="row" style={{ gap: 6 }}>
-                    {p.onEnregistrer && (
-                      <Button kind="s" icon="check" full={false} disabled={p.busy}
-                        onClick={() => p.onEnregistrer?.(i)}>{tr("Enregistrer")}</Button>
-                    )}
-                    <Button kind="t" icon="trash" full={false} disabled={p.busy}
-                      onClick={() => p.onSupprimer(i)}>{tr("Supprimer")}</Button>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-
-      <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <span className="tag tag-muted">{t('Poids total : {0} kg', { 0: total })}</span>
-        {sansPoids && <span className="small muted">{tr("Les lignes sans poids ne comptent pas dans le total.")}</span>}
-      </div>
-
-      {p.admin && (
-        <>
-          <h4 style={{ marginBottom: 0, fontSize: 15 }}>{tr("Ajouter une ligne")}</h4>
-          <div className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            {champ(brouillon.nom, "Nom de l’article", '2 1 160px', (x) => setBrouillon({ ...brouillon, nom: x }))}
-            {champ(brouillon.quantite, "Quantité", '1 1 80px', (x) => setBrouillon({ ...brouillon, quantite: x }), 'number')}
-            {champ(brouillon.poids, "Poids (kg)", '1 1 90px', (x) => setBrouillon({ ...brouillon, poids: x }), 'number')}
-            <Button icon="plus" full={false} disabled={p.busy || ajout} onClick={() => void ajouter()}>
-              {tr(ajout ? 'Ajout…' : 'Ajouter')}
-            </Button>
-          </div>
-        </>
-      )}
-    </>
-  );
-}
-
-/** La photo du lot : prise ou choix, compression, envoi dans `fret-photos`. */
-
-function PhotoLot({ expeditionId, photoInitiale, admin, onNotee }: {
-  expeditionId: string;
-  photoInitiale: string;
-  admin: boolean;
-  onNotee: (msg: string) => void;
-}) {
-  const { tr } = useI18n();
-  const [photos, setPhotos] = useState([photoInitiale, '', '']);
+  const [exps, setExps] = useState<Expedition[]>([]);
+  const [totaux, setTotaux] = useState<Record<string, ExpeditionTotaux>>({});
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setErr(null);
-    if (!supabase) {
-      setErr('Connectez la base pour modifier les photos.');
-      return;
-    }
-    void supabase.from('expeditions')
-      .select('photo, photo2, photo3')
-      .eq('id', expeditionId).single()
-      .then(({ data, error }) => {
-        if (!alive) return;
-        if (error) {
-          setErr('Chargement des photos impossible.');
-          return;
-        }
-        setPhotos([data.photo ?? '', data.photo2 ?? '', data.photo3 ?? '']);
-        setLoading(false);
-      });
-    return () => { alive = false; };
-  }, [expeditionId]);
-
-  const enregistrer = async (index: number, chemin: string) => {
-    if (!supabase) return;
-    setBusy(true);
-    setErr(null);
-    try {
-      const { error } = await supabase.rpc('admin_photo_expedition', {
-        p_id: expeditionId,
-        p_position: index + 1,
-        p_chemin: chemin,
-      });
-      if (error) throw error;
-      setPhotos((old) => old.map((v, i) => i === index ? chemin : v));
-      onNotee(chemin ? 'Photo du lot enregistrée.' : 'Photo du lot retirée.');
-    } catch {
-      setErr('Enregistrement impossible. Réessayez.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <section className="stack">
-      <h3 style={{ marginBottom: 0 }}>{tr("Photo du lot")} (3 max.)</h3>
-      {err && <div role="alert" className="notice err">{tr(err)}</div>}
-      {photos.map((photo, i) => (
-        <fieldset key={i} disabled={loading ? true : busy}
-          style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
-          className="stack">
-          <legend>{tr("Photo du lot")} {i + 1}/3</legend>
-          <StoredPhoto bucket="fret-photos" path={photo ? photo : undefined}
-            label={tr("Photo du lot") + ' ' + (i + 1)} h={140} round={12} />
-          {admin && !loading && (
-            <>
-              <FilePick label={tr("Photo du lot") + ' ' + (i + 1)}
-                done={!!photo} bucket="fret-photos"
-                onPick={(_img, chemin) => {
-                  if (chemin) void enregistrer(i, chemin);
-                }} />
-              {photo && (
-                <Button kind="t" icon="trash" disabled={busy}
-                  onClick={() => void enregistrer(i, '')}>
-                  {tr("Retirer la photo")}
-                </Button>
-              )}
-            </>
-          )}
-        </fieldset>
-      ))}
-    </section>
-  );
-}
-
-/** Création d'un compte voyageur manquant, depuis la fiche de création du lot. */
-function NouveauVoyageur({ onCree, onFermer }: {
-  onCree: (v: Voyageur) => void;
-  onFermer: () => void;
-}) {
-  const { tr } = useI18n();
-  const [nom, setNom] = useState('');
-  const [telephone, setTelephone] = useState('');
-  const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [mdp, setMdp] = useState<string | null>(null);
-  const [copie, setCopie] = useState(false);
-
-  const creer = async () => {
-    setErr(null);
-    if (!nom.trim()) { setErr('Indiquez le nom du voyageur.'); return; }
-    setBusy(true);
-    const r = await creerVoyageur({ nom, telephone, email });
-    setBusy(false);
-    if (r.error) { setErr(r.error); return; }
-    setMdp(r.motDePasse ?? null);
-    if (r.id) onCree({ id: r.id, nom: nom.trim(), email: email.trim() });
-  };
-
-  return (
-    <>
-      <h3 style={{ marginBottom: 0 }}>{tr("Ajouter un voyageur")}</h3>
-      <p className="small muted" style={{ margin: 0 }}>
-        {tr("Crée un compte au nom du voyageur. Le mot de passe temporaire s’affiche ici : à vous de le lui transmettre.")}
-      </p>
-      <Field id="nv-nom" label={tr("Nom")} value={nom} onChange={setNom} req />
-      <Field id="nv-tel" label={tr("Téléphone")} value={telephone} onChange={setTelephone} req
-        hint={tr("Numéro utilisé pour se connecter.")} />
-      <Field id="nv-email" label={tr("Adresse e-mail (facultatif)")} value={email} onChange={setEmail}
-        hint={tr("Sert seulement à récupérer un mot de passe oublié.")} />
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <Button icon="plus" full={false} disabled={busy} onClick={() => void creer()}>
-          {tr(busy ? 'Création…' : 'Créer le compte')}
-        </Button>
-        <Button kind="t" icon="x" full={false} disabled={busy} onClick={onFermer}>{tr("Fermer")}</Button>
-      </div>
-
-      {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-
-      {mdp && (
-        <div role="status" className="notice ok">
-          <Icon name="check" size={20} sw={2} />
-          <div>
-            <strong>{tr("Mot de passe temporaire")}</strong>
-            <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 20, letterSpacing: 1, margin: '4px 0' }}>{mdp}</div>
-            <div className="small">{tr("Notez-le maintenant : il ne sera plus affiché.")}</div>
-            <div className="small">
-              {tr("Transmettez-le au voyageur : il devra le changer après sa première connexion.")}
-            </div>
-            <div className="row" style={{ gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-              <Button kind="s" icon="copy" full={false} onClick={() => {
-                void navigator.clipboard?.writeText(mdp).then(() => setCopie(true)).catch(() => setCopie(false));
-              }}>{tr(copie ? 'Copié' : 'Copier')}</Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-/** Création d'une fiche de transitaire manquante, en trois champs. */
-function NouveauTransitaire({ onCree, onFermer }: {
-  onCree: (t: { id: string; nom: string }) => void;
-  onFermer: () => void;
-}) {
-  const { tr } = useI18n();
-  const { s } = useStore();
-  const villes = s.cities.filter((c) => c.active);
-  const [nom, setNom] = useState('');
-  const [ville, setVille] = useState(villes[0]?.id ?? '');
-  const [tel, setTel] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  const creer = async () => {
-    setErr(null);
-    if (!nom.trim()) { setErr('Saisissez le nom du transitaire.'); return; }
-    const c = villes.find((x) => x.id === ville);
-    setBusy(true);
-    const r = await creerTransitaire({ nom, city: ville, lat: c?.lat ?? 0, lng: c?.lng ?? 0, tel });
-    setBusy(false);
-    if (r.error || !r.id) { setErr(r.error ?? 'La création de la fiche a échoué. Réessayez.'); return; }
-    onCree({ id: r.id, nom: nom.trim() });
-    onFermer();
-  };
-
-  return (
-    <>
-      <h3 style={{ marginBottom: 0 }}>{tr("Ajouter un transitaire")}</h3>
-      <p className="small muted" style={{ margin: 0 }}>
-        {tr("Crée une fiche de transitaire. Le nom en chinois reste à compléter plus tard, depuis la fiche complète.")}
-      </p>
-      <Field id="nt-nom" label={tr("Nom")} value={nom} onChange={setNom} req />
-      <Select id="nt-ville" label={tr("Ville")} value={ville} onChange={setVille}
-        options={villes.map((c) => ({ v: c.id, l: tr(cityName(c.id)) }))} req />
-      <Field id="nt-tel" label={tr("Téléphone (facultatif)")} value={tel} onChange={setTel} />
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <Button icon="plus" full={false} disabled={busy} onClick={() => void creer()}>
-          {tr(busy ? 'Création…' : 'Créer la fiche')}
-        </Button>
-        <Button kind="t" icon="x" full={false} disabled={busy} onClick={onFermer}>{tr("Annuler")}</Button>
-      </div>
-
-      {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-    </>
-  );
-}
-
-/** Fiche d'un lot : champs modifiables, étapes posées, ajout d'étape, notes
-    internes et suppression. */
-function LotSheet({ lot, nomVoyageur, admin, transitaires, onClose, onSaved, onNotee, onTransitaireCree }: {
-  lot: Expedition;
-  nomVoyageur: string;
-  admin: boolean;
-  transitaires: { id: string; nom: string }[];
-  onClose: () => void;
-  onSaved: (msg: string) => void;
-  /** Signale un changement SANS fermer la fiche (photo, lignes d'articles). */
-  onNotee: (msg: string) => void;
-  onTransitaireCree: (t: { id: string; nom: string }) => void;
-}) {
-  const { tr, t } = useI18n();
-  const [conteneur, setConteneur] = useState(lot.conteneur);
-  const [poids, setPoids] = useState(lot.poids);
-  const [cbm, setCbm] = useState(lot.cbm == null ? '' : String(lot.cbm));
-  const [providerId, setProviderId] = useState(lot.providerId ?? '');
-  const [depart, setDepart] = useState(lot.departLe ?? '');
-  const [arriveePrevue, setArriveePrevue] = useState(lot.arriveePrevue ?? '');
-  const [arriveeLe, setArriveeLe] = useState(lot.arriveeLe ?? '');
-  const [notes, setNotes] = useState<string | null>(null);
-  const [etapes, setEtapes] = useState<Etape[] | null>(null);
-  const [lignes, setLignes] = useState<Ligne[] | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState(false);
-  const [nouveauTransitaire, setNouveauTransitaire] = useState(false);
-
-  /* Ajout d'étape */
-  const [statut, setStatut] = useState<Statut>(lot.statut);
-  const [lieu, setLieu] = useState('');
-  const [note, setNote] = useState('');
-  const [survenu, setSurvenu] = useState('');
-  const [estime, setEstime] = useState(false);
-  const [publique, setPublique] = useState(true);
-
-  useEffect(() => {
-    document.getElementById('fr-conteneur')?.focus();
-  }, []);
-
-  useEffect(() => {
-    let vivant = true;
-    void Promise.all([fetchNotes(lot.id), fetchEtapes(lot.id), fetchArticles(lot.id)]).then(([n, e, a]) => {
-      if (!vivant) return;
-      setNotes(n ?? '');
-      setEtapes(e);
-      setLignes(a.map(enLigne));
-    });
-    return () => { vivant = false; };
-  }, [lot.id]);
-
-  /* Seulement les statuts à partir de l'état courant : la base refuse une
-     étape qui ferait reculer le lot, et le voyageur verrait son suivi
-     redescendre. */
-  const proposes = useMemo(() => STATUTS.slice(STATUTS.indexOf(lot.statut)), [lot.statut]);
-
-  const maj = async () => {
-    setErr(null); setBusy('save');
-    const { error } = await majExpedition({
-      id: lot.id, conteneur, poids,
-      cbm: cbm.trim() === '' ? undefined : nombre(cbm),
-      providerId: providerId || undefined,
-      departLe: depart || null, arriveePrevue: arriveePrevue || null, arriveeLe: arriveeLe || null,
-      notes: notes ?? undefined,
-    });
-    setBusy(null);
-    if (error) { setErr(error); return; }
-    onSaved('Lot modifié.');
-  };
-
-  /* --- les lignes d'articles : chacune part en base séparément --- */
-
-  const patchLigne = (i: number, patch: Partial<Ligne>) =>
-    setLignes((ls) => (ls ?? []).map((l, j) => (j === i ? { ...l, ...patch } : l)));
-
-  const enregistrerLigne = async (i: number) => {
-    const l = (lignes ?? [])[i];
-    if (!l?.id) return;
-    setErr(null); setBusy('ligne');
-    const { error } = await majArticle({
-      id: l.id, nom: l.nom, quantite: nombre(l.quantite) ?? 0, poids: nombre(l.poids),
-    });
-    setBusy(null);
-    if (error) { setErr(error); return; }
-    onNotee('Ligne d’article enregistrée.');
-  };
-
-  const supprimerLigne = async (i: number) => {
-    const l = (lignes ?? [])[i];
-    if (!l) return;
-    setErr(null);
-    if (!l.id) { setLignes((ls) => (ls ?? []).filter((_x, j) => j !== i)); return; }
-    setBusy('ligne');
-    const { error } = await supprimerArticle(l.id);
-    setBusy(null);
-    if (error) { setErr(error); return; }
-    setLignes((ls) => (ls ?? []).filter((_x, j) => j !== i));
-    onNotee('Ligne d’article supprimée.');
-  };
-
-  const ajouterLigne = async (l: Ligne): Promise<boolean> => {
-    if (!l.nom.trim()) { setErr('Indiquez le nom de l’article.'); return false; }
-    setErr(null); setBusy('ligne');
-    const { id, error } = await ajouterArticle({
-      expeditionId: lot.id, nom: l.nom.trim(), quantite: nombre(l.quantite) ?? 0, poids: nombre(l.poids),
-    });
-    setBusy(null);
-    if (error) { setErr(error); return false; }
-    setLignes((ls) => [...(ls ?? []), { ...l, id, nom: l.nom.trim() }]);
-    onNotee('Ligne d’article ajoutée.');
-    return true;
-  };
-
-  const ajouter = async () => {
-    setErr(null); setBusy('etape');
-    const { error } = await ajouterEtape({
-      expeditionId: lot.id, statut, lieu, note, publique, estime,
-      survenuLe: survenu ? new Date(`${survenu}T12:00:00`).toISOString() : null,
-    });
-    setBusy(null);
-    if (error) { setErr(error); return; }
-    onSaved(t('Étape « {0} » ajoutée.', { 0: tr(STATUT_LABEL[statut]) }));
-  };
-
-  const supprimer = async () => {
-    setErr(null); setBusy('delete');
-    const { error } = await supprimerExpedition(lot.id);
-    setBusy(null);
-    if (error) { setErr(error); return; }
-    onSaved(t('Lot {0} supprimé.', { 0: lot.code }));
-  };
-
-  const options = proposes.map((s) => ({ v: s, l: tr(STATUT_LABEL[s]) }));
-
-  return (
-    <AdminSheet title={lot.code} sub={nomVoyageur ? t('{0} — {1}', { 0: nomVoyageur, 1: tr(FRET_LABEL[lot.fret]) }) : tr(FRET_LABEL[lot.fret])} onClose={onClose}>
-      <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <StatutTag statut={lot.statut} />
-        <span className="small muted">{lot.origine}</span>
-        {lot.departLe && <span className="small muted">{t('Départ {0}', { 0: jour(lot.departLe) })}</span>}
-      </div>
-
-      {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-      {!admin && <div role="status" className="notice"><Icon name="info" size={20} sw={2} /><span>{tr("Consultation seule : la modification est réservée à l’administration.")}</span></div>}
-
-      {/* Étapes déjà posées */}
-      <h3 style={{ marginBottom: 0 }}>{tr("Étapes du lot")}</h3>
-      {etapes === null ? <p className="muted" role="status">{tr("Chargement…")}</p>
-        : etapes.length === 0 ? <p className="muted">{tr("Aucune étape posée pour le moment.")}</p>
-        : (
-          <ul className="stack" style={{ listStyle: 'none', margin: 0, padding: 0, gap: 8 }}>
-            {etapes.map((e) => (
-              <li key={e.id} className="small">
-                <strong>{tr(STATUT_LABEL[e.statut])}</strong>
-                <span className="muted"> — {jour(e.survenuLe)}{e.lieu ? ` · ${e.lieu}` : ''}</span>
-                {e.estime && <span className="tag tag-muted" style={{ marginLeft: 6 }}>{tr("Estimé")}</span>}
-                {!e.publique && <span className="tag tag-warn" style={{ marginLeft: 6 }}>{tr("Interne")}</span>}
-                {e.note && <div className="muted">{e.note}</div>}
-              </li>
-            ))}
-          </ul>
-        )}
-
-      {/* Champs modifiables */}
-      <Field id="fr-conteneur" label={tr(lot.fret === 'air' ? 'Numéro AWB' : 'Numéro de conteneur')}
-        value={conteneur} onChange={setConteneur} placeholder="Non renseigné"
-        hint={tr("Modifiable seulement : un champ vidé ici garde sa valeur précédente.")} />
-      <Field id="fr-poids" label={tr("Poids")} value={poids} onChange={setPoids} placeholder="Non renseigné" />
-      <Field id="fr-cbm" label={tr("Nombre de mètres cubes (CBM)")} type="number" value={cbm} onChange={setCbm}
-        placeholder="Non renseigné" hint={tr("Nombre de mètres cubes du lot, tel qu’annoncé par le transitaire.")} />
-      <Select id="fr-transitaire" label={tr("Transitaire")} value={providerId} onChange={setProviderId}
-        options={[{ v: '', l: tr("Aucun") }, ...transitaires.map((p) => ({ v: p.id, l: p.nom }))]} />
-      {admin && !nouveauTransitaire && (
-        <Button kind="s" icon="plus" full={false} onClick={() => setNouveauTransitaire(true)}>
-          {tr("Ajouter un transitaire")}
-        </Button>
-      )}
-      {nouveauTransitaire && (
-        <NouveauTransitaire
-          onFermer={() => setNouveauTransitaire(false)}
-          onCree={(p) => { onTransitaireCree(p); setProviderId(p.id); onNotee('Transitaire ajouté et sélectionné pour ce lot.'); }} />
-      )}
-      <Field id="fr-depart" label={tr("Date de départ")} type="date" value={depart} onChange={setDepart} />
-      <Field id="fr-prevue" label={tr("Arrivée prévue")} type="date" value={arriveePrevue} onChange={setArriveePrevue} />
-      <Field id="fr-arrivee" label={tr("Arrivée réelle")} type="date" value={arriveeLe} onChange={setArriveeLe} />
-
-      <PhotoLot expeditionId={lot.id} photoInitiale={lot.photo} admin={admin} onNotee={onNotee} />
-
-      {lignes === null
-        ? <p className="muted" role="status">{tr("Chargement…")}</p>
-        : (
-          <LignesArticles lignes={lignes} admin={admin} busy={busy !== null}
-            onPatch={patchLigne} onSupprimer={(i) => void supprimerLigne(i)}
-            onEnregistrer={(i) => void enregistrerLigne(i)}
-            onAjouter={ajouterLigne} />
-        )}
-
-      {/* Notes internes : jamais montrées au voyageur */}
-      <TextArea id="fr-notes" label={tr("Notes internes (jamais visibles du voyageur)")} value={notes ?? ''}
-        onChange={setNotes} rows={2} hint={tr("Visible de l’équipe seulement.")} />
-
-      {admin && (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button icon="check" full={false} disabled={busy !== null} onClick={() => void maj()}>
-            {tr(busy === 'save' ? 'Enregistrement…' : 'Enregistrer')}
-          </Button>
-          <Button to={`/suivi/${lot.code}`} kind="s" icon="search" full={false}>
-            {tr("Voir le suivi du voyageur")}
-          </Button>
-        </div>
-      )}
-
-      {/* Ajout d'une étape */}
-      {admin && (
-        <>
-          <h3 style={{ marginBottom: 0 }}>{tr("Ajouter une étape")}</h3>
-          <Select id="fr-statut" label={tr("Statut")} value={statut} onChange={(v) => setStatut(v as Statut)} options={options} />
-          <Field id="fr-lieu" label={tr("Lieu")} value={lieu} onChange={setLieu} placeholder="Dakar, Anvers…" />
-          <Field id="fr-survenu" label={tr("Date du mouvement")} type="date" value={survenu} onChange={setSurvenu}
-            hint={tr("Laissez vide pour maintenant.")} />
-          <TextArea id="fr-note" label={tr("Note visible du voyageur")} value={note} onChange={setNote} rows={2} />
-          <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
-            <label className="small" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <input type="checkbox" checked={publique} onChange={(e) => setPublique(e.target.checked)} />
-              {tr("Visible du voyageur")}
-            </label>
-            <label className="small" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <input type="checkbox" checked={estime} onChange={(e) => setEstime(e.target.checked)} />
-              {tr("Date estimée")}
-            </label>
-          </div>
-          <Button icon="truck" full={false} disabled={busy !== null} onClick={() => void ajouter()}>
-            {tr(busy === 'etape' ? 'Ajout…' : "Ajouter l’étape")}
-          </Button>
-        </>
-      )}
-
-      {admin && (
-        <SheetActions>
-          {confirming ? (
-            <>
-              <SheetDanger>{t('Supprimer définitivement le lot {0} ?', { 0: lot.code })}</SheetDanger>
-              <p className="small muted" style={{ margin: 0 }}>
-                {tr("Le lot et ses étapes disparaissent, et le voyageur perd son suivi. Cette action est irréversible.")}
-              </p>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Button kind="d" icon="trash" full={false} disabled={busy !== null} onClick={() => void supprimer()}>
-                  {tr(busy === 'delete' ? 'Suppression…' : 'Supprimer définitivement')}
-                </Button>
-                <Button kind="t" icon="x" full={false} disabled={busy !== null} onClick={() => setConfirming(false)}>
-                  {tr("Annuler")}
-                </Button>
-              </div>
-            </>
-          ) : (
-            <Button kind="d" icon="trash" full={false} onClick={() => { setErr(null); setConfirming(true); }}>
-              {tr("Supprimer le lot")}
-            </Button>
-          )}
-        </SheetActions>
-      )}
-    </AdminSheet>
-  );
-}
-
-/** Fiche de création : quel voyageur, quel fret, d'où, pour quand. */
-function NouveauLotSheet({ voyageurs, transitaires, onClose, onSaved, onVoyageurCree, onTransitaireCree }: {
-  voyageurs: Voyageur[];
-  transitaires: { id: string; nom: string }[];
-  onClose: () => void;
-  onSaved: (msg: string) => void;
-  onVoyageurCree: (v: Voyageur) => void;
-  onTransitaireCree: (t: { id: string; nom: string }) => void;
-}) {
-  const { tr, t } = useI18n();
-  const [userId, setUserId] = useState('');
-  const [fret, setFret] = useState<Fret>('sea');
-  const [origine, setOrigine] = useState(ORIGINES[0]);
-  const [providerId, setProviderId] = useState('');
-  const [conteneur, setConteneur] = useState('');
-  const [poids, setPoids] = useState('');
-  const [cbm, setCbm] = useState('');
-  const [photo, setPhoto] = useState('');
-  const [lignes, setLignes] = useState<Ligne[]>([]);
-  const [depart, setDepart] = useState('');
-  const [arriveePrevue, setArriveePrevue] = useState('');
-  const [notes, setNotes] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [nouveauVoyageur, setNouveauVoyageur] = useState(false);
-  const [nouveauTransitaire, setNouveauTransitaire] = useState(false);
-
-  useEffect(() => {
-    document.getElementById('nl-voyageur')?.focus();
-  }, []);
-
-  const creer = async () => {
-    if (!userId) { setErr('Choisissez le voyageur à qui appartient ce lot.'); return; }
-    if (lignes.some((l) => !l.nom.trim())) { setErr('Indiquez le nom de chaque article.'); return; }
-    setErr(null); setBusy(true);
-    const { id, code, error } = await creerExpedition({
-      userId, fret, origine, providerId: providerId || null, conteneur, poids,
-      cbm: cbm.trim() === '' ? null : nombre(cbm), photo,
-      departLe: depart || null, arriveePrevue: arriveePrevue || null, notes,
-    });
-    setBusy(false);
-    if (error || !id) { setErr(error ?? 'La création du lot a échoué. Réessayez.'); return; }
-
-    /* Les lignes d'articles ne peuvent être écrites qu'une fois le lot créé :
-       elles ont besoin de son identifiant. */
-    let echec = '';
-    for (const l of lignes) {
-      const r = await ajouterArticle({
-        expeditionId: id, nom: l.nom.trim(), quantite: nombre(l.quantite) ?? 0, poids: nombre(l.poids),
-      });
-      if (r.error) { echec = r.error; break; }
-    }
-    onSaved(echec
-      ? t('Lot {0} créé, mais les lignes d’article n’ont pas pu être enregistrées : {1}', { 0: code ?? '', 1: echec })
-      : t('Lot {0} créé.', { 0: code ?? '' }));
-  };
-
-  return (
-    <AdminSheet title={tr("Nouveau lot")} sub={tr("Un conteneur maritime ou un envoi aérien, suivi jusqu’à la remise.")} onClose={onClose}>
-      {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-      {voyageurs.length === 0 && (
-        <div role="status" className="notice warn"><Icon name="alert" size={20} sw={2} />
-          <span>{tr("Aucun compte voyageur lisible : la liste des comptes est réservée à l’administration.")}</span>
-        </div>
-      )}
-      <Select id="nl-voyageur" label={tr("Voyageur")} value={userId} onChange={setUserId}
-        options={[{ v: '', l: tr("Choisir un voyageur") }, ...voyageurs.map((v) => ({ v: v.id, l: v.email ? `${v.nom} — ${v.email}` : v.nom }))]} req />
-      {!nouveauVoyageur && (
-        <Button kind="s" icon="plus" full={false} onClick={() => setNouveauVoyageur(true)}>
-          {tr("Ajouter un voyageur")}
-        </Button>
-      )}
-      {nouveauVoyageur && (
-        <NouveauVoyageur onFermer={() => setNouveauVoyageur(false)}
-          onCree={(v) => { onVoyageurCree(v); setUserId(v.id); }} />
-      )}
-      <Select id="nl-fret" label={tr("Type de fret")} value={fret} onChange={(v) => setFret(v as Fret)}
-        options={(Object.keys(FRET_LABEL) as Fret[]).map((f) => ({ v: f, l: tr(FRET_LABEL[f]) }))} />
-      <Select id="nl-origine" label={tr("Ville d’origine")} value={origine} onChange={setOrigine}
-        options={ORIGINES.map((o) => ({ v: o, l: o }))} />
-      <Select id="nl-transitaire" label={tr("Transitaire")} value={providerId} onChange={setProviderId}
-        options={[{ v: '', l: tr("Aucun") }, ...transitaires.map((p) => ({ v: p.id, l: p.nom }))]} />
-      {!nouveauTransitaire && (
-        <Button kind="s" icon="plus" full={false} onClick={() => setNouveauTransitaire(true)}>
-          {tr("Ajouter un transitaire")}
-        </Button>
-      )}
-      {nouveauTransitaire && (
-        <NouveauTransitaire onFermer={() => setNouveauTransitaire(false)}
-          onCree={(p) => { onTransitaireCree(p); setProviderId(p.id); }} />
-      )}
-      <Field id="nl-conteneur" label={tr(fret === 'air' ? 'Numéro AWB' : 'Numéro de conteneur')} value={conteneur} onChange={setConteneur} />
-      <Field id="nl-poids" label={tr("Poids")} value={poids} onChange={setPoids} />
-      <Field id="nl-cbm" label={tr("Nombre de mètres cubes (CBM)")} type="number" value={cbm} onChange={setCbm} />
-
-      <h3 style={{ marginBottom: 0 }}>{tr("Photo du lot")}</h3>
-      <StoredPhoto bucket="fret-photos" path={photo || undefined} label={tr("Photo du lot")} h={140} round={12} />
-      <FilePick label={tr("Photo du lot")} done={!!photo} bucket="fret-photos"
-        onPick={(_img, chemin) => setPhoto(chemin ?? '')} />
-
-      <LignesArticles lignes={lignes} admin busy={busy}
-        onPatch={(i, patch) => setLignes((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)))}
-        onSupprimer={(i) => setLignes((ls) => ls.filter((_x, j) => j !== i))}
-        onAjouter={async (l) => {
-          if (!l.nom.trim()) { setErr('Indiquez le nom de l’article.'); return false; }
-          setErr(null);
-          setLignes((ls) => [...ls, { ...l, nom: l.nom.trim() }]);
-          return true;
-        }} />
-
-      <Field id="nl-depart" label={tr("Date de départ")} type="date" value={depart} onChange={setDepart} />
-      <Field id="nl-prevue" label={tr("Arrivée prévue")} type="date" value={arriveePrevue} onChange={setArriveePrevue} />
-      <TextArea id="nl-notes" label={tr("Notes internes (jamais visibles du voyageur)")} value={notes} onChange={setNotes} rows={2} />
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <Button icon="check" full={false} disabled={busy} onClick={() => void creer()}>
-          {tr(busy ? 'Création…' : 'Créer le lot')}
-        </Button>
-        <Button kind="t" icon="x" full={false} disabled={busy} onClick={onClose}>{tr("Annuler")}</Button>
-      </div>
-    </AdminSheet>
-  );
-}
-
-/** Liste des lots, accessible à l'équipe. Sur téléphone, chaque lot ouvre sa
-    fiche ; sur ordinateur, le tableau reste affiché et le code ouvre la même
-    fiche. */
-export function Expeditions() {
-  const { tr, t } = useI18n();
-  const wide = useWide();
-  const { s } = useStore();
-  const admin = s.user?.role === 'admin';
-
-  const [lots, setLots] = useState<Expedition[]>([]);
-  const [voyageurs, setVoyageurs] = useState<Voyageur[]>([]);
-  const [transitaires, setTransitaires] = useState<{ id: string; nom: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pq, setPq] = useState('');
-  const [etat, setEtat] = useState<'' | Statut>('');
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
-  const [open, setOpen] = useState<Expedition | null>(null);
-  const [creation, setCreation] = useState(false);
-  const { sort, toggle } = useSort<'code' | 'statut' | 'createdAt'>({ k: 'createdAt', dir: -1 });
 
   const reload = useCallback(async () => {
-    const [l, v, p] = await Promise.all([fetchExpeditions(), fetchVoyageurs(), fetchTransitaires()]);
-    setLots(l);
-    setVoyageurs(v);
-    setTransitaires(p.map((x) => ({ id: x.id, nom: x.nom })));
-    setLoading(false);
+    const [e, t, w] = await Promise.all([fetchExpeditions(), fetchExpeditionTotaux(), fetchWarehouses()]);
+    setExps(e); setTotaux(t); setWarehouses(w); setLoading(false);
   }, []);
-
   useEffect(() => { void reload(); }, [reload]);
 
-  /** Nom du voyageur : la lecture des comptes est réservée à l'administration,
-      le nom peut donc manquer — on ne l'invente pas. */
-  const nomDe = useCallback((userId: string) => {
-    const v = voyageurs.find((x) => x.id === userId);
-    return v ? v.nom : '';
-  }, [voyageurs]);
+  const openExps = exps.filter((e) => e.statut === 'ouverte');
 
-  const rows = lots
-    .filter((l) => (!etat || l.statut === etat)
-      && (contient(`${l.code} ${l.conteneur} ${l.articles} ${nomDe(l.userId)}`, pq)))
-    .sort((a, b) => compare(sort.k === 'createdAt' ? a.createdAt : sort.k === 'statut' ? STATUTS.indexOf(a.statut) : a.code,
-      sort.k === 'createdAt' ? b.createdAt : sort.k === 'statut' ? STATUTS.indexOf(b.statut) : b.code, sort.dir));
+  // ---- Réception d'un colis ----
+  const [rc, setRc] = useState({
+    code: suggestColisCode(), mode: 'maritime_groupage' as FretMode, expeditionCode: '', profileId: '',
+    clientNom: '', clientTel: '', codeClient: '', marque: '', type: 'general', poids: '', volume: '',
+  });
+  const [clientQ, setClientQ] = useState('');
+  const [clientResults, setClientResults] = useState<ClientLite[]>([]);
+  const [clientSel, setClientSel] = useState<ClientLite | null>(null);
+  const [clientLoading, setClientLoading] = useState(true);
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [newClient, setNewClient] = useState({ name: '', email: '', phone: '' });
+  useEffect(() => {
+    let alive = true;
+    setClientLoading(true);
+    const timer = window.setTimeout(() => {
+      rechercherClients(clientQ.trim()).then((list) => {
+        if (alive) { setClientResults(list); setClientLoading(false); }
+      });
+    }, clientQ ? 250 : 0);
+    return () => { alive = false; window.clearTimeout(timer); };
+  }, [clientQ]);
+  const choisirClient = (c: ClientLite) => {
+    setClientSel(c);
+    setRc((r) => ({ ...r, profileId: c.id, clientNom: c.name ?? '', clientTel: c.phone ?? '' }));
+  };
+  const ajouterClient = async (ev: FormEvent) => {
+    ev.preventDefault(); setErr(null); setOk(null);
+    if (!newClient.name.trim() || !newClient.phone.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newClient.email.trim())) {
+      setErr('Saisissez le nom, le téléphone et une adresse e-mail valide.'); return;
+    }
+    setBusy(true);
+    const res = await creerVoyageurFret(newClient);
+    setBusy(false);
+    if (res.error || !res.traveler) { setErr(res.error ?? 'Création du compte impossible.'); return; }
+    setClientResults((list) => [res.traveler!, ...list.filter((c) => c.id !== res.traveler!.id)]);
+    choisirClient(res.traveler);
+    setClientQ(res.traveler.name ?? ''); setShowNewClient(false);
+    setNewClient({ name: '', email: '', phone: '' });
+    setOk(`Compte voyageur créé pour ${res.traveler.name}. Une invitation a été envoyée par e-mail.`);
+  };
 
-  const saved = (msg: string) => { setErr(null); setOk(msg); setOpen(null); setCreation(false); void reload(); };
+  const [busy, setBusy] = useState(false);
+  const recevoir = async (ev: FormEvent) => {
+    ev.preventDefault(); setErr(null); setOk(null);
+    if (!rc.code.trim()) { setErr('Donnez un code au colis.'); return; }
+    if (!rc.profileId) { setErr('Choisissez un voyageur ou créez son compte avant d’enregistrer le colis.'); return; }
+    setBusy(true);
+    const res = await createColis({
+      code: rc.code, mode: rc.mode, expeditionCode: rc.expeditionCode || null, profileId: rc.profileId,
+      clientNom: rc.clientNom, clientTel: rc.clientTel, codeClient: rc.codeClient, marqueColis: rc.marque,
+      typeMarchandise: rc.type, poidsKg: toNum(rc.poids), volumeM3: toNum(rc.volume), recuMaintenant: true,
+    });
+    setBusy(false);
+    if (res.error) { setErr(res.error); return; }
+    setOk(`Colis ${rc.code} enregistré.`);
+    setRc((c) => ({ ...c, code: suggestColisCode(), profileId: '', clientNom: '', clientTel: '', codeClient: '', marque: '', poids: '', volume: '' }));
+    setClientSel(null);
+    await reload();
+  };
 
-  /** Signale un changement SANS fermer la fiche ouverte (photo, lignes d'articles). */
-  const notee = (msg: string) => { setErr(null); setOk(msg); void reload(); };
+  // ---- Nouvelle expédition ----
+  const [showNew, setShowNew] = useState(false);
+  const [ne, setNe] = useState({ code: suggestExpeditionCode(), mode: 'maritime_groupage' as FretMode, warehouseId: '', seuilKg: '', seuilM3: '' });
+  const creerExp = async (ev: FormEvent) => {
+    ev.preventDefault(); setErr(null); setOk(null);
+    setBusy(true);
+    const res = await createExpedition({
+      code: ne.code, mode: ne.mode, warehouseId: ne.warehouseId || null,
+      seuilKg: toNum(ne.seuilKg), seuilM3: toNum(ne.seuilM3),
+    });
+    setBusy(false);
+    if (res.error) { setErr(res.error); return; }
+    setOk(`Expédition ${ne.code} créée.`);
+    setNe({ code: suggestExpeditionCode(), mode: 'maritime_groupage', warehouseId: '', seuilKg: '', seuilM3: '' });
+    setShowNew(false);
+    await reload();
+  };
 
-  /** Le nouveau compte voyageur rejoint la liste tout de suite : le lot peut
-      être créé sans recharger la page. */
-  const voyageurCree = (v: Voyageur) =>
-    setVoyageurs((vs) => [...vs.filter((x) => x.id !== v.id), v].sort((a, b) => a.nom.localeCompare(b.nom)));
-
-  const transitaireCree = (p: { id: string; nom: string }) =>
-    setTransitaires((ps) => [...ps.filter((x) => x.id !== p.id), p].sort((a, b) => a.nom.localeCompare(b.nom)));
+  const { sort, toggle } = useSort<'code' | 'statut'>({ k: 'code', dir: -1 });
+  const shown = [...exps].sort((a, b) =>
+    compare(sort.k === 'statut' ? a.statut : a.code, sort.k === 'statut' ? b.statut : b.code, sort.dir));
 
   return (
     <>
       <header className="admin-head">
         <div>
-          <h1>{tr("Suivi de fret")}</h1>
-          <div className="muted" style={{ marginTop: 4 }}>{tr("Lots de marchandises Chine → Sénégal, et leur suivi par le voyageur.")}</div>
+          <h1>{tr("Expéditions")}</h1>
+          <div className="muted" style={{ marginTop: 4 }}>{tr("Suivez chaque conteneur ou vol, et rattachez les colis de vos clients.")}</div>
         </div>
-        {admin && (
-          <Button icon="plus" full={false} onClick={() => { setOk(null); setCreation(true); }}>
-            {tr("Nouveau lot")}
-          </Button>
-        )}
+        <Button icon="plus" full={false} onClick={() => setShowNew((v) => !v)}>{tr(showNew ? 'Fermer' : 'Nouvelle expédition')}</Button>
       </header>
+
       <div className="admin-body" style={{ gap: 18 }}>
-        <section className="card stack" style={{ gap: 12 }}>
-          <h2 style={{ fontSize: 17, margin: 0 }}>{t('{0} lot(s)', { 0: lots.length })}</h2>
+        {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+        {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
 
-          {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(ok)}</span></div>}
-          {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+        {showNewClient && (
+          <section className="card stack" style={{ gap: 12 }}>
+            <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Créer un compte voyageur")}</h2>
+            <p className="small muted" style={{ margin: 0 }}>{tr("Une invitation sera envoyée à son adresse e-mail. Le compte sera sélectionné pour le colis dès sa création.")}</p>
+            <form onSubmit={ajouterClient} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
+              <div className="grow"><Field id="nv-nom" label={tr("Nom complet")} value={newClient.name} onChange={(v) => setNewClient({ ...newClient, name: v })} req /></div>
+              <div className="grow"><Field id="nv-email" label={tr("Adresse e-mail")} type="email" value={newClient.email} onChange={(v) => setNewClient({ ...newClient, email: v })} req /></div>
+              <div className="grow"><Field id="nv-phone" label={tr("Téléphone")} type="tel" value={newClient.phone} onChange={(v) => setNewClient({ ...newClient, phone: v })} req /></div>
+              <Button type="submit" icon="plus" full={false} disabled={busy}>{tr(busy ? 'Création…' : 'Créer et sélectionner')}</Button>
+            </form>
+          </section>
+        )}
 
-          <div className="filters" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <div className="admin-search" style={{ maxWidth: 360, flex: '1 1 220px' }}>
-              <Icon name="search" size={18} />
-              <input type="search" value={pq} onChange={(e) => setPq(e.target.value)}
-                aria-label={tr("Rechercher un lot")} placeholder={tr("Code, conteneur, article, voyageur")} />
+        {/* ---- Réception d'un colis ---- */}
+        <section className="card stack" style={{ gap: 14 }}>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Enregistrer un colis reçu")}</h2>
+          <p className="small muted" style={{ margin: 0 }}>
+            {tr("À l’arrivée d’un colis à l’entrepôt en Chine : notez le client, le marquage, le poids et le volume. Vous pourrez le rattacher à une expédition tout de suite ou plus tard.")}</p>
+          <form onSubmit={recevoir} className="stack" style={{ gap: 12 }} noValidate>
+            <div className="filters" style={{ alignItems: 'flex-end' }}>
+              <div style={{ minWidth: 170 }}><Field id="rc-code" label={tr("Code du colis")} value={rc.code} onChange={(v) => setRc({ ...rc, code: v })} req /></div>
+              <Select id="rc-mode" label={tr("Mode")} value={rc.mode} onChange={(v) => setRc({ ...rc, mode: v as FretMode })} options={MODE_OPTIONS} />
+              <Select id="rc-exp" label={tr("Expédition")} value={rc.expeditionCode}
+                onChange={(v) => setRc({ ...rc, expeditionCode: v })}
+                options={[{ v: '', l: 'Non affecté pour l’instant' }, ...openExps.map((e) => ({ v: e.code, l: `${e.code} · ${MODE_LABEL[e.mode]}` }))]} />
             </div>
-            <div>
-              <label className="small muted" htmlFor="fstat-lot" style={{ display: 'block', marginBottom: 4 }}>{tr("Statut")}</label>
-              <select id="fstat-lot" value={etat} onChange={(e) => setEtat(e.target.value as '' | Statut)}>
-                <option value="">{tr("Tous")}</option>
-                {STATUTS.map((st) => <option key={st} value={st}>{tr(STATUT_LABEL[st])}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
-            : rows.length === 0 ? <p className="muted">{tr(pq || etat ? 'Aucun lot ne correspond à la recherche.' : 'Aucun lot suivi pour le moment.')}</p>
-            : wide ? (
-              <div className="table dense"><table>
-                <thead><tr>
-                  <SortTh k="code" label={tr("Code")} sort={sort} onSort={toggle} />
-                  <th>{tr("Voyageur")}</th>
-                  <SortTh k="statut" label={tr("Statut")} sort={sort} onSort={toggle} />
-                  <th>{tr("Fret")}</th>
-                  <th>{tr("Arrivée prévue")}</th>
-                  <th>{tr("Actions")}</th>
-                </tr></thead>
-                <tbody>
-                  {rows.map((l) => (
-                    <tr key={l.id}>
-                      <td>
-                        <button type="button" className="linklike" onClick={() => setOpen(l)}><strong>{l.code}</strong></button>
-                        <div className="small muted">{l.conteneur || l.origine}</div>
-                      </td>
-                      <td>{nomDe(l.userId) || '—'}</td>
-                      <td><StatutTag statut={l.statut} /></td>
-                      <td>{tr(FRET_LABEL[l.fret])}</td>
-                      <td>{jour(l.arriveePrevue) || '—'}</td>
-                      <td><Button kind="s" icon="edit" full={false} onClick={() => setOpen(l)}>{tr("Ouvrir la fiche")}</Button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table></div>
-            ) : (
-              <div className="acards">
-                {rows.map((l) => (
-                  <AdminCard key={l.id} toneSeed={l.code}
-                    title={l.code}
-                    sub={[nomDe(l.userId) || null, l.conteneur || l.origine, jour(l.arriveePrevue) ? t('Arrivée prévue {0}', { 0: jour(l.arriveePrevue) }) : null].filter(Boolean).join(' · ')}
-                    badge={<StatutTag statut={l.statut} />}
-                    onOpen={() => setOpen(l)} ariaLabel={t('Ouvrir la fiche du lot {0}', { 0: l.code })} />
-                ))}
+            <div className="filters" style={{ alignItems: 'flex-end' }}>
+              <div className="grow" style={{ minWidth: 240 }}>
+                <Field id="rc-search-client" label={tr("Rechercher un voyageur")} type="search" value={clientQ} onChange={setClientQ} placeholder={tr("Nom ou téléphone")} />
               </div>
-            )}
+              <div className="grow" style={{ minWidth: 280 }}>
+                <Select id="rc-client" label={tr("Client / voyageur")} value={rc.profileId}
+                  onChange={(id) => {
+                    const found = clientResults.find((c) => c.id === id);
+                    if (found) choisirClient(found);
+                    else { setClientSel(null); setRc((r) => ({ ...r, profileId: '', clientNom: '', clientTel: '' })); }
+                  }} req
+                  options={[{ v: '', l: clientLoading ? 'Chargement des voyageurs…' : 'Choisir un voyageur…' },
+                    ...clientResults.map((c) => ({ v: c.id, l: `${c.name ?? 'Sans nom'}${c.phone ? ` · ${c.phone}` : ''}` })),
+                    ...(clientSel && !clientResults.some((c) => c.id === clientSel.id)
+                      ? [{ v: clientSel.id, l: `${clientSel.name ?? 'Sans nom'}${clientSel.phone ? ` · ${clientSel.phone}` : ''}` }] : [])]} />
+              </div>
+              <Button kind="s" icon="plus" full={false} onClick={() => setShowNewClient((v) => !v)}>{tr(showNewClient ? 'Fermer' : 'Nouveau voyageur')}</Button>
+            </div>
+            {clientSel && <div className="small muted">{tr("Compte sélectionné : ")}{clientSel.name}</div>}
+            <div className="filters" style={{ alignItems: 'flex-end' }}>
+              <div style={{ minWidth: 130 }}><Field id="rc-marque" label={tr("Marquage")} value={rc.marque} onChange={(v) => setRc({ ...rc, marque: v })} placeholder={tr("Shipping mark")} /></div>
+            </div>
+            <div className="filters" style={{ alignItems: 'flex-end' }}>
+              <Select id="rc-type" label={tr("Type de marchandise")} value={rc.type} onChange={(v) => setRc({ ...rc, type: v })} options={TYPES} />
+              <div style={{ minWidth: 120 }}><Field id="rc-poids" label={tr("Poids (kg)")} value={rc.poids} onChange={(v) => setRc({ ...rc, poids: v })} placeholder="0" /></div>
+              <div style={{ minWidth: 120 }}><Field id="rc-vol" label={tr("Volume (m³)")} value={rc.volume} onChange={(v) => setRc({ ...rc, volume: v })} placeholder="0" /></div>
+              <Button type="submit" icon="box" full={false} disabled={busy}>{tr(busy ? 'Enregistrement…' : 'Enregistrer le colis')}</Button>
+            </div>
+          </form>
         </section>
 
-        {open && <LotSheet lot={open} nomVoyageur={nomDe(open.userId)} admin={admin}
-          transitaires={transitaires} onClose={() => setOpen(null)} onSaved={saved}
-          onNotee={notee} onTransitaireCree={transitaireCree} />}
-        {creation && <NouveauLotSheet voyageurs={voyageurs} transitaires={transitaires}
-          onClose={() => setCreation(false)} onSaved={saved}
-          onVoyageurCree={voyageurCree} onTransitaireCree={transitaireCree} />}
+        {/* ---- Nouvelle expédition ---- */}
+        {showNew && (
+          <section className="card stack" style={{ gap: 12 }}>
+            <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Nouvelle expédition")}</h2>
+            <form onSubmit={creerExp} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
+              <div style={{ minWidth: 160 }}><Field id="ne-code" label={tr("Code de lot")} value={ne.code} onChange={(v) => setNe({ ...ne, code: v })} req /></div>
+              <Select id="ne-mode" label={tr("Mode")} value={ne.mode} onChange={(v) => setNe({ ...ne, mode: v as FretMode })} options={MODE_OPTIONS} />
+              <Select id="ne-wh" label={tr("Entrepôt (Chine)")} value={ne.warehouseId} onChange={(v) => setNe({ ...ne, warehouseId: v })}
+                options={[{ v: '', l: '—' }, ...warehouses.map((w) => ({ v: w.id, l: w.nom }))]} />
+              <div style={{ minWidth: 120 }}><Field id="ne-skg" label={tr("Seuil kg")} value={ne.seuilKg} onChange={(v) => setNe({ ...ne, seuilKg: v })} placeholder={tr("facultatif")} /></div>
+              <div style={{ minWidth: 120 }}><Field id="ne-sm3" label={tr("Seuil m³")} value={ne.seuilM3} onChange={(v) => setNe({ ...ne, seuilM3: v })} placeholder={tr("facultatif")} /></div>
+              <Button type="submit" icon="ship" full={false} disabled={busy}>{tr("Créer")}</Button>
+            </form>
+          </section>
+        )}
+
+        {/* ---- Liste des expéditions ---- */}
+        <section className="card stack" style={{ gap: 12 }}>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr(`Expéditions (${exps.length})`)}</h2>
+          {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
+            : exps.length === 0 ? <p className="muted">{tr("Aucune expédition. Créez-en une pour commencer à regrouper les colis.")}</p> : (
+            <div className="table dense"><table>
+              <thead><tr>
+                <SortTh k="code" label="Code" sort={sort} onSort={toggle} />
+                <th>{tr("Mode")}</th><SortTh k="statut" label="Statut" sort={sort} onSort={toggle} />
+                <th>{tr("Colis")}</th><th>{tr("Remplissage")}</th>
+              </tr></thead>
+              <tbody>
+                {shown.map((e) => {
+                  const t = totaux[e.code];
+                  return (
+                    <tr key={e.code}>
+                      <td><Link to={`/equipe/expeditions/${encodeURIComponent(e.code)}`}><strong>{e.code}</strong></Link><div className="small muted">{e.destination}</div></td>
+                      <td>{tr(MODE_LABEL[e.mode])}</td>
+                      <td><span className="small">{tr(EXPEDITION_STATUT_LABEL[e.statut])}</span></td>
+                      <td>{t?.nbColis ?? 0}</td>
+                      <td><Remplissage exp={e} tot={t} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table></div>
+          )}
+        </section>
       </div>
     </>
+  );
+}
+
+/** Barre de remplissage : total atteint face au seuil, sur l'unité du mode. */
+function Remplissage({ exp, tot }: { exp: Expedition; tot?: ExpeditionTotaux }) {
+  const { tr } = useI18n();
+  if (!tot) return <span className="np">—</span>;
+  const unite = MODE_UNITE[exp.mode];
+  const total = unite === 'm3' ? tot.totalM3 : tot.totalKg;
+  const seuil = unite === 'm3' ? exp.seuilM3 : exp.seuilKg;
+  const u = unite === 'm3' ? 'm³' : 'kg';
+  if (!seuil) return <span className="small">{total.toLocaleString('fr-FR')} {u}</span>;
+  const pct = Math.min(100, Math.round((total / seuil) * 100));
+  const plein = pct >= 100;
+  return (
+    <div className="stack" style={{ gap: 4, minWidth: 140 }}>
+      <div className="small" style={{ fontWeight: 600 }}>{total.toLocaleString('fr-FR')} / {seuil.toLocaleString('fr-FR')} {u} · {pct}%</div>
+      <div style={{ height: 6, borderRadius: 999, background: 'var(--chip-border, #e3e3e3)', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: plein ? '#1F7A4A' : '#1F4A7A' }} />
+      </div>
+      {plein && <span className="small" style={{ color: '#1F7A4A', fontWeight: 600 }}><Icon name="check" size={13} sw={2.4} /> {tr("Prêt à charger")}</span>}
+    </div>
+  );
+}
+
+/* ============================================================
+   Détail d'une expédition : totaux, colis, étapes
+   ============================================================ */
+const ETAPES_ORDRE: EtapeType[] = ['recu_chine', 'regroupe', 'depart', 'en_transit', 'arrive_dakar', 'chez_diaba', 'dispo_retrait', 'en_livraison', 'remis'];
+
+export function ExpeditionDetail() {
+  const { tr } = useI18n();
+  const { code = '' } = useParams();
+  const [exp, setExp] = useState<Expedition | null>(null);
+  const [tot, setTot] = useState<ExpeditionTotaux | undefined>();
+  const [colis, setColis] = useState<Colis[]>([]);
+  const [libres, setLibres] = useState<Colis[]>([]);
+  const [factures, setFactures] = useState<Record<string, Facture>>({});
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    const [exps, totaux, cs, l, f] = await Promise.all([fetchExpeditions(), fetchExpeditionTotaux(), fetchColis(code), fetchColis(), fetchFactures()]);
+    setExp(exps.find((e) => e.code === code) ?? null);
+    setTot(totaux[code]); setColis(cs); setLibres(l); setFactures(f); setLoading(false);
+  }, [code]);
+
+  const facturer = async (colisCode: string) => {
+    setErr(null); setOk(null);
+    const res = await emettreFacture(colisCode);
+    if (res.error) { setErr(res.error); return; }
+    setOk(`Facture émise pour ${colisCode}.`); await reload();
+  };
+  const payer = async (colisCode: string) => {
+    setErr(null); setOk(null);
+    const res = await marquerFacturePayee(colisCode);
+    if (res.error) { setErr(res.error); return; }
+    setOk(`Facture de ${colisCode} marquée payée.`); await reload();
+  };
+  useEffect(() => { void reload(); }, [reload]);
+
+  const [aff, setAff] = useState('');
+  const affecter = async () => {
+    if (!aff) return; setErr(null); setOk(null);
+    const res = await affecterColis(aff, code);
+    if (res.error) { setErr(res.error); return; }
+    setOk(`Colis ${aff} rattaché.`); setAff(''); await reload();
+  };
+  const etape = async (colisCode: string, type: EtapeType) => {
+    setErr(null); setOk(null);
+    const res = await addEtape(colisCode, type);
+    if (res.error) { setErr(res.error); return; }
+    setOk(`Étape « ${tr(ETAPE_LABEL[type])} » ajoutée à ${colisCode}.`); await reload();
+  };
+
+  if (loading) return <div className="admin-body"><p className="muted" role="status">{tr("Chargement…")}</p></div>;
+  if (!exp) return <div className="admin-body"><p className="muted">{tr("Expédition introuvable.")} <Link to="/equipe/expeditions">{tr("Retour à la liste")}</Link></p></div>;
+
+  const unite = MODE_UNITE[exp.mode];
+
+  return (
+    <>
+      <header className="admin-head">
+        <div>
+          <h1>{exp.code}</h1>
+          <div className="muted" style={{ marginTop: 4 }}>{tr(MODE_LABEL[exp.mode])} · {exp.destination} · {tr(EXPEDITION_STATUT_LABEL[exp.statut])}</div>
+        </div>
+        <Button to="/equipe/expeditions" kind="s" icon="chevL" full={false}>{tr("Toutes les expéditions")}</Button>
+      </header>
+
+      <div className="admin-body" style={{ gap: 18 }}>
+        {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+        {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
+
+        <section className="card stack" style={{ gap: 10 }}>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Remplissage")}</h2>
+          <div className="row" style={{ gap: 24, flexWrap: 'wrap' }}>
+            <Stat label={tr("Colis")} value={String(tot?.nbColis ?? 0)} />
+            <Stat label={tr("Total poids")} value={`${(tot?.totalKg ?? 0).toLocaleString('fr-FR')} kg`} />
+            <Stat label={tr("Total volume")} value={`${(tot?.totalM3 ?? 0).toLocaleString('fr-FR')} m³`} />
+          </div>
+          <Remplissage exp={exp} tot={tot} />
+          {!exp.seuilKg && !exp.seuilM3 && <p className="small muted" style={{ margin: 0 }}>{tr("Aucun seuil défini pour cette expédition. Le remplissage s’affiche sans objectif de chargement.")}</p>}
+          <p className="small muted" style={{ margin: 0 }}>{tr(`Unité de facturation de ce mode : ${unite === 'm3' ? 'm³' : 'kg'}.`)}</p>
+        </section>
+
+        {/* ---- Colis de l'expédition ---- */}
+        <section className="card stack" style={{ gap: 12 }}>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr(`Colis (${colis.length})`)}</h2>
+          {colis.length === 0 ? <p className="muted">{tr("Aucun colis rattaché pour l’instant.")}</p> : (
+            <div className="table dense"><table>
+              <thead><tr><th>{tr("Colis")}</th><th>{tr("Client")}</th><th>{tr("Poids / Volume")}</th><th>{tr("Statut")}</th><th>{tr("Facture")}</th><th>{tr("Étape")}</th></tr></thead>
+              <tbody>
+                {colis.map((c) => (
+                  <tr key={c.code}>
+                    <td><strong>{c.code}</strong>{c.marqueColis && <div className="small muted">{c.marqueColis}</div>}</td>
+                    <td>{c.clientNom ?? <span className="np">—</span>}{c.clientTel && <div className="small muted">{c.clientTel}</div>}</td>
+                    <td className="small">{c.poidsKg != null ? `${c.poidsKg} kg` : '—'}{c.volumeM3 != null ? ` · ${c.volumeM3} m³` : ''}</td>
+                    <td><span className="small">{tr(COLIS_STATUT_LABEL[c.statut])}</span></td>
+                    <td>
+                      {(() => {
+                        const f = factures[c.code];
+                        return f ? (
+                          <div className="stack" style={{ gap: 4, minWidth: 150 }}>
+                            <span className="small"><strong>{money(f.montantTotal, f.devise)}</strong> · {tr(FACTURE_STATUT_LABEL[f.statut])}</span>
+                            <span className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+                              {f.statut === 'a_payer' && <Button kind="s" full={false} onClick={() => payer(c.code)}>{tr("Marquer payé")}</Button>}
+                              <Button kind="s" full={false} onClick={() => facturer(c.code)}>{tr("Refacturer")}</Button>
+                            </span>
+                          </div>
+                        ) : <Button kind="s" icon="send" full={false} onClick={() => facturer(c.code)}>{tr("Facturer")}</Button>;
+                      })()}
+                    </td>
+                    <td>
+                      <select aria-label={tr("Ajouter une étape")} defaultValue="" onChange={(e) => { if (e.target.value) { void etape(c.code, e.target.value as EtapeType); e.target.value = ''; } }}>
+                        <option value="">{tr("Ajouter une étape…")}</option>
+                        {ETAPES_ORDRE.map((s) => <option key={s} value={s}>{tr(ETAPE_LABEL[s])}</option>)}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table></div>
+          )}
+        </section>
+
+        {/* ---- Rattacher un colis existant ---- */}
+        <section className="card stack" style={{ gap: 12 }}>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Rattacher un colis à cette expédition")}</h2>
+          {libres.length === 0 ? <p className="small muted" style={{ margin: 0 }}>{tr("Aucun colis en attente d’affectation.")}</p> : (
+            <div className="filters" style={{ alignItems: 'flex-end' }}>
+              <Select id="aff" label={tr("Colis non affecté")} value={aff} onChange={setAff}
+                options={[{ v: '', l: 'Choisir un colis…' }, ...libres.map((c) => ({ v: c.code, l: `${c.code}${c.clientNom ? ` · ${c.clientNom}` : ''}` }))]} />
+              <Button icon="link" full={false} disabled={!aff} onClick={affecter}>{tr("Rattacher")}</Button>
+            </div>
+          )}
+        </section>
+      </div>
+    </>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="stack" style={{ gap: 2 }}>
+      <div className="small muted">{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>
+    </div>
   );
 }
