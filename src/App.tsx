@@ -12,6 +12,7 @@ import { Favorites, Profile, Downloads } from './pages/Account';
 import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contribute';
 import { ShoppingLists, ShoppingListPage } from './pages/Shopping';
 import { ReviewsAdminPage } from './pages/Reviews';
+import { Suivi } from './pages/Suivi';
 
 const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminDashboard })));
@@ -83,6 +84,10 @@ export default function App() {
         {/* Réinitialisation : le lien reçu par e-mail ouvre une session de
             récupération — cette page doit rester accessible même connecté. */}
         <Route path="/reinitialiser" element={<ResetPassword />} />
+        {/* Suivi public d'un lot : sans compte (client resté à Dakar) comme avec compte,
+            donc hors des deux gardes. */}
+        <Route path="/suivi" element={<Suivi />} />
+        <Route path="/suivi/:code" element={<Suivi />} />
 
         <Route element={<RequireAuth />}>
           <Route path="/accueil" element={<Home />} />

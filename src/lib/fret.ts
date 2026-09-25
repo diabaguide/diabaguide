@@ -461,3 +461,89 @@ export async function supprimerExpedition(id: string): Promise<{ error?: string 
   const { error } = await supabase.rpc('admin_supprimer_expedition', { p_id: id });
   return error ? { error: message(error) } : {};
 }
+/* ------------------------------------------------------------------ */
+/* Suivi public par code de lot (lot 3)                               */
+/*                                                                    */
+/* Lecture par `suivi_public(code)`, la SEULE fonction accordée à     */
+/* `anon` : statut, dates, étapes publiques et transitaire (nom et    */
+/* téléphone d'un professionnel de l'annuaire). Jamais le voyageur,   */
+/* ses articles ni les notes internes : la page n'a rien d'autre à    */
+/* afficher, et la base ne le lui donnerait pas.                      */
+/* ------------------------------------------------------------------ */
+
+/** Format d'un code de lot : DIA-AAAA-NNNN. */
+export const CODE_LOT = /^DIA-\d{4}-\d{4}$/;
+
+/** Met un code saisi à la main au bon format (« dia 2026 1 » → « DIA-2026-0001 »). */
+export function normaliserCode(saisie: string): string {
+  const s = saisie.trim().toUpperCase().replace(/[\s_.]+/g, '-');
+  const m = s.match(/^DIA-?(\d{4})-?(\d{1,4})$/);
+  return m ? `DIA-${m[1]}-${m[2].padStart(4, '0')}` : s;
+}
+
+export type EtapePublique = {
+  statut: Statut;
+  lieu: string;
+  note: string;
+  survenuLe: string;
+  estime: boolean;
+};
+
+export type SuiviPublic = {
+  code: string;
+  fret: Fret;
+  origine: string;
+  statut: Statut;
+  departLe: string | null;
+  arriveePrevue: string | null;
+  arriveeLe: string | null;
+  transitaire: { nom: string; telephone: string } | null;
+  etapes: EtapePublique[];
+};
+
+/** `null` : aucun lot ne porte ce code. */
+export async function fetchSuiviPublic(saisie: string): Promise<{ suivi: SuiviPublic | null; error?: string }> {
+  const code = normaliserCode(saisie);
+  if (!CODE_LOT.test(code)) return { suivi: null };
+
+  if (!supabase) {
+    const l = readLocal().find((x) => x.code === code);
+    if (!l) return { suivi: null };
+    return {
+      suivi: {
+        code: l.code, fret: l.fret, origine: l.origine, statut: l.statut,
+        departLe: l.departLe, arriveePrevue: l.arriveePrevue, arriveeLe: l.arriveeLe,
+        transitaire: null,
+        etapes: (l.etapes ?? []).filter((e) => e.publique)
+          .map((e) => ({ statut: e.statut, lieu: e.lieu, note: e.note, survenuLe: e.survenuLe, estime: e.estime }))
+          .sort((a, b) => a.survenuLe.localeCompare(b.survenuLe)),
+      },
+    };
+  }
+
+  const { data, error } = await supabase.rpc('suivi_public', { p_code: code });
+  if (error) return { suivi: null, error: message(error) };
+  if (!data) return { suivi: null };
+  const r = data as Record<string, unknown>;
+  const tr = r.transitaire as Record<string, unknown> | null;
+  const etapes = Array.isArray(r.etapes) ? (r.etapes as Record<string, unknown>[]) : [];
+  return {
+    suivi: {
+      code: String(r.code ?? code),
+      fret: r.fret === 'air' ? 'air' : 'sea',
+      origine: String(r.origine ?? ''),
+      statut: statutValide(r.statut),
+      departLe: (r.depart_le as string) ?? null,
+      arriveePrevue: (r.arrivee_prevue as string) ?? null,
+      arriveeLe: (r.arrivee_le as string) ?? null,
+      transitaire: tr && tr.nom ? { nom: String(tr.nom), telephone: String(tr.telephone ?? '') } : null,
+      etapes: etapes.map((e) => ({
+        statut: statutValide(e.statut),
+        lieu: String(e.lieu ?? ''),
+        note: String(e.note ?? ''),
+        survenuLe: String(e.survenu_le ?? e.date ?? ''),
+        estime: e.estime === true,
+      })),
+    },
+  };
+}
