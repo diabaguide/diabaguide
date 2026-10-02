@@ -231,7 +231,7 @@ export function Members() {
                 <label htmlFor="inv-tel">{tr("Numéro de téléphone")}<span className="req" aria-hidden="true"> *</span></label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <select id="inv-dial" aria-label={tr("Indicatif du pays")} value={dial} onChange={(e) => setDial(e.target.value)} style={{ flex: '0 0 auto', width: 'auto', maxWidth: '45%' }}>
-                    {DIAL_CODES.map((x) => <option key={x.c + x.n} value={x.c}>{x.flag} {x.c} {x.n}</option>)}
+                    {DIAL_CODES.map((x) => <option key={x.c + x.n} value={x.c}>{x.flag} {x.c} {tr(x.n)}</option>)}
                   </select>
                   <input id="inv-tel" type="tel" inputMode="tel" autoComplete="off" value={tel} style={{ flex: 1, minWidth: 0 }} onChange={(e) => setTel(e.target.value)} />
                 </div>

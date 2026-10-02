@@ -106,7 +106,7 @@ export function Signup() {
           <label htmlFor="tel">{tr("Numéro de téléphone")}<span className="req" aria-hidden="true"> *</span></label>
           <div style={{ display: 'flex', gap: 8 }}>
             <select id="tel-dial" aria-label={tr("Indicatif du pays")} value={dial} onChange={(e) => setDial(e.target.value)} style={{ flex: '0 0 auto', width: 'auto', maxWidth: '45%' }}>
-              {DIAL_CODES.map((x) => <option key={x.c + x.n} value={x.c}>{x.flag} {x.c} {x.n}</option>)}
+              {DIAL_CODES.map((x) => <option key={x.c + x.n} value={x.c}>{x.flag} {x.c} {tr(x.n)}</option>)}
             </select>
             <input id="tel" type="tel" inputMode="tel" autoComplete="tel-national" value={f.phone} aria-invalid={!!show('phone')}
               aria-describedby={show('phone') ? 'tel-err' : undefined} className={show('phone') ? 'err' : ''} style={{ flex: 1, minWidth: 0 }}
