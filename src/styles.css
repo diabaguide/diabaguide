@@ -87,6 +87,12 @@ h1, h2, h3, p { margin: 0; }
 .radio.on { border: 2px solid var(--primary); font-weight: 600; }
 .radio input { width: 20px; height: 20px; accent-color: var(--primary); flex-shrink: 0; }
 .radio small { display: block; font-size: 13px; font-weight: 400; color: var(--muted); }
+.carac { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+@media (max-width: 420px) { .carac { grid-template-columns: repeat(2, 1fr); } }
+.carac-item { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 96px; padding: 26px 6px 10px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; text-align: center; font-size: 14px; font-weight: 500; line-height: 1.25; overflow-wrap: normal; word-break: normal; hyphens: manual; cursor: pointer; }
+.carac-item.on { border: 2px solid var(--primary); font-weight: 600; }
+.carac-item input { position: absolute; top: 8px; left: 8px; width: 20px; height: 20px; margin: 0; accent-color: var(--primary); }
+.carac-emoji { font-size: 26px; line-height: 1; }
 .check { display: flex; align-items: flex-start; gap: 12px; min-height: 44px; }
 .check input { width: 24px; height: 24px; accent-color: var(--primary); margin-top: 2px; flex-shrink: 0; }
 

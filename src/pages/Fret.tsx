@@ -6,8 +6,8 @@ import { cityName } from '../data';
 import { Button, Field, Icon, Logo, Screen, Select, TextArea, TopBar } from '../ui';
 import {
   devisFret, annoncerColis, fetchMesColis, fetchEtapesColis, fetchFactures, fetchColisByCode,
-  MODE_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL,
-  type FretMode, type Colis, type EtapeVue, type Facture,
+  MODE_LABEL, COLIS_STATUT_LABEL, CARACTERISTIQUES, caracLabel, ETAPE_LABEL, FACTURE_STATUT_LABEL,
+  type FretMode, type Caracteristique, type Colis, type EtapeVue, type Facture,
 } from '../lib/fret';
 
 const MODE_OPTIONS = (Object.keys(MODE_LABEL) as FretMode[]).map((v) => ({ v, l: MODE_LABEL[v] }));
@@ -47,19 +47,19 @@ export function MesEnvois() {
   // ---- Annoncer un colis ----
   const { s } = useStore();
   const villes = s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }));
-  const [an, setAn] = useState({ mode: 'maritime_groupage' as FretMode, ville: '', type: 'general', description: '', marque: '', poids: '', volume: '' });
+  const [an, setAn] = useState({ mode: 'maritime_groupage' as FretMode, ville: '', carac: [] as Caracteristique[], type: 'general', description: '', marque: '', poids: '', volume: '' });
   const ville = an.ville || s.city;
   const [busy, setBusy] = useState(false);
   const annoncer = async (e: FormEvent) => {
     e.preventDefault(); setErr(null); setOk(null); setBusy(true);
     const res = await annoncerColis({
-      mode: an.mode, villeDepart: ville, typeMarchandise: an.type, description: an.description, marqueColis: an.marque,
+      mode: an.mode, villeDepart: ville, caracteristiques: an.carac, typeMarchandise: an.type, description: an.description, marqueColis: an.marque,
       poidsKg: isMaritime(an.mode) ? null : toNum(an.poids), volumeM3: isMaritime(an.mode) ? toNum(an.volume) : null,
     });
     setBusy(false);
     if (res.error) { setErr(res.error); return; }
     setOk(`Colis annoncé (${res.code}). L’équipe Diaba le confirmera à la réception en Chine.`);
-    setAn({ mode: 'maritime_groupage', ville: '', type: 'general', description: '', marque: '', poids: '', volume: '' });
+    setAn({ mode: 'maritime_groupage', ville: '', carac: [], type: 'general', description: '', marque: '', poids: '', volume: '' });
     await reload();
   };
 
@@ -100,6 +100,21 @@ export function MesEnvois() {
             <Select id="an-mode" label={tr("Mode d’envoi")} value={an.mode} onChange={(v) => setAn({ ...an, mode: v as FretMode })} options={MODE_OPTIONS} />
             <Select id="an-ville" label={tr("Ville de départ")} value={ville} onChange={(v) => setAn({ ...an, ville: v })} options={villes} />
             <Select id="an-type" label={tr("Type de marchandise")} value={an.type} onChange={(v) => setAn({ ...an, type: v })} options={TYPES} />
+            <fieldset className="stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
+              <legend style={{ fontWeight: 600, marginBottom: 8 }}>{tr("Caractéristiques particulières (cochez si applicable)")}</legend>
+              <div className="carac">
+                {CARACTERISTIQUES.map((c) => {
+                  const on = an.carac.includes(c.v);
+                  return (
+                    <label key={c.v} className={`carac-item ${on ? 'on' : ''}`}>
+                      <input type="checkbox" checked={on} onChange={(e) => setAn({ ...an, carac: e.target.checked ? [...an.carac, c.v] : an.carac.filter((x) => x !== c.v) })} />
+                      <span className="carac-emoji" aria-hidden="true">{c.emoji}</span>
+                      <span>{tr(c.l)}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
             <Field id="an-marque" label={tr("Marquage / fournisseur")} value={an.marque} onChange={(v) => setAn({ ...an, marque: v })} placeholder={tr("Nom du fournisseur ou marquage")} />
             <TextArea id="an-desc" label={tr("Description")} value={an.description} onChange={(v) => setAn({ ...an, description: v })} rows={2} placeholder={tr("Ce que contient le colis")} />
             {isMaritime(an.mode)
@@ -135,6 +150,7 @@ function ColisCard({ c, facture }: { c: Colis; facture?: Facture }) {
         <div className="stack" style={{ gap: 2 }}>
           <strong>{c.code}</strong>
           <span className="small muted">{tr(MODE_LABEL[c.mode])}{c.villeDepart ? ` · ${cityName(c.villeDepart)}` : ''}{c.marqueColis ? ` · ${c.marqueColis}` : ''}</span>
+          {c.caracteristiques.length > 0 && <span className="small">{c.caracteristiques.map((v) => tr(caracLabel(v))).join(' · ')}</span>}
         </div>
         <span className="tag tag-info">{tr(COLIS_STATUT_LABEL[c.statut])}</span>
       </div>

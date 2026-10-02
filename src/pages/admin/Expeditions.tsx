@@ -10,7 +10,7 @@ import {
   createExpedition, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
   suggestExpeditionCode, suggestColisCode,
   fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
-  MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL,
+  MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL, caracLabel,
   type Expedition, type ExpeditionTotaux, type EtapeExpedition, type Colis, type FretMode, type Warehouse, type EtapeType, type Facture, type ClientLite,
 } from '../../lib/fret';
 
@@ -364,7 +364,7 @@ export function ExpeditionDetail() {
               <tbody>
                 {colis.map((c) => (
                   <tr key={c.code}>
-                    <td><strong>{c.code}</strong>{c.marqueColis && <div className="small muted">{c.marqueColis}</div>}</td>
+                    <td><strong>{c.code}</strong>{c.marqueColis && <div className="small muted">{c.marqueColis}</div>}{c.caracteristiques.length > 0 && <div className="small">{c.caracteristiques.map((v) => tr(caracLabel(v))).join(' · ')}</div>}</td>
                     <td>{c.clientNom ?? <span className="np">—</span>}{c.clientTel && <div className="small muted">{c.clientTel}</div>}</td>
                     <td className="small">{c.poidsKg != null ? `${c.poidsKg} kg` : '—'}{c.volumeM3 != null ? ` · ${c.volumeM3} m³` : ''}</td>
                     <td><span className="small">{tr(COLIS_STATUT_LABEL[c.statut])}</span></td>

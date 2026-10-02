@@ -29,6 +29,15 @@ export const MODE_UNITE: Record<FretMode, 'kg' | 'm3'> = {
   aerien_fret: 'kg',
   aerien_express: 'kg',
 };
+/** Caractéristiques particulières cochées à l'annonce (contrainte colis_caracteristiques_valides). */
+export type Caracteristique = 'fragile' | 'batterie' | 'inflammable' | 'liquide';
+export const CARACTERISTIQUES: { v: Caracteristique; l: string; emoji: string }[] = [
+  { v: 'fragile', l: 'Fragile', emoji: '🍷' },
+  { v: 'batterie', l: 'Batterie', emoji: '🔋' },
+  { v: 'inflammable', l: 'Inflammable', emoji: '🔥' },
+  { v: 'liquide', l: 'Liquide / produit chimique', emoji: '🧪' },
+];
+export const caracLabel = (v: Caracteristique) => CARACTERISTIQUES.find((c) => c.v === v)?.l ?? v;
 export const EXPEDITION_STATUT_LABEL: Record<ExpeditionStatut, string> = {
   ouverte: 'Ouverte', cloturee: 'Clôturée', partie: 'Partie',
   arrivee: 'Arrivée', livree: 'Livrée', annulee: 'Annulée',
@@ -62,7 +71,7 @@ export interface ExpeditionTotaux {
 }
 export interface Colis {
   code: string; expeditionCode: string | null; clientNom: string | null; clientTel: string | null;
-  codeClient: string | null; marqueColis: string | null; villeDepart: string | null; mode: FretMode; typeMarchandise: string | null;
+  codeClient: string | null; marqueColis: string | null; villeDepart: string | null; caracteristiques: Caracteristique[]; mode: FretMode; typeMarchandise: string | null;
   description: string | null; poidsKg: number | null; volumeM3: number | null;
   statut: ColisStatut; recuChineLe: string | null; createdAt: string;
 }
@@ -116,7 +125,7 @@ export async function fetchExpeditionTotaux(): Promise<Record<string, Expedition
 export async function fetchColis(expeditionCode?: string): Promise<Colis[]> {
   if (!supabase) return [];
   let q = supabase.from('colis')
-    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
+    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
     .order('created_at', { ascending: false });
   q = expeditionCode ? q.eq('expedition_code', expeditionCode) : q.is('expedition_code', null);
   const { data, error } = await q;
@@ -128,7 +137,7 @@ export async function fetchColis(expeditionCode?: string): Promise<Colis[]> {
 export async function fetchTousColis(profileId?: string): Promise<Colis[]> {
   if (!supabase) return [];
   let q = supabase.from('colis')
-    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
+    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
     .order('created_at', { ascending: false });
   if (profileId) q = q.eq('profile_id', profileId);
   const { data, error } = await q;
@@ -261,7 +270,7 @@ export async function devisFret(
 
 /** Le voyageur annonce un colis à venir (statut 'annonce', rattaché à son compte). */
 export async function annoncerColis(c: {
-  mode: FretMode; villeDepart: string; typeMarchandise?: string; description?: string; marqueColis?: string;
+  mode: FretMode; villeDepart: string; caracteristiques?: Caracteristique[]; typeMarchandise?: string; description?: string; marqueColis?: string;
   poidsKg?: number | null; volumeM3?: number | null;
 }): Promise<{ code?: string; error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
@@ -272,7 +281,7 @@ export async function annoncerColis(c: {
   const { error } = await supabase.from('colis').insert({
     code, mode: c.mode, profile_id: uid, expedition_code: null, statut: 'annonce',
     type_marchandise: c.typeMarchandise || 'general', description: c.description?.trim() || null,
-    marque_colis: c.marqueColis?.trim() || null, ville_depart: c.villeDepart, poids_kg: c.poidsKg ?? null, volume_m3: c.volumeM3 ?? null,
+    marque_colis: c.marqueColis?.trim() || null, ville_depart: c.villeDepart, caracteristiques: c.caracteristiques ?? [], poids_kg: c.poidsKg ?? null, volume_m3: c.volumeM3 ?? null,
   });
   if (error) return { error: humanize(error.message) };
   return { code };
@@ -282,7 +291,7 @@ export async function annoncerColis(c: {
 export async function fetchMesColis(): Promise<Colis[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from('colis')
-    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
+    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
     .order('created_at', { ascending: false });
   if (error) { warn('chargement de mes colis', error); return []; }
   return (data as Row[]).map(toColis);
@@ -292,7 +301,7 @@ export async function fetchMesColis(): Promise<Colis[]> {
 export async function fetchColisByCode(code: string): Promise<Colis | null> {
   if (!supabase) return null;
   const { data, error } = await supabase.from('colis')
-    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
+    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
     .eq('code', code).maybeSingle();
   if (error) { warn('chargement du colis', error); return null; }
   return data ? toColis(data as Row) : null;
@@ -473,7 +482,7 @@ function toExpedition(r: Row): Expedition {
 function toColis(r: Row): Colis {
   return {
     code: String(r.code), expeditionCode: str(r.expedition_code), clientNom: str(r.client_nom), clientTel: str(r.client_tel),
-    codeClient: str(r.code_client), marqueColis: str(r.marque_colis), villeDepart: str(r.ville_depart), mode: r.mode as FretMode, typeMarchandise: str(r.type_marchandise),
+    codeClient: str(r.code_client), marqueColis: str(r.marque_colis), villeDepart: str(r.ville_depart), caracteristiques: Array.isArray(r.caracteristiques) ? r.caracteristiques as Caracteristique[] : [], mode: r.mode as FretMode, typeMarchandise: str(r.type_marchandise),
     description: str(r.description), poidsKg: num(r.poids_kg), volumeM3: num(r.volume_m3),
     statut: r.statut as ColisStatut, recuChineLe: str(r.recu_chine_le), createdAt: String(r.created_at),
   };

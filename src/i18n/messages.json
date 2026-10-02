@@ -4152,5 +4152,10 @@
     "zh": "义乌",
     "ar": "ييوو"
   },
-  "Ville de départ": {"en": "City of departure", "zh": "出发城市", "ar": "مدينة المغادرة"}
+  "Ville de départ": {"en": "City of departure", "zh": "出发城市", "ar": "مدينة المغادرة"},
+  "Caractéristiques particulières (cochez si applicable)": {"en": "Special characteristics (tick if applicable)", "zh": "特殊属性（如适用请勾选）", "ar": "خصائص خاصة (ضعوا علامة إن وُجدت)"},
+  "Fragile": {"en": "Fragile", "zh": "易碎", "ar": "قابل للكسر"},
+  "Batterie": {"en": "Battery", "zh": "电池", "ar": "بطارية"},
+  "Inflammable": {"en": "Flammable", "zh": "易燃", "ar": "قابل للاشتعال"},
+  "Liquide / produit chimique": {"en": "Liquid / chemical", "zh": "液体 / 化学品", "ar": "سائل / مادة كيميائية"}
 }
