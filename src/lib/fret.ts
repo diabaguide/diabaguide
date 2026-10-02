@@ -300,23 +300,24 @@ export async function fetchColisByCode(code: string): Promise<Colis | null> {
 
 export interface EtapeVue { type: EtapeType; au: string }
 /**
- * Le suivi d'un colis : « colis annoncé » (sa création), puis les étapes de
- * l'expédition qui le transporte. RLS : un voyageur ne lit que les étapes
+ * Le suivi d'un colis : « colis annoncé » (sa création), « reçu à l'entrepôt
+ * (Chine) » (sa réception), puis les étapes de l'expédition qui le transporte. RLS : un voyageur ne lit que les étapes
  * visibles des expéditions portant ses propres colis.
  */
 export async function fetchEtapesColis(colisCode: string): Promise<EtapeVue[]> {
   if (!supabase) return [];
   const { data: c, error: ce } = await supabase.from('colis')
-    .select('expedition_code, created_at').eq('code', colisCode).maybeSingle();
+    .select('expedition_code, created_at, recu_chine_le').eq('code', colisCode).maybeSingle();
   if (ce || !c) { if (ce) warn('chargement du suivi', ce); return []; }
   const etapes: EtapeVue[] = [{ type: 'annonce', au: String(c.created_at) }];
+  if (c.recu_chine_le) etapes.push({ type: 'recu_chine', au: String(c.recu_chine_le) });
   if (c.expedition_code) {
     const { data, error } = await supabase.from('expedition_etapes')
       .select('type, au').eq('expedition_code', c.expedition_code).order('au', { ascending: true });
     if (error) { warn('chargement du suivi', error); return etapes; }
     etapes.push(...((data as EtapeVue[]) ?? []));
   }
-  return etapes;
+  return etapes.sort((x, y) => x.au.localeCompare(y.au));
 }
 
 /* ---------- Administration : entrepôts, tarifs, types ---------- */
