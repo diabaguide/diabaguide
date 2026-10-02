@@ -3564,5 +3564,15 @@
     "en": "Sign in to edit your profile.",
     "zh": "请登录后编辑您的资料。",
     "ar": "سجّلوا الدخول لتعديل ملفكم الشخصي."
-  }
+  },
+  "Quelques infos suffisent : l’équipe Diaba complète le reste. ": {"en": "Just a few details are enough: the Diaba team fills in the rest. ", "zh": "只需填写少量信息，其余由 Diaba 团队补充。 ", "ar": "بضع معلومات تكفي: فريق Diaba يستكمل الباقي. "},
+  "Tel qu’écrit sur l’enseigne ou la carte, en chinois ou en lettres latines.": {"en": "As written on the sign or card, in Chinese or Latin letters.", "zh": "按招牌或名片上的写法，中文或拉丁字母均可。", "ar": "كما هو مكتوب على اللافتة أو البطاقة، بالصينية أو بالأحرف اللاتينية."},
+  "Où se trouve-t-il ?": {"en": "Where is it?", "zh": "它在哪里？", "ar": "أين يقع؟"},
+  "Photo de la devanture ou de la carte de visite ": {"en": "Photo of the storefront or business card ", "zh": "店面或名片照片 ", "ar": "صورة للواجهة أو بطاقة العمل "},
+  "Une photo suffit, on s’occupe du reste : nom en chinois, adresse, téléphone, WeChat.": {"en": "One photo is enough, we take care of the rest: Chinese name, address, phone, WeChat.", "zh": "一张照片就够了，其余交给我们：中文名称、地址、电话、微信。", "ar": "صورة واحدة تكفي ونحن نتولى الباقي: الاسم بالصينية والعنوان والهاتف وWeChat."},
+  "Si vous les avez": {"en": "If you have them", "zh": "如果您有的话", "ar": "إن توفرت لديكم"},
+  "Sans photo, indiquez au moins un téléphone ou un identifiant WeChat.": {"en": "Without a photo, give at least a phone number or a WeChat ID.", "zh": "没有照片时，请至少提供电话或微信号。", "ar": "بدون صورة، أدخلوا على الأقل رقم هاتف أو معرّف WeChat."},
+  "Ce qu’ils vendent": {"en": "What they sell", "zh": "他们销售的产品", "ar": "ما يبيعونه"},
+  "Par exemple : coques de téléphone, câbles": {"en": "For example: phone cases, cables", "zh": "例如：手机壳、数据线", "ar": "مثال: أغطية هواتف، كابلات"},
+  "Ajoutez une photo, ou un téléphone ou un identifiant WeChat.": {"en": "Add a photo, or a phone number or WeChat ID.", "zh": "请添加照片，或电话或微信号。", "ar": "أضيفوا صورة، أو رقم هاتف أو معرّف WeChat."}
 }

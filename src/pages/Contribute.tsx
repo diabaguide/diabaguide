@@ -1,28 +1,18 @@
 import { useI18n } from '../i18n';
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catLabel, cityName, type Cat, type City, type Proposal, type Status } from '../data';
 import { emptyProposal, useStore } from '../store';
 import { compressImage } from '../lib/image';
 import { uploadPhoto, type PhotoBucket } from '../lib/photos';
-import { Button, DemoNote, Field, Icon, KV, RadioCard, Screen, Section, StatusBadge, StoredPhoto, TextArea, TopBar, Select } from '../ui';
+import { Button, DemoNote, Field, Icon, RadioCard, Screen, Section, StatusBadge, StoredPhoto, TextArea, TopBar, Select } from '../ui';
 
-const LABELS = ['Lieu', 'Contact', 'Photos', 'Envoi'];
-
-function Stepper({ n }: { n: number }) {
-  const { tr } = useI18n();
-  return (
-    <div className="stepper">
-      <div className="bars">{[1, 2, 3, 4].map((i) => <i key={i} className={i <= n ? 'on' : ''} />)}</div>
-      <div className="row small" style={{ justifyContent: 'space-between' }}><strong>{tr("Étape ")}{tr(n)} {tr(" sur 4 : ")}{tr(LABELS[n - 1])}</strong><span className="muted">{tr("Brouillon automatique")}</span></div>
-    </div>
-  );
-}
-
-/* Seuls la catégorie, le nom et une indication de localisation sont obligatoires pour soumettre. */
+/* Obligatoires : catégorie, nom, localisation, et au moins une photo OU un contact (téléphone / WeChat)
+   pour que l'équipe puisse retrouver le prestataire. */
 const required = (p: Proposal) => ({
   name: p.name.trim() ? null : 'Saisissez le nom du prestataire.',
   loc: p.loc.trim() ? null : 'Indiquez au moins un quartier, un marché ou un repère.',
+  proof: p.photos > 0 || p.tel.trim() || p.wechat.trim() ? null : 'Ajoutez une photo, ou un téléphone ou un identifiant WeChat.',
 });
 
 export const MAX_PHOTOS = 3;
@@ -65,8 +55,6 @@ export function FilePick({ label, onPick, done, bucket }: { label: string; onPic
 
 export function Wizard() {
   const { tr } = useI18n();
-  const { step } = useParams();
-  const n = Math.min(4, Math.max(1, Number(step) || 1));
   const { s, d, api } = useStore();
   const nav = useNavigate();
   const p = s.draft ?? emptyProposal();
@@ -74,87 +62,42 @@ export function Wizard() {
   const [busy, setBusy] = useState(false);
   const set = (patch: Partial<Proposal>) => d({ t: 'draft', p: { ...p, ...patch } });
   const errs = required(p);
-  const go = (to: number) => nav(`/contributions/nouvelle/${to}`);
-  const next = () => {
-    if (n === 1) { setTried(true); if (errs.name || errs.loc) return; }
-    go(n + 1);
-  };
   const saveDraft = async () => { setBusy(true); await api.saveDraft(p); nav('/contributions'); };
   const submit = async () => {
-    if (errs.name || errs.loc) { setTried(true); go(1); return; }
+    if (errs.name || errs.loc || errs.proof) { setTried(true); return; }
     setBusy(true); await api.submit(p); nav('/contributions/nouvelle/envoyee');
   };
-  const nextBtns: ReactNode = (
-    <div className="stack" style={{ marginTop: 6 }}>
-      <div className="row">
-        {n > 1 && <Button kind="s" icon="chevL" full={false} onClick={() => go(n - 1)}>{tr("Retour")}</Button>}
-        <div className="grow">{n < 4 ? <Button onClick={next}>{tr("Suivant")}</Button> : <Button icon="send" onClick={submit} disabled={busy}>{tr(busy ? 'Envoi…' : 'Soumettre à Diaba')}</Button>}</div>
-      </div>
-      <Button kind="t" onClick={saveDraft} disabled={busy}>{tr("Enregistrer le brouillon")}</Button>
-    </div>
-  );
 
   return (
     <Screen>
-      <TopBar title={tr("Proposer une adresse")} back={n > 1 ? `/contributions/nouvelle/${n - 1}` : -1} />
-      <Stepper n={n} />
+      <TopBar title={tr("Proposer une adresse")} back={-1} />
       <div className="main" style={{ gap: 16, paddingTop: 14 }}>
-        {n === 1 && (
-          <>
-            <div className="small muted">{tr("Seuls la catégorie, le nom et une indication de localisation sont obligatoires. ")}<span className="req">*</span> {tr(" = obligatoire.")}</div>
-            <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Catégorie ")}<span className="req" aria-hidden="true">*</span></h2>
-              {s.categories.filter((c) => c.active).map((c) => <RadioCard key={c.id} name="cat" label={tr(c.label)} icon={c.icon} checked={p.cat === c.id} onChange={() => set({ cat: c.id as Cat })} />)}
-            </section>
-            <Field id="nom" label={tr("Nom du prestataire")} value={p.name} onChange={(v) => set({ name: v })} req error={tr(tried ? errs.name : null)} />
-            <Field id="nomcn" label={tr("Nom en chinois (facultatif)")} value={p.cn} onChange={(v) => set({ cn: v })} />
-            <Select id="ville" label={tr("Ville")} value={p.city} onChange={(v) => set({ city: v as City })} options={s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }))} />
-            <Field id="loc" label={tr("Indication de localisation")} value={p.loc} onChange={(v) => set({ loc: v })} req hint={tr("Quartier, marché, rue ou repère : ce que vous savez.")} error={tr(tried ? errs.loc : null)} />
-          </>
-        )}
-        {n === 2 && (
-          <>
-            <div className="small muted">{tr("Tous les champs de cette étape sont facultatifs. Ne renseignez que ce que vous connaissez.")}</div>
-            <TextArea id="prod" label={tr("Produits ou services")} rows={4} value={p.products} onChange={(v) => set({ products: v })} />
-            <Field id="moq" label={tr("Minimum de commande")} value={p.moq} placeholder={tr("Par exemple : 100 pièces")} onChange={(v) => set({ moq: v })} />
-            <Field id="tel" label={tr("Téléphone")} type="tel" value={p.tel} onChange={(v) => set({ tel: v })} />
-            <Field id="wx" label={tr("Identifiant WeChat")} value={p.wechat} onChange={(v) => set({ wechat: v })} />
-            <Field id="adrcn" label={tr("Adresse en chinois")} value={p.addrCn} hint={tr("Copiez-la depuis une carte de visite si possible.")} onChange={(v) => set({ addrCn: v })} />
-          </>
-        )}
-        {n === 3 && (
-          <>
-            <div className="small muted">{tr("Facultatif. Des photos du lieu aident l’équipe à vérifier l’adresse.")}</div>
-            <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Photos du lieu (")}{tr(p.photos)}{tr(" sur ")}{tr(MAX_PHOTOS)})</h2>
-              <div className="grid2">
-                {Array.from({ length: Math.min(p.photos, MAX_PHOTOS) }).map((_, i) => <StoredPhoto key={i} path={p.photoPaths[i]} label={tr(`Photo ${i + 1}`)} h={100} round={12} />)}
-                {p.photos < MAX_PHOTOS ? <FilePick label="Prendre une photo" onPick={(_, path) => set({ photos: p.photos + 1, photoPaths: path ? [...p.photoPaths, path] : p.photoPaths })} /> : <div className="small muted">{tr("3 photos au maximum.")}</div>}
-              </div>
-            </section>
-          </>
-        )}
-        {n === 4 && (
-          <>
-            <div className="muted small" style={{ fontSize: 15 }}>{tr("Relisez votre proposition avant de l’envoyer.")}</div>
-            <Section title={tr("Récapitulatif")}>
-              {[
-                ['Catégorie', catLabel(p.cat), 1], ['Nom', [p.name, p.cn].filter(Boolean).join(' · '), 1],
-                ['Localisation', [cityName(p.city), p.loc].filter(Boolean).join(' · '), 1], ['Produits', p.products, 2], ['Minimum de commande', p.moq, 2],
-                ['Téléphone et WeChat', [p.tel, p.wechat].filter(Boolean).join(' · '), 2],
-                ['Photos', `${p.photos} photo(s)`, 3],
-              ].map(([k, v, to]) => (
-                <div key={k as string} className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <KV k={tr(k as string)}>{tr((v as string) || undefined)}</KV>
-                  <Link className="link" to={`/contributions/nouvelle/${to}`} aria-label={tr(`Modifier ${k}`)}>{tr("Modifier")}</Link>
-                </div>
-              ))}
-            </Section>
-            {!errs.name && !errs.loc
-              ? <div className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr("Les 3 champs obligatoires sont remplis.")}</span></div>
-              : <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr("Il manque des champs obligatoires (nom ou localisation).")}</span></div>}
-            <div className="notice"><Icon name="info" size={20} /><span>{tr("Votre proposition sera examinée par l’équipe Diaba avant publication.")}</span></div>
-          </>
-        )}
-        {nextBtns}
+        <div className="small muted">{tr("Quelques infos suffisent : l’équipe Diaba complète le reste. ")}<span className="req">*</span> {tr(" = obligatoire.")}</div>
+        <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Catégorie ")}<span className="req" aria-hidden="true">*</span></h2>
+          {s.categories.filter((c) => c.active).map((c) => <RadioCard key={c.id} name="cat" label={tr(c.label)} icon={c.icon} checked={p.cat === c.id} onChange={() => set({ cat: c.id as Cat })} />)}
+        </section>
+        <Field id="nom" label={tr("Nom du prestataire")} value={p.name} onChange={(v) => set({ name: v })} req hint={tr("Tel qu’écrit sur l’enseigne ou la carte, en chinois ou en lettres latines.")} error={tr(tried ? errs.name : null)} />
+        <Select id="ville" label={tr("Ville")} value={p.city} onChange={(v) => set({ city: v as City })} options={s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }))} />
+        <Field id="loc" label={tr("Où se trouve-t-il ?")} value={p.loc} onChange={(v) => set({ loc: v })} req hint={tr("Quartier, marché, rue ou repère : ce que vous savez.")} error={tr(tried ? errs.loc : null)} />
+        <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Photo de la devanture ou de la carte de visite ")}<span className="req" aria-hidden="true">*</span></h2>
+          <div className="small muted">{tr("Une photo suffit, on s’occupe du reste : nom en chinois, adresse, téléphone, WeChat.")}</div>
+          <div className="grid2">
+            {Array.from({ length: Math.min(p.photos, MAX_PHOTOS) }).map((_, i) => <StoredPhoto key={i} path={p.photoPaths[i]} label={tr(`Photo ${i + 1}`)} h={100} round={12} />)}
+            {p.photos < MAX_PHOTOS ? <FilePick label="Prendre une photo" onPick={(_, path) => set({ photos: p.photos + 1, photoPaths: path ? [...p.photoPaths, path] : p.photoPaths })} /> : <div className="small muted">{tr("3 photos au maximum.")}</div>}
+          </div>
+        </section>
+        <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Si vous les avez")}</h2>
+          <div className="small muted">{tr("Sans photo, indiquez au moins un téléphone ou un identifiant WeChat.")}</div>
+          <Field id="tel" label={tr("Téléphone")} type="tel" value={p.tel} onChange={(v) => set({ tel: v })} />
+          <Field id="wx" label={tr("Identifiant WeChat")} value={p.wechat} onChange={(v) => set({ wechat: v })} />
+          <Field id="prod" label={tr("Ce qu’ils vendent")} value={p.products} placeholder={tr("Par exemple : coques de téléphone, câbles")} onChange={(v) => set({ products: v })} />
+        </section>
+        {tried && errs.proof && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(errs.proof)}</span></div>}
+        <div className="notice"><Icon name="info" size={20} /><span>{tr("Votre proposition sera examinée par l’équipe Diaba avant publication.")}</span></div>
+        <div className="stack" style={{ marginTop: 6 }}>
+          <Button icon="send" onClick={submit} disabled={busy}>{tr(busy ? 'Envoi…' : 'Envoyer à Diaba')}</Button>
+          <Button kind="t" onClick={saveDraft} disabled={busy}>{tr("Enregistrer le brouillon")}</Button>
+        </div>
       </div>
     </Screen>
   );
@@ -199,7 +142,7 @@ export function Contributions() {
           );
           return draft ? (
             <button key={p.id} type="button" className="card stack" style={{ gap: 8, textAlign: 'start', font: 'inherit', cursor: 'pointer' }}
-              onClick={() => { d({ t: 'draft', p }); nav('/contributions/nouvelle/2'); }}>{inner}</button>
+              onClick={() => { d({ t: 'draft', p }); nav('/contributions/nouvelle/1'); }}>{inner}</button>
           ) : (
             <Link key={p.id} to={`/contributions/${p.id}`} className="card stack" style={{ gap: 8, textDecoration: 'none', color: 'inherit' }}>{inner}</Link>
           );
