@@ -144,7 +144,7 @@ export function FretDashboard() {
                       <td><Link to={lien(e.code)}><strong>{e.code}</strong></Link><div className="small muted">{e.destination}</div></td>
                       <td>{tr(MODE_LABEL[e.mode])}</td>
                       <td>{t?.nbColis ?? 0}</td>
-                      <td className="small">{remplissage(t)}</td>
+                      <td className="small">{remplissage(t, tr)}</td>
                     </tr>
                   );
                 })}
@@ -154,7 +154,7 @@ export function FretDashboard() {
             <div className="acards">
               {ouvertes.map((e) => (
                 <AdminCard key={e.code} toneSeed={e.code} title={e.code}
-                  sub={<>{tr(MODE_LABEL[e.mode])} · {totaux[e.code]?.nbColis ?? 0} {tr("colis")} · {remplissage(totaux[e.code])}</>}
+                  sub={<>{tr(MODE_LABEL[e.mode])} · {totaux[e.code]?.nbColis ?? 0} {tr("colis")} · {remplissage(totaux[e.code], tr)}</>}
                   onOpen={() => nav(lien(e.code))} />
               ))}
             </div>
@@ -195,11 +195,11 @@ export function FretDashboard() {
   );
 }
 
-function remplissage(t?: ExpeditionTotaux) {
+function remplissage(t: ExpeditionTotaux | undefined, tr: (s: string) => string) {
   if (!t) return '—';
   const parts = [
-    t.pctKg != null ? `${t.pctKg} % du poids (${t.totalKg} kg)` : `${t.totalKg} kg`,
-    t.pctM3 != null ? `${t.pctM3} % du volume (${t.totalM3} m³)` : `${t.totalM3} m³`,
+    t.pctKg != null ? tr(`${t.pctKg} % du poids (${t.totalKg} kg)`) : `${t.totalKg} kg`,
+    t.pctM3 != null ? tr(`${t.pctM3} % du volume (${t.totalM3} m³)`) : `${t.totalM3} m³`,
   ];
   return parts.join(' · ');
 }
