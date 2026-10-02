@@ -5,7 +5,7 @@ import { Button, Field, Icon, Logo, Photo, Screen, TopBar } from '../ui';
 import { useStore, type Lang } from '../store';
 import { supabase } from '../lib/supabase';
 import { homeFor, sendPasswordReset, signIn, signOut, signUp, updatePassword, ACCOUNT_NOTICE_KEY } from '../lib/auth';
-import { EMAIL, PHONE } from '../lib/phone';
+import { DIAL_CODES, EMAIL, PHONE } from '../lib/phone';
 
 const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }, { v: 'ar', l: 'العربية', flag: '🇸🇦' }];
 export function LangSwitch({ dark = false }: { dark?: boolean }) {
@@ -49,19 +49,6 @@ export function Welcome() {
   );
 }
 
-const DIAL_CODES: { c: string; flag: string; n: string }[] = [
-  { c: '+221', flag: '🇸🇳', n: 'Sénégal' }, { c: '+86', flag: '🇨🇳', n: 'Chine' }, { c: '+33', flag: '🇫🇷', n: 'France' },
-  { c: '+223', flag: '🇲🇱', n: 'Mali' }, { c: '+224', flag: '🇬🇳', n: 'Guinée' }, { c: '+225', flag: '🇨🇮', n: 'Côte d’Ivoire' },
-  { c: '+220', flag: '🇬🇲', n: 'Gambie' }, { c: '+222', flag: '🇲🇷', n: 'Mauritanie' }, { c: '+226', flag: '🇧🇫', n: 'Burkina Faso' },
-  { c: '+227', flag: '🇳🇪', n: 'Niger' }, { c: '+228', flag: '🇹🇬', n: 'Togo' }, { c: '+229', flag: '🇧🇯', n: 'Bénin' },
-  { c: '+234', flag: '🇳🇬', n: 'Nigeria' }, { c: '+233', flag: '🇬🇭', n: 'Ghana' }, { c: '+237', flag: '🇨🇲', n: 'Cameroun' },
-  { c: '+243', flag: '🇨🇩', n: 'RD Congo' }, { c: '+242', flag: '🇨🇬', n: 'Congo' }, { c: '+241', flag: '🇬🇦', n: 'Gabon' },
-  { c: '+212', flag: '🇲🇦', n: 'Maroc' }, { c: '+213', flag: '🇩🇿', n: 'Algérie' }, { c: '+216', flag: '🇹🇳', n: 'Tunisie' },
-  { c: '+20', flag: '🇪🇬', n: 'Égypte' }, { c: '+27', flag: '🇿🇦', n: 'Afrique du Sud' }, { c: '+32', flag: '🇧🇪', n: 'Belgique' },
-  { c: '+41', flag: '🇨🇭', n: 'Suisse' }, { c: '+44', flag: '🇬🇧', n: 'Royaume-Uni' }, { c: '+49', flag: '🇩🇪', n: 'Allemagne' },
-  { c: '+34', flag: '🇪🇸', n: 'Espagne' }, { c: '+39', flag: '🇮🇹', n: 'Italie' }, { c: '+1', flag: '🇺🇸', n: 'États-Unis / Canada' },
-  { c: '+971', flag: '🇦🇪', n: 'Émirats arabes unis' }, { c: '+90', flag: '🇹🇷', n: 'Turquie' }, { c: '+852', flag: '🇭🇰', n: 'Hong Kong' },
-];
 
 export function Signup() {
   const { tr, t } = useI18n();

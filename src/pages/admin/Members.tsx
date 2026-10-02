@@ -1,5 +1,5 @@
 import { useI18n } from '../../i18n';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
 import { Button, Field, Icon, Select, useWide } from '../../ui';
@@ -10,7 +10,9 @@ import {
   fetchInvitations, fetchMembers, inviteMember, resetPasswordFor, revokeInvitation, setMemberRole, updateMember,
   ROLE_LABEL, type Invitation, type Member,
 } from '../../lib/members';
-import { formatPhone, phoneKey } from '../../lib/phone';
+import { DIAL_CODES, PHONE, formatPhone, joinPhone, phoneKey } from '../../lib/phone';
+import { compressImage } from '../../lib/image';
+import { photoUrl, uploadPhoto } from '../../lib/photos';
 import { whatsappUrl } from '../../lib/shopping';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,6 +32,21 @@ const RoleBadge = ({ role }: { role: Role }) => {
     </span>
   );
 };
+
+/** Photo de profil : l'image si elle existe, sinon les initiales. */
+function Avatar({ path, name, size = 40 }: { path?: string | null; name: string; size?: number }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    setUrl(null);
+    if (path) void photoUrl(path, 3600, 'avatars').then((u) => { if (live) setUrl(u); });
+    return () => { live = false; };
+  }, [path]);
+  const ini = name.split(/[\s.@]+/).filter(Boolean).map((x) => x[0]?.toUpperCase()).slice(0, 2).join('') || '?';
+  return url
+    ? <img src={url} alt="" width={size} height={size} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />
+    : <span aria-hidden="true" style={{ width: size, height: size, borderRadius: '50%', flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--gold-fill, #E6EAF3)', color: '#153E9F', fontWeight: 700, fontSize: Math.round(size * 0.4) }}>{ini}</span>;
+}
 
 /** Modification du nom et du téléphone d'un compte (administrateurs). */
 function MemberEdit({ m, onSaved }: { m: Member; onSaved: (msg: string) => void }) {
@@ -100,6 +117,12 @@ export function Members() {
   const [openInvite, setOpenInvite] = useState<Invitation | null>(null);
 
   const [email, setEmail] = useState('');
+  const [nom, setNom] = useState('');
+  const [dial, setDial] = useState('+221');
+  const [tel, setTel] = useState('');
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [role, setRole] = useState<'livreur' | 'team' | 'admin'>('team');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -122,15 +145,29 @@ export function Members() {
     e.preventDefault();
     setErr(null); setOk(null);
     if (!EMAIL.test(email)) { setErr('Saisissez une adresse e-mail valide.'); return; }
+    if (nom.trim().length < 2) { setErr('Saisissez le nom complet.'); return; }
+    const phone = joinPhone(dial, tel);
+    if (!PHONE.test(phone)) { setErr('Saisissez un numéro de téléphone valide.'); return; }
     setBusy(true);
-    const res = await inviteMember(email, role);
+    const res = await inviteMember(email, role, { name: nom.trim(), phone, avatarPath: avatar ?? undefined });
     setBusy(false);
     if (res.error) { setErr(res.error); return; }
     setOk(res.outcome === 'promoted'
       ? `${email} a été ajouté comme ${ROLE_LABEL[role].toLowerCase()}.`
       : `Invitation enregistrée pour ${email}. Le rôle sera appliqué dès sa première connexion.`);
-    setEmail('');
+    setEmail(''); setNom(''); setTel(''); setAvatar(null);
     await reload();
+  };
+
+  const pickAvatar = async (file: File | undefined) => {
+    if (!file) return;
+    setErr(null); setAvatarBusy(true);
+    try {
+      const img = await compressImage(file, 512, 0.85);
+      const up = await uploadPhoto(img, 'avatars');
+      if (up.error) setErr(up.error); else setAvatar(up.path ?? null);
+    } catch (e) { setErr((e as Error).message); }
+    setAvatarBusy(false);
   };
 
   const change = async (id: string, next: Role) => {
@@ -169,12 +206,40 @@ export function Members() {
         <section className="card stack" style={{ gap: 14 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Ajouter un membre")}</h2>
           <p className="small muted" style={{ margin: 0 }}>
-            {tr("Si la personne a déjà un compte, son rôle est appliqué immédiatement. Sinon, l’invitation est conservée et le rôle lui est accordé à sa première connexion.")}</p>
-          <form onSubmit={invite} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
-            <div className="grow"><Field id="inv-mail" label={tr("Adresse e-mail")} type="email" value={email} onChange={setEmail} placeholder={tr("nom@exemple.com")} /></div>
-            <Select id="inv-role" label={tr("Rôle")} value={role} onChange={(v) => setRole(v as 'livreur' | 'team' | 'admin')}
-              options={[{ v: 'team', l: 'Équipe' }, { v: 'livreur', l: 'Livreur (fret uniquement)' }, { v: 'admin', l: 'Administrateur' }]} />
-            <Button type="submit" icon="plus" full={false} disabled={busy}>{tr(busy ? 'Ajout…' : 'Ajouter')}</Button>
+            {tr("Si la personne a déjà un compte, son rôle est appliqué immédiatement. Sinon, l’invitation est conservée avec son nom, son numéro et sa photo, et le rôle lui est accordé à sa première connexion.")}</p>
+          <form onSubmit={invite} className="stack" style={{ gap: 14 }} noValidate>
+            <div className="row" style={{ gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Avatar path={avatar} name={nom || email} size={64} />
+              <input ref={fileRef} type="file" accept="image/*" className="sr" aria-label={tr("Photo de profil")}
+                onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; void pickAvatar(f); }} />
+              <div className="stack" style={{ gap: 4 }}>
+                <span style={{ fontWeight: 600 }}>{tr("Photo de profil")}</span>
+                <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                  <Button kind="s" icon="camera" full={false} disabled={avatarBusy} onClick={() => fileRef.current?.click()}>
+                    {tr(avatarBusy ? 'Préparation de la photo…' : avatar ? 'Changer la photo' : 'Choisir une photo')}
+                  </Button>
+                  {avatar && <Button kind="t" icon="x" full={false} onClick={() => setAvatar(null)}>{tr("Retirer")}</Button>}
+                </span>
+              </div>
+            </div>
+            <div className="filters" style={{ alignItems: 'flex-end' }}>
+              <div className="grow"><Field id="inv-nom" label={tr("Nom complet")} value={nom} onChange={setNom} req /></div>
+              <div className="grow"><Field id="inv-mail" label={tr("Adresse e-mail")} type="email" value={email} onChange={setEmail} placeholder={tr("nom@exemple.com")} req /></div>
+            </div>
+            <div className="filters" style={{ alignItems: 'flex-end' }}>
+              <div className="field grow">
+                <label htmlFor="inv-tel">{tr("Numéro de téléphone")}<span className="req" aria-hidden="true"> *</span></label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <select id="inv-dial" aria-label={tr("Indicatif du pays")} value={dial} onChange={(e) => setDial(e.target.value)} style={{ flex: '0 0 auto', width: 'auto', maxWidth: '45%' }}>
+                    {DIAL_CODES.map((x) => <option key={x.c + x.n} value={x.c}>{x.flag} {x.c} {x.n}</option>)}
+                  </select>
+                  <input id="inv-tel" type="tel" inputMode="tel" autoComplete="off" value={tel} style={{ flex: 1, minWidth: 0 }} onChange={(e) => setTel(e.target.value)} />
+                </div>
+              </div>
+              <Select id="inv-role" label={tr("Rôle")} value={role} onChange={(v) => setRole(v as 'livreur' | 'team' | 'admin')}
+                options={[{ v: 'team', l: 'Équipe' }, { v: 'livreur', l: 'Livreur (fret uniquement)' }, { v: 'admin', l: 'Administrateur' }]} />
+              <Button type="submit" icon="plus" full={false} disabled={busy || avatarBusy}>{tr(busy ? 'Ajout…' : 'Ajouter')}</Button>
+            </div>
           </form>
         </section>
 
@@ -188,7 +253,12 @@ export function Members() {
               <tbody>
                 {invites.map((i) => (
                   <tr key={i.email}>
-                    <td><strong>{i.email}</strong><div className="small muted">{tr("Pas encore inscrit")}</div></td>
+                    <td>
+                      <div className="row" style={{ gap: 10 }}>
+                        <Avatar path={i.avatarPath} name={i.name ?? i.email} />
+                        <div><strong>{i.name ?? i.email}</strong><div className="small muted">{i.name ? `${i.email} · ` : ''}{tr("Pas encore inscrit")}</div></div>
+                      </div>
+                    </td>
                     <td><RoleBadge role={i.role} /></td>
                     <td><Button kind="s" icon="x" full={false} onClick={() => revoke(i.email)}>{tr("Annuler")}</Button></td>
                   </tr>
@@ -198,7 +268,8 @@ export function Members() {
             ) : (
               <div className="acards">
                 {invites.map((i) => (
-                  <AdminCard key={i.email} toneSeed={i.email} title={i.email} sub={tr("Pas encore inscrit")}
+                  <AdminCard key={i.email} toneSeed={i.name ?? i.email} thumb={i.avatarPath ? <Avatar path={i.avatarPath} name={i.name ?? i.email} size={44} /> : undefined}
+                    title={i.name ?? i.email} sub={<>{i.name ? `${i.email} · ` : ''}{tr("Pas encore inscrit")}</>}
                     badge={<RoleBadge role={i.role} />} onOpen={() => setOpenInvite(i)} />
                 ))}
               </div>
@@ -228,8 +299,13 @@ export function Members() {
                   return (
                     <tr key={m.id}>
                       <td>
-                        <strong>{tr(m.name ?? '—')}{isMe && <span className="muted" style={{ fontWeight: 400 }}> {tr(" (vous)")}</span>}</strong>
-                        <div className="small muted">{m.email}</div>
+                        <div className="row" style={{ gap: 10 }}>
+                          <Avatar path={m.avatarPath} name={m.name ?? m.email} />
+                          <div>
+                            <strong>{tr(m.name ?? '—')}{isMe && <span className="muted" style={{ fontWeight: 400 }}> {tr(" (vous)")}</span>}</strong>
+                            <div className="small muted">{m.email}</div>
+                          </div>
+                        </div>
                       </td>
                       <td><RoleBadge role={m.role} /></td>
                       <td>
@@ -263,7 +339,7 @@ export function Members() {
               {shown.map((m) => {
                 const isMe = m.id === meId;
                 return (
-                  <AdminCard key={m.id} toneSeed={m.name ?? m.email}
+                  <AdminCard key={m.id} toneSeed={m.name ?? m.email} thumb={m.avatarPath ? <Avatar path={m.avatarPath} name={m.name ?? m.email} size={44} /> : undefined}
                     title={<>{tr(m.name ?? '—')}{isMe && <span className="muted" style={{ fontWeight: 400 }}>{tr(" (vous)")}</span>}</>}
                     sub={m.email} badge={<RoleBadge role={m.role} />}
                     onOpen={() => { setConfirmId(null); setOpenMember(m); }} />

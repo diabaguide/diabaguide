@@ -4,12 +4,14 @@ import { isInternalEmail, phoneOf } from './phone';
 
 export interface Member {
   id: string; name: string | null; phone: string | null; email: string; role: Role; createdAt: string;
+  /** Photo de profil (bucket « avatars »). */
+  avatarPath: string | null;
   /** État du compte (gestion par les administrateurs, voir supabase/admin_travelers.sql). */
   status: AccountStatus;
   suspendedAt: string | null;
   suspendedReason: string | null;
 }
-export interface Invitation { email: string; role: Exclude<Role, 'traveler'>; createdAt: string }
+export interface Invitation { email: string; role: Exclude<Role, 'traveler'>; createdAt: string; name: string | null; phone: string | null; avatarPath: string | null }
 export const STATUS_LABEL: Record<AccountStatus, string> = {
   active: 'Actif',
   suspended: 'Désactivé',
@@ -26,17 +28,17 @@ export const ROLE_LABEL: Record<Role, string> = {
 export async function fetchMembers(): Promise<Member[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from('profiles').select('id, name, phone, email, role, status, suspended_at, suspended_reason, created_at').order('created_at', { ascending: true });
+    .from('profiles').select('id, name, phone, email, role, status, suspended_at, suspended_reason, created_at, avatar_path').order('created_at', { ascending: true });
   if (error) { warn('chargement des comptes', error); return []; }
   return (data as {
     id: string; name: string | null; phone: string | null; email: string; role: Role;
-    status: AccountStatus | null; suspended_at: string | null; suspended_reason: string | null; created_at: string;
+    status: AccountStatus | null; suspended_at: string | null; suspended_reason: string | null; created_at: string; avatar_path: string | null;
   }[]).map((r) => ({
     id: r.id, name: r.name, phone: r.phone,
     // Compte inscrit avec son seul numéro : l'adresse interne n'est jamais
     // montrée, on affiche le téléphone à la place.
     email: isInternalEmail(r.email) ? phoneOf(r.phone, r.email) : r.email,
-    role: r.role, createdAt: r.created_at,
+    role: r.role, createdAt: r.created_at, avatarPath: r.avatar_path,
     status: r.status ?? 'active', suspendedAt: r.suspended_at, suspendedReason: r.suspended_reason,
   }));
 }
@@ -202,34 +204,28 @@ export async function purgeTravelerFiles(userId: string): Promise<{ supprimes: n
 export async function fetchInvitations(): Promise<Invitation[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from('team_invitations').select('email, role, created_at').is('accepted_at', null).order('created_at', { ascending: true });
+    .from('team_invitations').select('email, role, created_at, name, phone, avatar_path').is('accepted_at', null).order('created_at', { ascending: true });
   if (error) { warn('chargement des invitations', error); return []; }
-  return (data as { email: string; role: Exclude<Role, 'traveler'>; created_at: string }[])
-    .map((r) => ({ email: r.email, role: r.role, createdAt: r.created_at }));
+  return (data as { email: string; role: Exclude<Role, 'traveler'>; created_at: string; name: string | null; phone: string | null; avatar_path: string | null }[])
+    .map((r) => ({ email: r.email, role: r.role, createdAt: r.created_at, name: r.name, phone: r.phone, avatarPath: r.avatar_path }));
 }
 
 /**
  * Ajoute un membre : promeut le compte s'il existe déjà, sinon crée une
  * invitation appliquée automatiquement à sa première inscription.
- * (Aucune clé service_role n'est nécessaire — elle ne doit jamais être
- * embarquée dans le front.)
+ * Le nom, le téléphone et la photo accompagnent l'invitation : ils sont
+ * appliqués au profil à la première inscription (supabase/member_profile.sql).
  */
 export async function inviteMember(
   email: string, role: Exclude<Role, 'traveler'>,
+  extra: { name?: string; phone?: string; avatarPath?: string } = {},
 ): Promise<{ outcome: 'promoted' | 'invited'; error?: string }> {
   if (!supabase) return { outcome: 'invited', error: 'Supabase non configuré.' };
-  const clean = email.trim().toLowerCase();
-
-  const { data: existing } = await supabase.from('profiles').select('id').ilike('email', clean).maybeSingle();
-  if (existing) {
-    const { error } = await supabase.from('profiles').update({ role }).eq('id', (existing as { id: string }).id);
-    return { outcome: 'promoted', error: error ? humanize(error.message) : undefined };
-  }
-
-  const { data: me } = await supabase.auth.getUser();
-  const { error } = await supabase.from('team_invitations')
-    .upsert({ email: clean, role, invited_by: me.user?.id ?? null, accepted_at: null }, { onConflict: 'email' });
-  return { outcome: 'invited', error: error ? humanize(error.message) : undefined };
+  const { data, error } = await supabase.rpc('admin_add_member', {
+    p_email: email.trim().toLowerCase(), p_role: role,
+    p_name: extra.name ?? null, p_phone: extra.phone ?? null, p_avatar: extra.avatarPath ?? null,
+  });
+  return { outcome: data === 'promoted' ? 'promoted' : 'invited', error: error ? humanize(error.message) : undefined };
 }
 
 /** Change le rôle d'un compte existant (garde-fous appliqués en base). */

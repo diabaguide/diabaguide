@@ -59,3 +59,25 @@ export const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function identifiantEstUnNumero(saisie: string): boolean {
   return !saisie.includes('@');
 }
+
+/** Indicatifs proposés dans les formulaires (Sénégal par défaut). */
+export const DIAL_CODES: { c: string; flag: string; n: string }[] = [
+  { c: '+221', flag: '🇸🇳', n: 'Sénégal' }, { c: '+86', flag: '🇨🇳', n: 'Chine' }, { c: '+33', flag: '🇫🇷', n: 'France' },
+  { c: '+223', flag: '🇲🇱', n: 'Mali' }, { c: '+224', flag: '🇬🇳', n: 'Guinée' }, { c: '+225', flag: '🇨🇮', n: 'Côte d’Ivoire' },
+  { c: '+220', flag: '🇬🇲', n: 'Gambie' }, { c: '+222', flag: '🇲🇷', n: 'Mauritanie' }, { c: '+226', flag: '🇧🇫', n: 'Burkina Faso' },
+  { c: '+227', flag: '🇳🇪', n: 'Niger' }, { c: '+228', flag: '🇹🇬', n: 'Togo' }, { c: '+229', flag: '🇧🇯', n: 'Bénin' },
+  { c: '+234', flag: '🇳🇬', n: 'Nigeria' }, { c: '+233', flag: '🇬🇭', n: 'Ghana' }, { c: '+237', flag: '🇨🇲', n: 'Cameroun' },
+  { c: '+243', flag: '🇨🇩', n: 'RD Congo' }, { c: '+242', flag: '🇨🇬', n: 'Congo' }, { c: '+241', flag: '🇬🇦', n: 'Gabon' },
+  { c: '+212', flag: '🇲🇦', n: 'Maroc' }, { c: '+213', flag: '🇩🇿', n: 'Algérie' }, { c: '+216', flag: '🇹🇳', n: 'Tunisie' },
+  { c: '+20', flag: '🇪🇬', n: 'Égypte' }, { c: '+27', flag: '🇿🇦', n: 'Afrique du Sud' }, { c: '+32', flag: '🇧🇪', n: 'Belgique' },
+  { c: '+41', flag: '🇨🇭', n: 'Suisse' }, { c: '+44', flag: '🇬🇧', n: 'Royaume-Uni' }, { c: '+49', flag: '🇩🇪', n: 'Allemagne' },
+  { c: '+34', flag: '🇪🇸', n: 'Espagne' }, { c: '+39', flag: '🇮🇹', n: 'Italie' }, { c: '+1', flag: '🇺🇸', n: 'États-Unis / Canada' },
+  { c: '+971', flag: '🇦🇪', n: 'Émirats arabes unis' }, { c: '+90', flag: '🇹🇷', n: 'Turquie' }, { c: '+852', flag: '🇭🇰', n: 'Hong Kong' },
+];
+
+/** Numéro complet : l'indicatif est ajouté sauf si la personne a déjà tapé un « + ». */
+export const joinPhone = (dial: string, raw: string) => {
+  const n = raw.trim();
+  if (!n) return '';
+  return n.startsWith('+') ? n : `${dial} ${n.replace(/^0+/, '')}`;
+};
