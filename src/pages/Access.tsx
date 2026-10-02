@@ -49,18 +49,35 @@ export function Welcome() {
   );
 }
 
+const DIAL_CODES: { c: string; flag: string; n: string }[] = [
+  { c: '+221', flag: '🇸🇳', n: 'Sénégal' }, { c: '+86', flag: '🇨🇳', n: 'Chine' }, { c: '+33', flag: '🇫🇷', n: 'France' },
+  { c: '+223', flag: '🇲🇱', n: 'Mali' }, { c: '+224', flag: '🇬🇳', n: 'Guinée' }, { c: '+225', flag: '🇨🇮', n: 'Côte d’Ivoire' },
+  { c: '+220', flag: '🇬🇲', n: 'Gambie' }, { c: '+222', flag: '🇲🇷', n: 'Mauritanie' }, { c: '+226', flag: '🇧🇫', n: 'Burkina Faso' },
+  { c: '+227', flag: '🇳🇪', n: 'Niger' }, { c: '+228', flag: '🇹🇬', n: 'Togo' }, { c: '+229', flag: '🇧🇯', n: 'Bénin' },
+  { c: '+234', flag: '🇳🇬', n: 'Nigeria' }, { c: '+233', flag: '🇬🇭', n: 'Ghana' }, { c: '+237', flag: '🇨🇲', n: 'Cameroun' },
+  { c: '+243', flag: '🇨🇩', n: 'RD Congo' }, { c: '+242', flag: '🇨🇬', n: 'Congo' }, { c: '+241', flag: '🇬🇦', n: 'Gabon' },
+  { c: '+212', flag: '🇲🇦', n: 'Maroc' }, { c: '+213', flag: '🇩🇿', n: 'Algérie' }, { c: '+216', flag: '🇹🇳', n: 'Tunisie' },
+  { c: '+20', flag: '🇪🇬', n: 'Égypte' }, { c: '+27', flag: '🇿🇦', n: 'Afrique du Sud' }, { c: '+32', flag: '🇧🇪', n: 'Belgique' },
+  { c: '+41', flag: '🇨🇭', n: 'Suisse' }, { c: '+44', flag: '🇬🇧', n: 'Royaume-Uni' }, { c: '+49', flag: '🇩🇪', n: 'Allemagne' },
+  { c: '+34', flag: '🇪🇸', n: 'Espagne' }, { c: '+39', flag: '🇮🇹', n: 'Italie' }, { c: '+1', flag: '🇺🇸', n: 'États-Unis / Canada' },
+  { c: '+971', flag: '🇦🇪', n: 'Émirats arabes unis' }, { c: '+90', flag: '🇹🇷', n: 'Turquie' }, { c: '+852', flag: '🇭🇰', n: 'Hong Kong' },
+];
+
 export function Signup() {
   const { tr, t } = useI18n();
   const { d } = useStore();
   const nav = useNavigate();
   const [f, setF] = useState({ name: '', phone: '', email: '', pw: '', terms: false });
+  const [dial, setDial] = useState('+221');
+  // Numéro complet avec indicatif, sauf si l'utilisateur a déjà saisi un « + ».
+  const fullPhone = f.phone.trim().startsWith('+') ? f.phone.trim() : `${dial} ${f.phone.trim().replace(/^0+/, '')}`;
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [apiErr, setApiErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const errs = {
     name: f.name.trim() ? null : 'Saisissez votre nom.',
-    phone: PHONE.test(f.phone.trim()) ? null : 'Saisissez un numéro de téléphone valide.',
+    phone: f.phone.trim() && PHONE.test(fullPhone) ? null : 'Saisissez un numéro de téléphone valide.',
     email: !f.email.trim() || EMAIL.test(f.email.trim()) ? null : 'Saisissez une adresse e-mail complète, par exemple nom@exemple.com.',
     pw: f.pw.length >= 8 ? null : 'Le mot de passe doit contenir au moins 8 caractères.',
     terms: f.terms ? null : 'Acceptez les conditions pour créer votre compte.',
@@ -73,12 +90,12 @@ export function Signup() {
     setInfo(null);
     if (count) return;
     if (!supabase) {
-      d({ t: 'login', user: { name: f.name, phone: f.phone, email: f.email || f.phone, role: 'traveler', status: 'active' } });
+      d({ t: 'login', user: { name: f.name, phone: fullPhone, email: f.email || fullPhone, role: 'traveler', status: 'active' } });
       nav('/inscription/confirmation');
       return;
     }
     setBusy(true);
-    const res = await signUp(f.name, f.phone, f.email, f.pw);
+    const res = await signUp(f.name, fullPhone, f.email, f.pw);
     setBusy(false);
     if (res.error) { setApiErr(res.error); return; }
     if (res.needsConfirm) {
@@ -98,7 +115,19 @@ export function Signup() {
         {info && <div role="status" className="notice"><Icon name="check" size={20} sw={2} /><span>{tr(info)}</span></div>}
         <p className="muted small">{tr("Un compte est nécessaire pour consulter les adresses et en proposer. Les champs marqués * sont obligatoires.")}</p>
         <Field id="nom" label={tr("Nom complet")} value={f.name} onChange={(v) => setF({ ...f, name: v })} req error={tr(show('name'))} />
-        <Field id="tel" label={tr("Numéro de téléphone")} type="tel" value={f.phone} onChange={(v) => setF({ ...f, phone: v })} req hint={tr("C’est votre identifiant : vous vous connecterez avec ce numéro. L’équipe Diaba peut aussi vous joindre dessus.")} error={tr(show('phone'))} />
+        <div className="field">
+          <label htmlFor="tel">{tr("Numéro de téléphone")}<span className="req" aria-hidden="true"> *</span></label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <select id="tel-dial" aria-label={tr("Indicatif du pays")} value={dial} onChange={(e) => setDial(e.target.value)} style={{ flex: '0 0 auto', width: 'auto', maxWidth: '45%' }}>
+              {DIAL_CODES.map((x) => <option key={x.c + x.n} value={x.c}>{x.flag} {x.c} {x.n}</option>)}
+            </select>
+            <input id="tel" type="tel" inputMode="tel" autoComplete="tel-national" value={f.phone} aria-invalid={!!show('phone')}
+              aria-describedby={show('phone') ? 'tel-err' : undefined} className={show('phone') ? 'err' : ''} style={{ flex: 1, minWidth: 0 }}
+              onChange={(e) => setF({ ...f, phone: e.target.value })} />
+          </div>
+          {!show('phone') && <div className="hint">{tr("C’est votre identifiant : vous vous connecterez avec ce numéro. L’équipe Diaba peut aussi vous joindre dessus.")}</div>}
+          {show('phone') && <div id="tel-err" className="error"><Icon name="alert" size={16} sw={2} /><span>{tr(errs.phone)}</span></div>}
+        </div>
         <Field id="mdp" label={tr("Mot de passe")} type="password" value={f.pw} onChange={(v) => setF({ ...f, pw: v })} req hint={tr("Au moins 8 caractères.")} error={tr(show('pw'))} />
         <Field id="mail" label={tr("Adresse e-mail (facultatif)")} type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} hint={tr("Utile seulement pour récupérer votre mot de passe si vous l’oubliez.")} error={tr(show('email'))} />
         <div>
