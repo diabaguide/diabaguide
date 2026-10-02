@@ -4,9 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { catLabel, type Provider } from '../data';
 import { useOnline, useStore, type LocPref, type Theme } from '../store';
 import { changeMyPassword, isTeamRole, signOut, updateMyProfile } from '../lib/auth';
-import { Button, DemoNote, Field, Icon, RadioCard, Screen, StoredPhoto, Tag, TopBar } from '../ui';
+import { Avatar, AvatarPicker, Button, DemoNote, Field, Icon, RadioCard, Screen, StoredPhoto, Tag, TopBar } from '../ui';
 import { LangSwitch } from './Access';
 import { PHONE } from '../lib/phone';
+import { removePhoto } from '../lib/photos';
 
 export function Favorites() {
   const { tr } = useI18n();
@@ -90,7 +91,9 @@ export function Profile() {
       <TopBar title={tr("Profil")} />
       <div className="main" style={{ gap: 20 }}>
         <div className="card row" style={{ padding: 16, gap: 14 }}>
-          <span className="avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: 20 }}>{tr(initials)}</span>
+          {s.user?.avatarPath
+            ? <Avatar path={s.user.avatarPath} name={s.user.name} size={56} />
+            : <span className="avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: 20 }}>{tr(initials)}</span>}
           <div className="grow"><div style={{ fontWeight: 700, fontSize: 18 }}>{s.user?.name}</div><div className="small muted">{s.user?.email || s.user?.phone}</div></div>
         </div>
         <Button kind="s" icon="edit" to="/profil/modifier">{tr("Modifier mon profil")}</Button>
@@ -134,6 +137,7 @@ export function ProfileForms() {
   const u = s.user;
   const [name, setName] = useState(u?.name ?? '');
   const [phone, setPhone] = useState(u?.phone ?? '');
+  const [avatar, setAvatar] = useState<string | null>(u?.avatarPath ?? null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -153,10 +157,14 @@ export function ProfileForms() {
     if (name.trim().length < 2) { setErr('Le nom doit contenir au moins 2 caractères.'); return; }
     if (phone.trim() && !PHONE.test(phone.trim())) { setErr('Saisissez un numéro de téléphone valide.'); return; }
     setBusy(true);
-    const res = await updateMyProfile(name, phone);
+    const before = u?.avatarPath ?? null;
+    const changed = avatar !== before;
+    const res = await updateMyProfile(name, phone, changed ? (avatar ? { path: avatar } : { remove: true }) : {});
     setBusy(false);
     if (res.error) { setErr(res.error); return; }
-    d({ t: 'login', user: { ...u, name: name.trim(), phone: phone.trim() } });
+    d({ t: 'login', user: { ...u, name: name.trim(), phone: phone.trim(), avatarPath: avatar } });
+    // Ancien fichier remplacé ou retiré : on le supprime du stockage.
+    if (changed) await removePhoto(before, 'avatars');
     setOk('Profil enregistré.');
   };
 
@@ -179,6 +187,7 @@ export function ProfileForms() {
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Mes informations")}</h2>
           {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
           {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
+          <AvatarPicker path={avatar} name={name || u.email} onChange={setAvatar} onError={setErr} />
           <Field id="me-name" label={tr("Nom complet")} value={name} onChange={setName} req />
           <Field id="me-phone" label={tr("Numéro de téléphone")} type="tel" value={phone} onChange={setPhone}
             hint={tr("Avec l’indicatif du pays, par exemple +221 77 123 45 67.")} />

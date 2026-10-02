@@ -6,7 +6,7 @@ import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
 import { signOut } from '../../lib/auth';
 import { FilePick, MAX_PHOTOS } from '../Contribute';
-import { Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, StoredPhoto, Tag, TextArea, useWide } from '../../ui';
+import { Avatar, Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, StoredPhoto, Tag, TextArea, useWide } from '../../ui';
 import { AdminCard, AdminSheet, SheetActions } from './mobile';
 
 /* Toutes les propositions vues par l’équipe (hors brouillons des voyageurs).
@@ -82,7 +82,9 @@ export function AdminLayout() {
         </nav>
         <button type="button" className="collapse-btn" aria-pressed={collapsed} aria-label={tr(collapsed ? 'Agrandir le menu' : 'Réduire le menu')} title={tr(collapsed ? 'Agrandir le menu' : 'Réduire le menu')} onClick={toggle}><Icon name={collapsed ? 'chevR' : 'chevL'} size={20} /><span className="lbl">{tr("Réduire le menu")}</span></button>
         <div className="me">
-          <span className="avatar">{tr((s.user?.name ?? '?').split(/[\s.]+/).map((x) => x[0]?.toUpperCase()).slice(0, 2).join(''))}</span>
+          {s.user?.avatarPath
+            ? <Avatar path={s.user.avatarPath} name={s.user.name} />
+            : <span className="avatar">{tr((s.user?.name ?? '?').split(/[\s.]+/).map((x) => x[0]?.toUpperCase()).slice(0, 2).join(''))}</span>}
           <div className="grow lbl"><div style={{ fontWeight: 600 }}>{s.user?.name}</div><div className="small" style={{ color: '#DCE6FA' }}>{tr(isAdmin ? 'Administrateur' : 'Vérification')}</div></div>
           <Link to="/accueil" className="iconbtn" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.4)' }} aria-label={tr("Revenir à l’espace voyageur")} title={tr("Revenir à l’espace voyageur")}><Icon name="compass" size={20} /></Link>
           <button type="button" className="iconbtn" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.4)' }} aria-label={tr("Se déconnecter")} onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}><Icon name="logout" size={20} /></button>

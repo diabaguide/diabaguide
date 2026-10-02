@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 export type PhotoBucket = 'proposal-photos' | 'fiche-photos' | 'review-photos' | 'fret-photos' | 'avatars';
 
 /** Buckets dont les règles d'accès exigent un dossier au nom du voyageur. */
-const dossierUtilisateur: PhotoBucket[] = ['proposal-photos', 'review-photos'];
+const dossierUtilisateur: PhotoBucket[] = ['proposal-photos', 'review-photos', 'avatars'];
 
 /**
  * Envoie une photo (déjà compressée) dans le bucket privé.
@@ -25,6 +25,16 @@ export async function uploadPhoto(blob: Blob, bucket: PhotoBucket = 'proposal-ph
     return { error: 'L’envoi de la photo a échoué. Réessayez.' };
   }
   return { path };
+}
+
+/**
+ * Supprime un fichier du stockage, sans bruit : un échec (fichier déjà parti,
+ * ou rangé hors du dossier de la personne) ne doit jamais bloquer un
+ * enregistrement de profil.
+ */
+export async function removePhoto(path: string | null | undefined, bucket: PhotoBucket): Promise<void> {
+  if (!supabase || !path) return;
+  try { await supabase.storage.from(bucket).remove([path]); } catch { /* sans conséquence */ }
 }
 
 /** URL temporaire pour afficher une photo privée (1 h par défaut). */

@@ -1,5 +1,5 @@
 import { useI18n } from './i18n';
-import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
 /* Vrai à partir de 1024 px : la mise en page « site web » est active. */
 export function useWide() {
@@ -14,7 +14,8 @@ export function useWide() {
   }, []);
   return wide;
 }
-import { photoUrl, type PhotoBucket } from './lib/photos';
+import { photoUrl, uploadPhoto, removePhoto, type PhotoBucket } from './lib/photos';
+import { compressImage } from './lib/image';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ICONS, type IconName } from './icons';
 import { STATUS_STYLE, type Status } from './data';
@@ -85,6 +86,61 @@ export function StoredPhoto({ path, label, h, w, round, bucket }: { path?: strin
     return () => { live = false; };
   }, [path, bucket]);
   return <Photo label={label} h={h} w={w} round={round} src={url} />;
+}
+
+/** Photo de profil : l'image si elle existe, sinon les initiales. */
+export function Avatar({ path, name, size = 40 }: { path?: string | null; name: string; size?: number }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    setUrl(null);
+    if (path) void photoUrl(path, 3600, 'avatars').then((u) => { if (live) setUrl(u); });
+    return () => { live = false; };
+  }, [path]);
+  const ini = name.split(/[\s.@]+/).filter(Boolean).map((x) => x[0]?.toUpperCase()).slice(0, 2).join('') || '?';
+  return url
+    ? <img src={url} alt="" width={size} height={size} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />
+    : <span aria-hidden="true" style={{ width: size, height: size, borderRadius: '50%', flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--gold-fill, #E6EAF3)', color: '#153E9F', fontWeight: 700, fontSize: Math.round(size * 0.4) }}>{ini}</span>;
+}
+
+/**
+ * Choix d'une photo de profil : aperçu, « Choisir / Changer » et « Retirer ».
+ * L'image est réduite (512 px) puis envoyée tout de suite ; `onChange` reçoit
+ * le chemin du nouveau fichier, ou null si la photo est retirée. L'ancien
+ * fichier n'est supprimé qu'à l'enregistrement du profil (voir removePhoto).
+ */
+export function AvatarPicker({ path, name, onChange, onError }: {
+  path: string | null; name: string; onChange: (path: string | null) => void; onError?: (msg: string) => void;
+}) {
+  const { tr } = useI18n();
+  const ref = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const pick = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const img = await compressImage(file, 512, 0.85);
+      const up = await uploadPhoto(img, 'avatars');
+      if (up.error) onError?.(up.error); else onChange(up.path ?? null);
+    } catch (e) { onError?.((e as Error).message); }
+    setBusy(false);
+  };
+  return (
+    <div className="row" style={{ gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+      <Avatar path={path} name={name} size={64} />
+      <input ref={ref} type="file" accept="image/*" className="sr" aria-label={tr("Photo de profil")}
+        onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; void pick(f); }} />
+      <div className="stack" style={{ gap: 4 }}>
+        <span style={{ fontWeight: 600 }}>{tr("Photo de profil")}</span>
+        <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+          <Button kind="s" icon="camera" full={false} disabled={busy} onClick={() => ref.current?.click()}>
+            {tr(busy ? 'Préparation de la photo…' : path ? 'Changer la photo' : 'Choisir une photo')}
+          </Button>
+          {path && <Button kind="t" icon="x" full={false} disabled={busy} onClick={() => onChange(null)}>{tr("Retirer")}</Button>}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 /* Emplacement photo :remplacer par <img> quand les visuels sont disponibles. */

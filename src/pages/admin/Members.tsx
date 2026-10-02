@@ -1,8 +1,8 @@
 import { useI18n } from '../../i18n';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
-import { Button, Field, Icon, Select, useWide } from '../../ui';
+import { Avatar, AvatarPicker, Button, Field, Icon, Select, useWide } from '../../ui';
 import { SortTh, compare, useSort } from './tableSort';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { Role } from '../../lib/auth';
@@ -11,8 +11,7 @@ import {
   ROLE_LABEL, type Invitation, type Member,
 } from '../../lib/members';
 import { DIAL_CODES, PHONE, formatPhone, joinPhone, phoneKey } from '../../lib/phone';
-import { compressImage } from '../../lib/image';
-import { photoUrl, uploadPhoto } from '../../lib/photos';
+import { removePhoto } from '../../lib/photos';
 import { whatsappUrl } from '../../lib/shopping';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -33,41 +32,31 @@ const RoleBadge = ({ role }: { role: Role }) => {
   );
 };
 
-/** Photo de profil : l'image si elle existe, sinon les initiales. */
-function Avatar({ path, name, size = 40 }: { path?: string | null; name: string; size?: number }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let live = true;
-    setUrl(null);
-    if (path) void photoUrl(path, 3600, 'avatars').then((u) => { if (live) setUrl(u); });
-    return () => { live = false; };
-  }, [path]);
-  const ini = name.split(/[\s.@]+/).filter(Boolean).map((x) => x[0]?.toUpperCase()).slice(0, 2).join('') || '?';
-  return url
-    ? <img src={url} alt="" width={size} height={size} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />
-    : <span aria-hidden="true" style={{ width: size, height: size, borderRadius: '50%', flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--gold-fill, #E6EAF3)', color: '#153E9F', fontWeight: 700, fontSize: Math.round(size * 0.4) }}>{ini}</span>;
-}
-
 /** Modification du nom et du téléphone d'un compte (administrateurs). */
 function MemberEdit({ m, onSaved }: { m: Member; onSaved: (msg: string) => void }) {
   const { tr } = useI18n();
   const [name, setName] = useState(m.name ?? '');
   const [phone, setPhone] = useState(m.phone ?? '');
+  const [avatar, setAvatar] = useState<string | null>(m.avatarPath);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const save = async () => {
     setErr(null);
     if (name.trim().length < 2) { setErr('Le nom doit contenir au moins 2 caractères.'); return; }
     setBusy(true);
-    const res = await updateMember(m.id, name, phone);
+    const changed = avatar !== m.avatarPath;
+    const res = await updateMember(m.id, name, phone, changed ? (avatar ? { path: avatar } : { remove: true }) : {});
     setBusy(false);
     if (res.error) { setErr(res.error); return; }
+    // Ancien fichier remplacé ou retiré : on le supprime du stockage.
+    if (changed) await removePhoto(m.avatarPath, 'avatars');
     onSaved('Membre modifié.');
   };
   return (
     <div className="stack" style={{ gap: 10 }}>
       <SheetDanger>{tr("Modifier le membre")}</SheetDanger>
       {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+      <AvatarPicker path={avatar} name={name || m.email} onChange={setAvatar} onError={setErr} />
       <Field id="mb-name" label={tr("Nom")} value={name} onChange={setName} req />
       <Field id="mb-phone" label={tr("Téléphone")} type="tel" value={phone} onChange={setPhone}
         placeholder={tr("Non renseigné")} hint={tr("Facultatif : espaces et indicatif acceptés.")} />
@@ -121,8 +110,6 @@ export function Members() {
   const [dial, setDial] = useState('+221');
   const [tel, setTel] = useState('');
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [avatarBusy, setAvatarBusy] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
   const [role, setRole] = useState<'livreur' | 'team' | 'admin'>('team');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -157,17 +144,6 @@ export function Members() {
       : `Invitation enregistrée pour ${email}. Le rôle sera appliqué dès sa première connexion.`);
     setEmail(''); setNom(''); setTel(''); setAvatar(null);
     await reload();
-  };
-
-  const pickAvatar = async (file: File | undefined) => {
-    if (!file) return;
-    setErr(null); setAvatarBusy(true);
-    try {
-      const img = await compressImage(file, 512, 0.85);
-      const up = await uploadPhoto(img, 'avatars');
-      if (up.error) setErr(up.error); else setAvatar(up.path ?? null);
-    } catch (e) { setErr((e as Error).message); }
-    setAvatarBusy(false);
   };
 
   const change = async (id: string, next: Role) => {
@@ -208,20 +184,7 @@ export function Members() {
           <p className="small muted" style={{ margin: 0 }}>
             {tr("Si la personne a déjà un compte, son rôle est appliqué immédiatement. Sinon, l’invitation est conservée avec son nom, son numéro et sa photo, et le rôle lui est accordé à sa première connexion.")}</p>
           <form onSubmit={invite} className="stack" style={{ gap: 14 }} noValidate>
-            <div className="row" style={{ gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Avatar path={avatar} name={nom || email} size={64} />
-              <input ref={fileRef} type="file" accept="image/*" className="sr" aria-label={tr("Photo de profil")}
-                onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; void pickAvatar(f); }} />
-              <div className="stack" style={{ gap: 4 }}>
-                <span style={{ fontWeight: 600 }}>{tr("Photo de profil")}</span>
-                <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                  <Button kind="s" icon="camera" full={false} disabled={avatarBusy} onClick={() => fileRef.current?.click()}>
-                    {tr(avatarBusy ? 'Préparation de la photo…' : avatar ? 'Changer la photo' : 'Choisir une photo')}
-                  </Button>
-                  {avatar && <Button kind="t" icon="x" full={false} onClick={() => setAvatar(null)}>{tr("Retirer")}</Button>}
-                </span>
-              </div>
-            </div>
+            <AvatarPicker path={avatar} name={nom || email} onChange={setAvatar} onError={setErr} />
             <div className="filters" style={{ alignItems: 'flex-end' }}>
               <div className="grow"><Field id="inv-nom" label={tr("Nom complet")} value={nom} onChange={setNom} req /></div>
               <div className="grow"><Field id="inv-mail" label={tr("Adresse e-mail")} type="email" value={email} onChange={setEmail} placeholder={tr("nom@exemple.com")} req /></div>
@@ -238,7 +201,7 @@ export function Members() {
               </div>
               <Select id="inv-role" label={tr("Rôle")} value={role} onChange={(v) => setRole(v as 'livreur' | 'team' | 'admin')}
                 options={[{ v: 'team', l: 'Équipe' }, { v: 'livreur', l: 'Livreur (fret uniquement)' }, { v: 'admin', l: 'Administrateur' }]} />
-              <Button type="submit" icon="plus" full={false} disabled={busy || avatarBusy}>{tr(busy ? 'Ajout…' : 'Ajouter')}</Button>
+              <Button type="submit" icon="plus" full={false} disabled={busy}>{tr(busy ? 'Ajout…' : 'Ajouter')}</Button>
             </div>
           </form>
         </section>

@@ -4,7 +4,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useStore } from '../../store';
 import { isTeamRole, signOut } from '../../lib/auth';
 import { phoneKey } from '../../lib/phone';
-import { Button, Icon, Logo, useWide } from '../../ui';
+import { Avatar, Button, Icon, Logo, useWide } from '../../ui';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import { ProfileForms } from '../Account';
 import {
@@ -62,7 +62,9 @@ export function FretLayout() {
         </nav>
         <button type="button" className="collapse-btn" aria-pressed={collapsed} aria-label={tr(collapsed ? 'Agrandir le menu' : 'Réduire le menu')} title={tr(collapsed ? 'Agrandir le menu' : 'Réduire le menu')} onClick={toggle}><Icon name={collapsed ? 'chevR' : 'chevL'} size={20} /><span className="lbl">{tr("Réduire le menu")}</span></button>
         <div className="me">
-          <span className="avatar">{tr((s.user?.name ?? '?').split(/[\s.]+/).map((x) => x[0]?.toUpperCase()).slice(0, 2).join(''))}</span>
+          {s.user?.avatarPath
+            ? <Avatar path={s.user.avatarPath} name={s.user.name} />
+            : <span className="avatar">{tr((s.user?.name ?? '?').split(/[\s.]+/).map((x) => x[0]?.toUpperCase()).slice(0, 2).join(''))}</span>}
           <div className="grow lbl"><div style={{ fontWeight: 600 }}>{s.user?.name}</div><div className="small" style={{ color: '#DCE6FA' }}>{tr(s.user?.role === 'livreur' ? 'Livreur' : 'Équipe fret')}</div></div>
           <button type="button" className="iconbtn" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.4)' }} aria-label={tr("Se déconnecter")} onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}><Icon name="logout" size={20} /></button>
         </div>

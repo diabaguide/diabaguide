@@ -11,7 +11,7 @@ export type AccountStatus = 'active' | 'suspended';
  * (compte désactivé) jusqu'à l'écran de connexion.
  */
 export const ACCOUNT_NOTICE_KEY = 'diaba-account-notice';
-export interface AuthUser { id: string; name: string; phone: string; email: string; role: Role; status: AccountStatus }
+export interface AuthUser { id: string; name: string; phone: string; email: string; role: Role; status: AccountStatus; avatarPath?: string | null }
 /** Un admin dispose aussi de tous les droits « équipe ». */
 export const isTeamRole = (r: Role | undefined) => r === 'team' || r === 'admin';
 /** Accès au module fret : le livreur, l'équipe et les administrateurs. */
@@ -43,19 +43,21 @@ async function profileFor(id: string, email: string, metaName?: string, metaPhon
   let name = metaName ?? (isInternalEmail(email) ? phoneOf(metaPhone, email) : email.split('@')[0]);
   let phone = metaPhone ?? '';
   let status: AccountStatus = 'active';
+  let avatarPath: string | null = null;
   try {
-    const { data } = await supabase!.from('profiles').select('name, phone, role, status').eq('id', id).maybeSingle();
+    const { data } = await supabase!.from('profiles').select('name, phone, role, status, avatar_path').eq('id', id).maybeSingle();
     if (data) {
       role = (data.role as Role) ?? role;
       name = data.name ?? name;
       phone = data.phone ?? phone;
       status = (data.status as AccountStatus) ?? status;
+      avatarPath = (data.avatar_path as string | null) ?? null;
     }
   } catch { /* profil pas encore créé (trigger) : on reste « voyageur » */ }
   // Un compte inscrit avec son seul numéro reçoit une adresse interne
   // (« p782254040@diabaguide.local ») : elle ne doit jamais être montrée. On
   // affiche le numéro, que l'on retrouve aussi sans profil lisible.
-  return { id, name, phone: phoneOf(phone, email), email: isInternalEmail(email) ? '' : email, role, status };
+  return { id, name, phone: phoneOf(phone, email), email: isInternalEmail(email) ? '' : email, role, status, avatarPath };
 }
 
 /** Utilisateur courant à partir d'une session Supabase (ou null). */
@@ -148,9 +150,13 @@ export async function sendPasswordReset(identifiant: string): Promise<{ error?: 
 }
 
 /** Modifie le nom et le téléphone du compte connecté (supabase/update_my_profile.sql). */
-export async function updateMyProfile(name: string, phone: string): Promise<{ error?: string }> {
+export async function updateMyProfile(
+  name: string, phone: string, avatar: { path?: string; remove?: boolean } = {},
+): Promise<{ error?: string }> {
   if (!supabase) return {};
-  const { error } = await supabase.rpc('update_my_profile', { p_name: name, p_phone: phone });
+  const { error } = await supabase.rpc('update_my_profile', {
+    p_name: name, p_phone: phone, p_avatar: avatar.path ?? null, p_remove_avatar: avatar.remove ?? false,
+  });
   return { error: error ? error.message : undefined };
 }
 

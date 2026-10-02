@@ -56,9 +56,13 @@ export async function updateTraveler(id: string, name: string, phone: string): P
 }
 
 /** Modifie le nom et le téléphone d'un compte, quel que soit son rôle (supabase/admin_update_member.sql). */
-export async function updateMember(id: string, name: string, phone: string): Promise<{ error?: string }> {
+export async function updateMember(
+  id: string, name: string, phone: string, avatar: { path?: string; remove?: boolean } = {},
+): Promise<{ error?: string }> {
   if (!supabase) return {};
-  const { error } = await supabase.rpc('admin_update_member', { p_id: id, p_name: name, p_phone: phone });
+  const { error } = await supabase.rpc('admin_update_member', {
+    p_id: id, p_name: name, p_phone: phone, p_avatar: avatar.path ?? null, p_remove_avatar: avatar.remove ?? false,
+  });
   return { error: error ? humanize(error.message) : undefined };
 }
 
