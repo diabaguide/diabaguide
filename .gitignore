@@ -27,6 +27,10 @@ Thumbs.db
 # Vite / cache
 .vite/
 
+# Sorties de tsc émises à côté des sources (le code source est en TypeScript)
+src/**/*.js
+*.tsbuildinfo
+
 # Vidages mémoire (core dumps) laissés par un processus planté
 core
 core.*
