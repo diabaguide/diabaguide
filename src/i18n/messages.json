@@ -3806,5 +3806,350 @@
     "en": "New parcel",
     "zh": "新建包裹",
     "ar": "طرد جديد"
+  },
+  "Halal": {
+    "en": "Halal",
+    "zh": "清真",
+    "ar": "حلال"
+  },
+  "Suppression refusée : réservée à l'administrateur.": {
+    "en": "Deletion refused: reserved for the administrator.",
+    "zh": "删除被拒绝：仅限管理员。",
+    "ar": "تم رفض الحذف: مخصص للمشرف."
+  },
+  "Impossible d'envoyer le signalement. Réessayez dans quelques instants.": {
+    "en": "Unable to send the report. Please try again in a few moments.",
+    "zh": "无法发送举报，请稍后重试。",
+    "ar": "تعذّر إرسال البلاغ. أعيدوا المحاولة بعد قليل."
+  },
+  "Vérifiez votre numéro de téléphone et votre mot de passe.": {
+    "en": "Check your phone number and password.",
+    "zh": "请检查您的电话号码和密码。",
+    "ar": "تحققوا من رقم هاتفكم وكلمة المرور."
+  },
+  "WeChat": {
+    "en": "WeChat",
+    "zh": "微信",
+    "ar": "ويتشات"
+  },
+  "Mes envois": {
+    "en": "My shipments",
+    "zh": "我的货运",
+    "ar": "شحناتي"
+  },
+  "Estimer le prix": {
+    "en": "Estimate the price",
+    "zh": "估算价格",
+    "ar": "تقدير السعر"
+  },
+  "Une estimation indicative. Le prix définitif est confirmé par Diaba après pesée et mesure.": {
+    "en": "An indicative estimate. The final price is confirmed by Diaba after weighing and measuring.",
+    "zh": "此为参考估价。最终价格由 Diaba 在称重和测量后确认。",
+    "ar": "تقدير إرشادي. يؤكّد Diaba السعر النهائي بعد الوزن والقياس."
+  },
+  "Mode d’envoi": {
+    "en": "Shipping mode",
+    "zh": "运输方式",
+    "ar": "طريقة الشحن"
+  },
+  "Tarif pas encore disponible pour ce choix. Contactez Diaba sur WhatsApp pour un devis.": {
+    "en": "Rate not yet available for this choice. Contact Diaba on WhatsApp for a quote.",
+    "zh": "该选项暂无资费。请通过 WhatsApp 联系 Diaba 获取报价。",
+    "ar": "السعر غير متوفر بعد لهذا الاختيار. تواصلوا مع Diaba عبر واتساب للحصول على عرض سعر."
+  },
+  "Estimation": {
+    "en": "Estimate",
+    "zh": "估价",
+    "ar": "التقدير"
+  },
+  "Annoncer un colis": {
+    "en": "Announce a parcel",
+    "zh": "预报包裹",
+    "ar": "الإبلاغ عن طرد"
+  },
+  "Prévenez Diaba d’un colis en route vers l’entrepôt en Chine. Vous pourrez ensuite suivre son avancement ici.": {
+    "en": "Let Diaba know about a parcel on its way to the warehouse in China. You can then follow its progress here.",
+    "zh": "请告知 Diaba 有包裹正在送往中国仓库。之后您可以在此跟踪进度。",
+    "ar": "أبلغوا Diaba بطرد في طريقه إلى المستودع في الصين. يمكنكم بعدها متابعة تقدّمه هنا."
+  },
+  "Marquage / fournisseur": {
+    "en": "Marking / supplier",
+    "zh": "唛头 / 供应商",
+    "ar": "العلامة / المورّد"
+  },
+  "Nom du fournisseur ou marquage": {
+    "en": "Supplier name or marking",
+    "zh": "供应商名称或唛头",
+    "ar": "اسم المورّد أو العلامة"
+  },
+  "Ce que contient le colis": {
+    "en": "What the parcel contains",
+    "zh": "包裹内容",
+    "ar": "محتوى الطرد"
+  },
+  "Poids estimé (kg)": {
+    "en": "Estimated weight (kg)",
+    "zh": "预估重量（公斤）",
+    "ar": "الوزن التقديري (كغ)"
+  },
+  "Volume estimé (m³)": {
+    "en": "Estimated volume (m³)",
+    "zh": "预估体积（立方米）",
+    "ar": "الحجم التقديري (م³)"
+  },
+  "Aucun colis pour l’instant. Annoncez votre premier colis ci-dessus.": {
+    "en": "No parcels yet. Announce your first parcel above.",
+    "zh": "暂无包裹。请在上方预报您的第一个包裹。",
+    "ar": "لا توجد طرود بعد. أبلغوا عن أول طرد لكم أعلاه."
+  },
+  "stockage": {
+    "en": "storage",
+    "zh": "仓储",
+    "ar": "التخزين"
+  },
+  "livraison": {
+    "en": "delivery",
+    "zh": "配送",
+    "ar": "التوصيل"
+  },
+  "Voir la facture": {
+    "en": "View invoice",
+    "zh": "查看发票",
+    "ar": "عرض الفاتورة"
+  },
+  "Pas encore d’étape visible. Vous serez informé dès que le colis avance.": {
+    "en": "No visible step yet. You will be notified as soon as the parcel moves forward.",
+    "zh": "暂无可见环节。包裹有进展时您会收到通知。",
+    "ar": "لا توجد مرحلة ظاهرة بعد. سيتم إعلامكم فور تقدّم الطرد."
+  },
+  "Imprimer / PDF": {
+    "en": "Print / PDF",
+    "zh": "打印 / PDF",
+    "ar": "طباعة / PDF"
+  },
+  "Aucune facture pour ce colis pour l’instant.": {
+    "en": "No invoice for this parcel yet.",
+    "zh": "该包裹暂无发票。",
+    "ar": "لا توجد فاتورة لهذا الطرد حتى الآن."
+  },
+  "Stockage": {
+    "en": "Storage",
+    "zh": "仓储",
+    "ar": "التخزين"
+  },
+  "Livraison": {
+    "en": "Delivery",
+    "zh": "配送",
+    "ar": "التوصيل"
+  },
+  "Total": {
+    "en": "Total",
+    "zh": "合计",
+    "ar": "الإجمالي"
+  },
+  "Payée le": {
+    "en": "Paid on",
+    "zh": "付款日期",
+    "ar": "تاريخ الدفع"
+  },
+  "Le règlement se fait auprès de Diaba (espèces, Wave, Orange Money). La marchandise est remise après paiement.": {
+    "en": "Payment is made to Diaba (cash, Wave, Orange Money). The goods are handed over after payment.",
+    "zh": "请向 Diaba 付款（现金、Wave、Orange Money）。付款后交付货物。",
+    "ar": "يتم الدفع لدى Diaba (نقدًا، Wave، Orange Money). تُسلَّم البضاعة بعد الدفع."
+  },
+  "Informations": {
+    "en": "Information",
+    "zh": "信息",
+    "ar": "المعلومات"
+  },
+  "Tarifs et entrepôts": {
+    "en": "Rates and warehouses",
+    "zh": "资费与仓库",
+    "ar": "الأسعار والمستودعات"
+  },
+  "Réglez ici les prix du fret, les frais de stockage et de livraison, et les adresses d’entrepôt en Chine.": {
+    "en": "Set freight prices, storage and delivery fees, and warehouse addresses in China here.",
+    "zh": "在此设置运费、仓储和配送费用以及中国仓库地址。",
+    "ar": "اضبطوا هنا أسعار الشحن ورسوم التخزين والتوصيل وعناوين المستودعات في الصين."
+  },
+  "Entrepôts en Chine": {
+    "en": "Warehouses in China",
+    "zh": "中国仓库",
+    "ar": "المستودعات في الصين"
+  },
+  "Identifiant": {
+    "en": "Identifier",
+    "zh": "标识",
+    "ar": "المعرّف"
+  },
+  "Entrepôt Guangzhou — fret": {
+    "en": "Guangzhou warehouse — freight",
+    "zh": "广州仓库 — 货运",
+    "ar": "مستودع قوانغتشو — شحن"
+  },
+  "Usage": {
+    "en": "Use",
+    "zh": "用途",
+    "ar": "الاستخدام"
+  },
+  "Adresse (français)": {
+    "en": "Address (French)",
+    "zh": "地址（法文）",
+    "ar": "العنوان (بالفرنسية)"
+  },
+  "Adresse (chinois)": {
+    "en": "Address (Chinese)",
+    "zh": "地址（中文）",
+    "ar": "العنوان (بالصينية)"
+  },
+  "Aucun entrepôt. Ajoutez vos adresses (une pour le fret/express, une pour le cargo).": {
+    "en": "No warehouse. Add your addresses (one for freight/express, one for cargo).",
+    "zh": "暂无仓库。请添加地址（货运/快递一个，海运一个）。",
+    "ar": "لا يوجد مستودع. أضيفوا عناوينكم (واحد للشحن/السريع وآخر للبضائع البحرية)."
+  },
+  "Grille de tarifs": {
+    "en": "Rate grid",
+    "zh": "资费表",
+    "ar": "جدول الأسعار"
+  },
+  "Un tarif par mode et type de marchandise. Le calculateur utilise le type précis, sinon « Marchandise générale ».": {
+    "en": "One rate per mode and goods type. The calculator uses the exact type, otherwise “General goods”.",
+    "zh": "每种方式和货物类型一个资费。计算器优先使用具体类型，否则使用“普通货物”。",
+    "ar": "سعر واحد لكل طريقة ونوع بضاعة. تستخدم الحاسبة النوع المحدد، وإلا «بضاعة عامة»."
+  },
+  "Type": {
+    "en": "Type",
+    "zh": "类型",
+    "ar": "النوع"
+  },
+  "Unité": {
+    "en": "Unit",
+    "zh": "单位",
+    "ar": "الوحدة"
+  },
+  "Prix unitaire": {
+    "en": "Unit price",
+    "zh": "单价",
+    "ar": "سعر الوحدة"
+  },
+  "Devise": {
+    "en": "Currency",
+    "zh": "币种",
+    "ar": "العملة"
+  },
+  "Aucun tarif saisi. Le calculateur restera indisponible tant qu’aucun prix n’est défini.": {
+    "en": "No rate entered. The calculator will stay unavailable until a price is set.",
+    "zh": "尚未录入资费。在设置价格之前，计算器将不可用。",
+    "ar": "لم يتم إدخال أي سعر. ستبقى الحاسبة غير متاحة حتى يُحدَّد سعر."
+  },
+  "Prix": {
+    "en": "Price",
+    "zh": "价格",
+    "ar": "السعر"
+  },
+  "Stockage (par jour après les jours gratuits) et livraison (par zone).": {
+    "en": "Storage (per day after the free days) and delivery (per zone).",
+    "zh": "仓储（免费天数后按天计费）和配送（按区域计费）。",
+    "ar": "التخزين (يوميًا بعد الأيام المجانية) والتوصيل (حسب المنطقة)."
+  },
+  "Stockage Dakar": {
+    "en": "Dakar storage",
+    "zh": "达喀尔仓储",
+    "ar": "التخزين في داكار"
+  },
+  "Jours gratuits": {
+    "en": "Free days",
+    "zh": "免费天数",
+    "ar": "الأيام المجانية"
+  },
+  "Zone": {
+    "en": "Zone",
+    "zh": "区域",
+    "ar": "المنطقة"
+  },
+  "Aucun frais annexe. Ajoutez le tarif de stockage/jour et les livraisons.": {
+    "en": "No additional fees. Add the daily storage rate and the deliveries.",
+    "zh": "暂无附加费用。请添加每日仓储费和配送费。",
+    "ar": "لا توجد رسوم إضافية. أضيفوا سعر التخزين اليومي ورسوم التوصيل."
+  },
+  "Détail": {
+    "en": "Detail",
+    "zh": "详情",
+    "ar": "التفاصيل"
+  },
+  "Guangzhou": {
+    "en": "Guangzhou",
+    "zh": "广州",
+    "ar": "قوانغتشو"
+  },
+  "Dakar": {
+    "en": "Dakar",
+    "zh": "达喀尔",
+    "ar": "داكار"
+  },
+  "au kilo (kg)": {
+    "en": "per kilo (kg)",
+    "zh": "按公斤计（kg）",
+    "ar": "بالكيلوغرام (كغ)"
+  },
+  "au colis": {
+    "en": "per parcel",
+    "zh": "按包裹计",
+    "ar": "لكل طرد"
+  },
+  "au conteneur": {
+    "en": "per container",
+    "zh": "按集装箱计",
+    "ar": "لكل حاوية"
+  },
+  "FCFA (XOF)": {
+    "en": "CFA franc (XOF)",
+    "zh": "西非法郎（XOF）",
+    "ar": "فرنك سيفا (XOF)"
+  },
+  "Dollar (USD)": {
+    "en": "US dollar (USD)",
+    "zh": "美元（USD）",
+    "ar": "دولار أمريكي (USD)"
+  },
+  "Yuan (RMB)": {
+    "en": "Yuan (RMB)",
+    "zh": "人民币（RMB）",
+    "ar": "يوان (RMB)"
+  },
+  "Euro (EUR)": {
+    "en": "Euro (EUR)",
+    "zh": "欧元（EUR）",
+    "ar": "يورو (EUR)"
+  },
+  "Fret / express": {
+    "en": "Freight / express",
+    "zh": "货运 / 快递",
+    "ar": "شحن / سريع"
+  },
+  "Cargo (maritime)": {
+    "en": "Cargo (sea)",
+    "zh": "海运货物",
+    "ar": "بضائع (بحري)"
+  },
+  "Donnez un identifiant et un nom à l’entrepôt.": {
+    "en": "Give the warehouse an identifier and a name.",
+    "zh": "请为仓库填写标识和名称。",
+    "ar": "أعطوا المستودع معرّفًا واسمًا."
+  },
+  "Saisissez un prix valide.": {
+    "en": "Enter a valid price.",
+    "zh": "请输入有效的价格。",
+    "ar": "أدخلوا سعرًا صالحًا."
+  },
+  "Donnez un libellé et un prix.": {
+    "en": "Enter a label and a price.",
+    "zh": "请填写名称和价格。",
+    "ar": "أدخلوا تسمية وسعرًا."
+  },
+  "Yiwu": {
+    "en": "Yiwu",
+    "zh": "义乌",
+    "ar": "ييوو"
   }
 }
