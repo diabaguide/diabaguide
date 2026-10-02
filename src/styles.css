@@ -491,3 +491,10 @@ body { -webkit-font-smoothing: antialiased; }
   .print-only .bought { color: #555 !important; text-decoration: line-through; }
 }
 
+
+/* Bouton flottant « + » (console fret : nouvelle expédition, nouveau colis). */
+.fab { position: fixed; right: 20px; bottom: 24px; z-index: 40; width: 60px; height: 60px; border-radius: 50%; border: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, .28); }
+.fab:hover { filter: brightness(1.08); }
+.fab:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 1023px) { .fab { bottom: 84px; } }
+tr.clickable:hover { background: var(--surface-2, rgba(0, 0, 0, .04)); }

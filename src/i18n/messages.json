@@ -3746,5 +3746,65 @@
   "Le nom doit contenir entre 2 et 100 caractères.": {"en": "The name must be between 2 and 100 characters.", "zh": "姓名长度须为 2 至 100 个字符。", "ar": "يجب أن يتراوح الاسم بين 2 و100 حرف."},
   "Photo invalide.": {"en": "Invalid photo.", "zh": "照片无效。", "ar": "الصورة غير صالحة."},
   "Rôle invalide.": {"en": "Invalid role.", "zh": "角色无效。", "ar": "الدور غير صالح."},
-  "Ce numéro de téléphone est déjà associé à un compte.": {"en": "This phone number is already linked to an account.", "zh": "该电话号码已关联到一个账户。", "ar": "رقم الهاتف هذا مرتبط بحساب بالفعل."}
+  "Ce numéro de téléphone est déjà associé à un compte.": {"en": "This phone number is already linked to an account.", "zh": "该电话号码已关联到一个账户。", "ar": "رقم الهاتف هذا مرتبط بحساب بالفعل."},
+  "Ouvrez une expédition pour voir ses colis et suivre ses étapes.": {
+    "en": "Open a shipment to see its parcels and follow its steps.",
+    "zh": "打开一个运单即可查看其包裹并跟踪各环节。",
+    "ar": "افتحوا شحنة لعرض طرودها ومتابعة مراحلها."
+  },
+  "Aucune expédition. Utilisez le bouton + pour en créer une.": {
+    "en": "No shipments. Use the + button to create one.",
+    "zh": "暂无运单。请点击 + 按钮创建。",
+    "ar": "لا توجد شحنات. استخدموا زر + لإنشاء واحدة."
+  },
+  "Donnez un code à l’expédition.": {
+    "en": "Give the shipment a code.",
+    "zh": "请为运单填写编号。",
+    "ar": "أعطوا الشحنة رمزًا."
+  },
+  "Créer l’expédition": {
+    "en": "Create shipment",
+    "zh": "创建运单",
+    "ar": "إنشاء الشحنة"
+  },
+  "Étapes de l’expédition": {
+    "en": "Shipment steps",
+    "zh": "运单环节",
+    "ar": "مراحل الشحنة"
+  },
+  "Une étape ajoutée ici s’applique à tous les colis de l’expédition.": {
+    "en": "A step added here applies to all parcels in the shipment.",
+    "zh": "在此添加的环节适用于该运单的所有包裹。",
+    "ar": "أي مرحلة تُضاف هنا تُطبَّق على جميع طرود الشحنة."
+  },
+  "Aucune étape pour l’instant.": {
+    "en": "No steps yet.",
+    "zh": "暂无环节。",
+    "ar": "لا توجد مراحل بعد."
+  },
+  "Visible par le voyageur": {
+    "en": "Visible to the traveler",
+    "zh": "旅客可见",
+    "ar": "ظاهرة للمسافر"
+  },
+  "Choisir une étape…": {
+    "en": "Choose a step…",
+    "zh": "选择环节…",
+    "ar": "اختاروا مرحلة…"
+  },
+  "Aucun colis dans cette expédition. Utilisez le bouton + pour en ajouter un.": {
+    "en": "No parcels in this shipment. Use the + button to add one.",
+    "zh": "该运单暂无包裹。请点击 + 按钮添加。",
+    "ar": "لا توجد طرود في هذه الشحنة. استخدموا زر + لإضافة طرد."
+  },
+  "Ajouter un colis": {
+    "en": "Add a parcel",
+    "zh": "添加包裹",
+    "ar": "إضافة طرد"
+  },
+  "Nouveau colis": {
+    "en": "New parcel",
+    "zh": "新建包裹",
+    "ar": "طرد جديد"
+  }
 }

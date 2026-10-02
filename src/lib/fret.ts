@@ -208,11 +208,7 @@ export async function createColis(c: {
     poids_kg: c.poidsKg ?? null, volume_m3: c.volumeM3 ?? null,
     statut: recu ? 'recu_chine' : 'annonce', recu_chine_le: recu ? new Date().toISOString() : null,
   });
-  if (error) return { error: humanize(error.message) };
-  // Trace l'étape correspondante (interne par défaut pour « reçu en Chine »).
-  if (recu) await addEtape(c.code.trim(), 'recu_chine');
-  else await addEtape(c.code.trim(), 'annonce');
-  return {};
+  return { error: error ? humanize(error.message) : undefined };
 }
 
 /** Rattache un colis à une expédition (regroupement). */
@@ -221,18 +217,30 @@ export async function affecterColis(code: string, expeditionCode: string): Promi
   const { error } = await supabase.from('colis')
     .update({ expedition_code: expeditionCode, statut: 'affecte', updated_at: new Date().toISOString() })
     .eq('code', code);
-  if (error) return { error: humanize(error.message) };
-  await addEtape(code, 'regroupe');
-  return {};
+  return { error: error ? humanize(error.message) : undefined };
 }
 
-/** Ajoute une étape de suivi ; visibilité client selon le défaut du cadrage. */
-export async function addEtape(colisCode: string, type: EtapeType, visibleClient?: boolean, note?: string): Promise<{ error?: string }> {
+/** Étapes d'une expédition, de la plus ancienne à la plus récente. */
+export interface EtapeExpedition { id: string; type: EtapeType; au: string; visibleClient: boolean; noteInterne: string | null; par: string | null }
+export async function fetchEtapesExpedition(expeditionCode: string): Promise<EtapeExpedition[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.from('expedition_etapes')
+    .select('id, type, au, visible_client, note_interne, par').eq('expedition_code', expeditionCode).order('au', { ascending: true });
+  if (error) { warn('chargement des étapes de l’expédition', error); return []; }
+  return (data as Row[]).map((r) => ({
+    id: String(r.id), type: r.type as EtapeType, au: String(r.au),
+    visibleClient: Boolean(r.visible_client), noteInterne: str(r.note_interne), par: str(r.par),
+  }));
+}
+
+/**
+ * Ajoute une étape à une expédition : tous ses colis avancent avec elle
+ * (supabase/expedition_etapes.sql). Visibilité voyageur : défaut selon l'étape.
+ */
+export async function addEtapeExpedition(expeditionCode: string, type: EtapeType, visibleClient?: boolean, note?: string): Promise<{ error?: string }> {
   if (!supabase) return {};
-  const { error } = await supabase.from('colis_etapes').insert({
-    colis_code: colisCode, type,
-    visible_client: visibleClient ?? ETAPE_VISIBLE_DEFAUT[type],
-    note_interne: note?.trim() || null,
+  const { error } = await supabase.rpc('ajouter_etape_expedition', {
+    p_code: expeditionCode, p_type: type, p_visible: visibleClient ?? null, p_note: note?.trim() || null,
   });
   return { error: error ? humanize(error.message) : undefined };
 }
@@ -291,13 +299,24 @@ export async function fetchColisByCode(code: string): Promise<Colis | null> {
 }
 
 export interface EtapeVue { type: EtapeType; au: string }
-/** Les étapes visibles d'un colis (RLS : seulement si le colis appartient au voyageur). */
+/**
+ * Le suivi d'un colis : « colis annoncé » (sa création), puis les étapes de
+ * l'expédition qui le transporte. RLS : un voyageur ne lit que les étapes
+ * visibles des expéditions portant ses propres colis.
+ */
 export async function fetchEtapesColis(colisCode: string): Promise<EtapeVue[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase.from('colis_etapes')
-    .select('type, au').eq('colis_code', colisCode).order('au', { ascending: true });
-  if (error) { warn('chargement du suivi', error); return []; }
-  return (data as EtapeVue[]) ?? [];
+  const { data: c, error: ce } = await supabase.from('colis')
+    .select('expedition_code, created_at').eq('code', colisCode).maybeSingle();
+  if (ce || !c) { if (ce) warn('chargement du suivi', ce); return []; }
+  const etapes: EtapeVue[] = [{ type: 'annonce', au: String(c.created_at) }];
+  if (c.expedition_code) {
+    const { data, error } = await supabase.from('expedition_etapes')
+      .select('type, au').eq('expedition_code', c.expedition_code).order('au', { ascending: true });
+    if (error) { warn('chargement du suivi', error); return etapes; }
+    etapes.push(...((data as EtapeVue[]) ?? []));
+  }
+  return etapes;
 }
 
 /* ---------- Administration : entrepôts, tarifs, types ---------- */
