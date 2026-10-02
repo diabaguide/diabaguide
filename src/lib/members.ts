@@ -81,7 +81,7 @@ export async function setTravelerStatus(
  * Rend le mot de passe temporaire, à transmettre au voyageur (WhatsApp) : sans
  * adresse e-mail, aucun envoi automatique n'est possible.
  */
-export async function resetPasswordFor(id: string): Promise<{ motDePasse?: string; error?: string }> {
+export async function resetPasswordFor(id: string, motDePasse?: string): Promise<{ motDePasse?: string; ok?: boolean; error?: string }> {
   if (!supabase) return { error: 'Réinitialisation indisponible en mode démonstration.' };
   const { data } = await supabase.auth.getSession();
   const jeton = data.session?.access_token;
@@ -90,11 +90,11 @@ export async function resetPasswordFor(id: string): Promise<{ motDePasse?: strin
     const r = await fetch('/api/reinitialiser-mot-de-passe', {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${jeton}` },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ id, motDePasse }),
     });
-    const corps = (await r.json().catch(() => ({}))) as { motDePasse?: string; error?: string };
+    const corps = (await r.json().catch(() => ({}))) as { motDePasse?: string; ok?: boolean; error?: string };
     if (!r.ok) return { error: corps.error ?? 'La réinitialisation a échoué. Réessayez.' };
-    return { motDePasse: corps.motDePasse };
+    return { motDePasse: corps.motDePasse, ok: corps.ok };
   } catch {
     return { error: 'Connexion impossible. Vérifiez votre réseau et réessayez.' };
   }

@@ -142,6 +142,29 @@ export async function sendPasswordReset(identifiant: string): Promise<{ error?: 
   return { error: error ? translate(error.message) : undefined };
 }
 
+/** Modifie le nom et le téléphone du compte connecté (supabase/update_my_profile.sql). */
+export async function updateMyProfile(name: string, phone: string): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { error } = await supabase.rpc('update_my_profile', { p_name: name, p_phone: phone });
+  return { error: error ? error.message : undefined };
+}
+
+/**
+ * Change le mot de passe du compte connecté, après avoir vérifié l'ancien :
+ * une session laissée ouverte sur un téléphone prêté ne suffit pas à prendre
+ * le compte.
+ */
+export async function changeMyPassword(current: string, next: string): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { data } = await supabase.auth.getUser();
+  const login = data.user?.email;
+  if (!login) return { error: 'Session expirée. Reconnectez-vous.' };
+  const check = await supabase.auth.signInWithPassword({ email: login, password: current });
+  if (check.error) return { error: 'Le mot de passe actuel est incorrect.' };
+  const { error } = await supabase.auth.updateUser({ password: next });
+  return { error: error ? translate(error.message) : undefined };
+}
+
 /** Définit un nouveau mot de passe pour la session courante (récupération). */
 export async function updatePassword(password: string): Promise<{ error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };

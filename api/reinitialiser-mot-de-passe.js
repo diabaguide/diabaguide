@@ -67,14 +67,21 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Pour votre propre compte, utilisez « Mot de passe oublié » à la connexion.' });
   }
 
+  // Mot de passe choisi par l'administrateur (facultatif) : sinon, un mot de
+  // passe temporaire est généré.
+  const choisi = typeof corps.motDePasse === 'string' ? corps.motDePasse : null;
+  if (choisi !== null && (choisi.length < 8 || choisi.length > 72)) {
+    return res.status(400).json({ error: 'Le mot de passe doit contenir entre 8 et 72 caractères.' });
+  }
+
   // 4. Le compte visé existe-t-il vraiment ? (avant de changer quoi que ce soit)
   const verif = await fetch(`${url}/auth/v1/admin/users/${cible}`, {
     headers: { apikey: service, authorization: `Bearer ${service}` },
   });
   if (!verif.ok) return res.status(404).json({ error: 'Ce compte est introuvable.' });
 
-  // 5. Nouveau mot de passe temporaire
-  const motDePasse = motDePasseTemporaire();
+  // 5. Nouveau mot de passe
+  const motDePasse = choisi ?? motDePasseTemporaire();
   const maj = await fetch(`${url}/auth/v1/admin/users/${cible}`, {
     method: 'PUT',
     headers: { apikey: service, authorization: `Bearer ${service}`, 'content-type': 'application/json' },
@@ -82,5 +89,5 @@ export default async function handler(req, res) {
   });
   if (!maj.ok) return res.status(500).json({ error: 'La réinitialisation a échoué. Réessayez.' });
 
-  return res.status(200).json({ motDePasse });
+  return res.status(200).json(choisi ? { ok: true } : { motDePasse });
 }

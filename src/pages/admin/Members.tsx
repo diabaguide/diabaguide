@@ -77,6 +77,19 @@ export function Members() {
     setMdp(res.motDePasse ?? null);
   };
 
+  /* Mot de passe choisi par l'administrateur. */
+  const [nouveau, setNouveau] = useState('');
+  const [nouveauOk, setNouveauOk] = useState(false);
+  const definir = async (m: Member) => {
+    setMdpErr(null); setMdp(null); setNouveauOk(false);
+    if (nouveau.length < 8) { setMdpErr('Le mot de passe doit contenir au moins 8 caractères.'); return; }
+    setMdpBusy(true);
+    const res = await resetPasswordFor(m.id, nouveau);
+    setMdpBusy(false);
+    if (res.error) { setMdpErr(res.error); return; }
+    setNouveau(''); setNouveauOk(true);
+  };
+
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -258,7 +271,7 @@ export function Members() {
 
         {openMember && (
           <AdminSheet title={tr(openMember.name ?? '—')} sub={openMember.email}
-            onClose={() => { setConfirmId(null); setOpenMember(null); setMdp(null); setMdpErr(null); }}>
+            onClose={() => { setConfirmId(null); setOpenMember(null); setMdp(null); setMdpErr(null); setNouveau(''); setNouveauOk(false); }}>
             <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <RoleBadge role={openMember.role} />
               {openMember.id === meId && <span className="small muted">{tr("C’est votre compte")}</span>}
@@ -317,6 +330,12 @@ export function Members() {
                     </div>
                   </div>
                 )}
+                <Field id="mb-newpw" label={tr("Définir un mot de passe")} type="password" value={nouveau} onChange={setNouveau}
+                  hint={tr("Au moins 8 caractères. À transmettre vous-même à la personne.")} />
+                <Button kind="s" icon="check" full={false} disabled={mdpBusy || !nouveau} onClick={() => void definir(openMember)}>
+                  {tr(mdpBusy ? 'Enregistrement…' : 'Enregistrer le mot de passe')}
+                </Button>
+                {nouveauOk && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr("Mot de passe modifié.")}</span></div>}
                 {mdpErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(mdpErr)}</span></div>}
               </div>
             )}

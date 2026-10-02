@@ -8,7 +8,7 @@ import { Welcome, Signup, SignupDone, Login, Forgot, ResetPassword } from './pag
 import { Home, Locate } from './pages/Home';
 import { Search, Filters } from './pages/Search';
 import { Fiche, Driver, Card, Contact, Report } from './pages/Fiche';
-import { Favorites, Profile, Downloads } from './pages/Account';
+import { Favorites, Profile, Downloads, EditProfile } from './pages/Account';
 import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contribute';
 import { ShoppingLists, ShoppingListPage } from './pages/Shopping';
 import { ReviewsAdminPage } from './pages/Reviews';
@@ -110,6 +110,7 @@ export default function App() {
           <Route path="/contributions/nouvelle/:step" element={<Wizard />} />
           <Route path="/contributions/:id" element={<ContributionDetail />} />
           <Route path="/profil" element={<Profile />} />
+          <Route path="/profil/modifier" element={<EditProfile />} />
           <Route path="/profil/telechargements" element={<Downloads />} />
         </Route>
 

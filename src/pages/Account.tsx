@@ -1,11 +1,12 @@
 import { useI18n } from '../i18n';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { catLabel, type Provider } from '../data';
 import { useOnline, useStore, type LocPref, type Theme } from '../store';
-import { isTeamRole, signOut } from '../lib/auth';
-import { Button, DemoNote, Icon, RadioCard, Screen, StoredPhoto, Tag, TopBar } from '../ui';
+import { changeMyPassword, isTeamRole, signOut, updateMyProfile } from '../lib/auth';
+import { Button, DemoNote, Field, Icon, RadioCard, Screen, StoredPhoto, Tag, TopBar } from '../ui';
 import { LangSwitch } from './Access';
+import { PHONE } from '../lib/phone';
 
 export function Favorites() {
   const { tr } = useI18n();
@@ -90,8 +91,9 @@ export function Profile() {
       <div className="main" style={{ gap: 20 }}>
         <div className="card row" style={{ padding: 16, gap: 14 }}>
           <span className="avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: 20 }}>{tr(initials)}</span>
-          <div><div style={{ fontWeight: 700, fontSize: 18 }}>{s.user?.name}</div><div className="small muted">{s.user?.email || s.user?.phone}</div></div>
+          <div className="grow"><div style={{ fontWeight: 700, fontSize: 18 }}>{s.user?.name}</div><div className="small muted">{s.user?.email || s.user?.phone}</div></div>
         </div>
+        <Button kind="s" icon="edit" to="/profil/modifier">{tr("Modifier mon profil")}</Button>
         <section className="stack"><h2 className="row" style={{ fontSize: 17 }}><Icon name="globe" size={20} />{tr("Langue")}</h2><LangSwitch />
           
         </section>
@@ -109,6 +111,80 @@ export function Profile() {
         </section>
         <Button kind="s" icon="logout" onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}>{tr("Se déconnecter")}</Button>
         <div className="small muted center">{tr("Diaba Guide · version de démonstration")}</div>
+      </div>
+    </Screen>
+  );
+}
+
+/** Modification de son propre profil : nom, téléphone et mot de passe. */
+export function EditProfile() {
+  const { tr } = useI18n();
+  const { s, d } = useStore();
+  const u = s.user;
+  const [name, setName] = useState(u?.name ?? '');
+  const [phone, setPhone] = useState(u?.phone ?? '');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
+
+  const [cur, setCur] = useState('');
+  const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwErr, setPwErr] = useState<string | null>(null);
+  const [pwOk, setPwOk] = useState(false);
+
+  if (!u) return null;
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    setErr(null); setOk(null);
+    if (name.trim().length < 2) { setErr('Le nom doit contenir au moins 2 caractères.'); return; }
+    if (phone.trim() && !PHONE.test(phone.trim())) { setErr('Saisissez un numéro de téléphone valide.'); return; }
+    setBusy(true);
+    const res = await updateMyProfile(name, phone);
+    setBusy(false);
+    if (res.error) { setErr(res.error); return; }
+    d({ t: 'login', user: { ...u, name: name.trim(), phone: phone.trim() } });
+    setOk('Profil enregistré.');
+  };
+
+  const savePw = async (e: FormEvent) => {
+    e.preventDefault();
+    setPwErr(null); setPwOk(false);
+    if (!cur) { setPwErr('Saisissez votre mot de passe actuel.'); return; }
+    if (pw.length < 8) { setPwErr('Le nouveau mot de passe doit contenir au moins 8 caractères.'); return; }
+    if (pw !== pw2) { setPwErr('Les deux mots de passe ne correspondent pas.'); return; }
+    setPwBusy(true);
+    const res = await changeMyPassword(cur, pw);
+    setPwBusy(false);
+    if (res.error) { setPwErr(res.error); return; }
+    setCur(''); setPw(''); setPw2(''); setPwOk(true);
+  };
+
+  return (
+    <Screen>
+      <TopBar title={tr("Modifier mon profil")} back="/profil" />
+      <div className="main" style={{ gap: 20 }}>
+        <form className="stack" onSubmit={save} noValidate>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Mes informations")}</h2>
+          {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+          {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
+          <Field id="me-name" label={tr("Nom complet")} value={name} onChange={setName} req />
+          <Field id="me-phone" label={tr("Numéro de téléphone")} type="tel" value={phone} onChange={setPhone}
+            hint={tr("Avec l’indicatif du pays, par exemple +221 77 123 45 67.")} />
+          <Button type="submit" icon="check" disabled={busy}>{tr(busy ? 'Enregistrement…' : 'Enregistrer')}</Button>
+        </form>
+
+        <form className="stack" onSubmit={savePw} noValidate>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Mot de passe")}</h2>
+          {pwErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(pwErr)}</span></div>}
+          {pwOk && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr("Mot de passe modifié.")}</span></div>}
+          <Field id="me-cur" label={tr("Mot de passe actuel")} type="password" value={cur} onChange={setCur} req />
+          <Field id="me-pw" label={tr("Nouveau mot de passe")} type="password" value={pw} onChange={setPw} req hint={tr("Au moins 8 caractères.")} />
+          <Field id="me-pw2" label={tr("Confirmer le nouveau mot de passe")} type="password" value={pw2} onChange={setPw2} req />
+          <Button type="submit" icon="lock" kind="s" disabled={pwBusy}>{tr(pwBusy ? 'Enregistrement…' : 'Changer le mot de passe')}</Button>
+        </form>
       </div>
     </Screen>
   );
