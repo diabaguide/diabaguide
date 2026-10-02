@@ -3737,5 +3737,14 @@
   "Colis {0} rattaché.": {"en": "Parcel {0} attached.", "zh": "包裹 {0} 已关联。", "ar": "تم ربط الطرد {0}."},
   "Étape « {0} » ajoutée à {1}.": {"en": "Step “{0}” added to {1}.", "zh": "已为 {1} 添加节点“{0}”。", "ar": "أُضيفت المرحلة «{0}» إلى {1}."},
   "Réservé à l’équipe.": {"en": "Team only.", "zh": "仅限团队。", "ar": "مخصص للفريق."},
-  "Réservé à l’équipe fret.": {"en": "Freight team only.", "zh": "仅限货运团队。", "ar": "مخصص لفريق الشحن."}
+  "Réservé à l’équipe fret.": {"en": "Freight team only.", "zh": "仅限货运团队。", "ar": "مخصص لفريق الشحن."},
+  "Photo de profil": {"en": "Profile photo", "zh": "头像", "ar": "صورة الملف الشخصي"},
+  "Choisir une photo": {"en": "Choose a photo", "zh": "选择照片", "ar": "اختيار صورة"},
+  "Changer la photo": {"en": "Change the photo", "zh": "更换照片", "ar": "تغيير الصورة"},
+  "Saisissez le nom complet.": {"en": "Enter the full name.", "zh": "请填写全名。", "ar": "أدخلوا الاسم الكامل."},
+  "Si la personne a déjà un compte, son rôle est appliqué immédiatement. Sinon, l’invitation est conservée avec son nom, son numéro et sa photo, et le rôle lui est accordé à sa première connexion.": {"en": "If the person already has an account, their role is applied immediately. Otherwise the invitation is kept with their name, number and photo, and the role is granted at their first sign-in.", "zh": "如果此人已有账户，角色将立即生效。否则邀请会连同其姓名、号码和照片一并保留，并在其首次登录时授予角色。", "ar": "إذا كان لدى الشخص حساب بالفعل يُطبَّق دوره فورًا. وإلا تُحفظ الدعوة مع اسمه ورقمه وصورته، ويُمنح الدور عند أول تسجيل دخول."},
+  "Le nom doit contenir entre 2 et 100 caractères.": {"en": "The name must be between 2 and 100 characters.", "zh": "姓名长度须为 2 至 100 个字符。", "ar": "يجب أن يتراوح الاسم بين 2 و100 حرف."},
+  "Photo invalide.": {"en": "Invalid photo.", "zh": "照片无效。", "ar": "الصورة غير صالحة."},
+  "Rôle invalide.": {"en": "Invalid role.", "zh": "角色无效。", "ar": "الدور غير صالح."},
+  "Ce numéro de téléphone est déjà associé à un compte.": {"en": "This phone number is already linked to an account.", "zh": "该电话号码已关联到一个账户。", "ar": "رقم الهاتف هذا مرتبط بحساب بالفعل."}
 }
