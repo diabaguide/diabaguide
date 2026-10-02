@@ -3289,5 +3289,280 @@
 "Trajet": {"en": "Route", "zh": "路线", "ar": "المسار"},
 "WhatsApp": {"en": "WhatsApp", "zh": "WhatsApp", "ar": "واتساب"},
 "{0} → Dakar": {"en": "{0} → Dakar", "zh": "{0} → 达喀尔", "ar": "{0} ← داكار"},
-"Étape franchie": {"en": "Step completed", "zh": "已完成", "ar": "مرحلة مكتملة"}
+"Étape franchie": {"en": "Step completed", "zh": "已完成", "ar": "مرحلة مكتملة"},
+  "Indicatif du pays": {
+    "en": "Country code",
+    "zh": "国家区号",
+    "ar": "رمز الدولة"
+  },
+  "Sénégal": {
+    "en": "Senegal",
+    "zh": "塞内加尔",
+    "ar": "السنغال"
+  },
+  "Chine": {
+    "en": "China",
+    "zh": "中国",
+    "ar": "الصين"
+  },
+  "France": {
+    "en": "France",
+    "zh": "法国",
+    "ar": "فرنسا"
+  },
+  "Mali": {
+    "en": "Mali",
+    "zh": "马里",
+    "ar": "مالي"
+  },
+  "Guinée": {
+    "en": "Guinea",
+    "zh": "几内亚",
+    "ar": "غينيا"
+  },
+  "Côte d’Ivoire": {
+    "en": "Côte d’Ivoire",
+    "zh": "科特迪瓦",
+    "ar": "كوت ديفوار"
+  },
+  "Gambie": {
+    "en": "Gambia",
+    "zh": "冈比亚",
+    "ar": "غامبيا"
+  },
+  "Mauritanie": {
+    "en": "Mauritania",
+    "zh": "毛里塔尼亚",
+    "ar": "موريتانيا"
+  },
+  "Burkina Faso": {
+    "en": "Burkina Faso",
+    "zh": "布基纳法索",
+    "ar": "بوركينا فاسو"
+  },
+  "Niger": {
+    "en": "Niger",
+    "zh": "尼日尔",
+    "ar": "النيجر"
+  },
+  "Togo": {
+    "en": "Togo",
+    "zh": "多哥",
+    "ar": "توغو"
+  },
+  "Bénin": {
+    "en": "Benin",
+    "zh": "贝宁",
+    "ar": "بنين"
+  },
+  "Nigeria": {
+    "en": "Nigeria",
+    "zh": "尼日利亚",
+    "ar": "نيجيريا"
+  },
+  "Ghana": {
+    "en": "Ghana",
+    "zh": "加纳",
+    "ar": "غانا"
+  },
+  "Cameroun": {
+    "en": "Cameroon",
+    "zh": "喀麦隆",
+    "ar": "الكاميرون"
+  },
+  "RD Congo": {
+    "en": "DR Congo",
+    "zh": "刚果（金）",
+    "ar": "الكونغو الديمقراطية"
+  },
+  "Congo": {
+    "en": "Congo",
+    "zh": "刚果（布）",
+    "ar": "الكونغو"
+  },
+  "Gabon": {
+    "en": "Gabon",
+    "zh": "加蓬",
+    "ar": "الغابون"
+  },
+  "Maroc": {
+    "en": "Morocco",
+    "zh": "摩洛哥",
+    "ar": "المغرب"
+  },
+  "Algérie": {
+    "en": "Algeria",
+    "zh": "阿尔及利亚",
+    "ar": "الجزائر"
+  },
+  "Tunisie": {
+    "en": "Tunisia",
+    "zh": "突尼斯",
+    "ar": "تونس"
+  },
+  "Égypte": {
+    "en": "Egypt",
+    "zh": "埃及",
+    "ar": "مصر"
+  },
+  "Afrique du Sud": {
+    "en": "South Africa",
+    "zh": "南非",
+    "ar": "جنوب أفريقيا"
+  },
+  "Belgique": {
+    "en": "Belgium",
+    "zh": "比利时",
+    "ar": "بلجيكا"
+  },
+  "Suisse": {
+    "en": "Switzerland",
+    "zh": "瑞士",
+    "ar": "سويسرا"
+  },
+  "Royaume-Uni": {
+    "en": "United Kingdom",
+    "zh": "英国",
+    "ar": "المملكة المتحدة"
+  },
+  "Allemagne": {
+    "en": "Germany",
+    "zh": "德国",
+    "ar": "ألمانيا"
+  },
+  "Espagne": {
+    "en": "Spain",
+    "zh": "西班牙",
+    "ar": "إسبانيا"
+  },
+  "Italie": {
+    "en": "Italy",
+    "zh": "意大利",
+    "ar": "إيطاليا"
+  },
+  "États-Unis / Canada": {
+    "en": "United States / Canada",
+    "zh": "美国 / 加拿大",
+    "ar": "الولايات المتحدة / كندا"
+  },
+  "Émirats arabes unis": {
+    "en": "United Arab Emirates",
+    "zh": "阿拉伯联合酋长国",
+    "ar": "الإمارات العربية المتحدة"
+  },
+  "Turquie": {
+    "en": "Türkiye",
+    "zh": "土耳其",
+    "ar": "تركيا"
+  },
+  "Hong Kong": {
+    "en": "Hong Kong",
+    "zh": "香港",
+    "ar": "هونغ كونغ"
+  },
+  "Modifier le membre": {
+    "en": "Edit member",
+    "zh": "编辑成员",
+    "ar": "تعديل العضو"
+  },
+  "Membre modifié.": {
+    "en": "Member updated.",
+    "zh": "成员已更新。",
+    "ar": "تم تعديل العضو."
+  },
+  "Définir un mot de passe": {
+    "en": "Set a password",
+    "zh": "设置密码",
+    "ar": "تعيين كلمة مرور"
+  },
+  "Au moins 8 caractères. À transmettre vous-même à la personne.": {
+    "en": "At least 8 characters. You must give it to the person yourself.",
+    "zh": "至少 8 个字符。请您自行告知该用户。",
+    "ar": "8 أحرف على الأقل. عليكم إبلاغ الشخص بها بأنفسكم."
+  },
+  "Mot de passe modifié.": {
+    "en": "Password changed.",
+    "zh": "密码已修改。",
+    "ar": "تم تغيير كلمة المرور."
+  },
+  "Le mot de passe doit contenir entre 8 et 72 caractères.": {
+    "en": "The password must contain between 8 and 72 characters.",
+    "zh": "密码长度须为 8 至 72 个字符。",
+    "ar": "يجب أن تتكون كلمة المرور من 8 إلى 72 حرفًا."
+  },
+  "Modifier mon profil": {
+    "en": "Edit my profile",
+    "zh": "编辑我的资料",
+    "ar": "تعديل ملفي الشخصي"
+  },
+  "Mes informations": {
+    "en": "My information",
+    "zh": "我的信息",
+    "ar": "معلوماتي"
+  },
+  "Avec l’indicatif du pays, par exemple +221 77 123 45 67.": {
+    "en": "With the country code, for example +221 77 123 45 67.",
+    "zh": "请包含国家区号，例如 +221 77 123 45 67。",
+    "ar": "مع رمز الدولة، مثلًا +221 77 123 45 67."
+  },
+  "Profil enregistré.": {
+    "en": "Profile saved.",
+    "zh": "资料已保存。",
+    "ar": "تم حفظ الملف الشخصي."
+  },
+  "Mot de passe actuel": {
+    "en": "Current password",
+    "zh": "当前密码",
+    "ar": "كلمة المرور الحالية"
+  },
+  "Confirmer le nouveau mot de passe": {
+    "en": "Confirm new password",
+    "zh": "确认新密码",
+    "ar": "تأكيد كلمة المرور الجديدة"
+  },
+  "Changer le mot de passe": {
+    "en": "Change password",
+    "zh": "修改密码",
+    "ar": "تغيير كلمة المرور"
+  },
+  "Saisissez votre mot de passe actuel.": {
+    "en": "Enter your current password.",
+    "zh": "请输入当前密码。",
+    "ar": "أدخلوا كلمة المرور الحالية."
+  },
+  "Le nouveau mot de passe doit contenir au moins 8 caractères.": {
+    "en": "The new password must contain at least 8 characters.",
+    "zh": "新密码至少需要 8 个字符。",
+    "ar": "يجب أن تحتوي كلمة المرور الجديدة على 8 أحرف على الأقل."
+  },
+  "Le mot de passe actuel est incorrect.": {
+    "en": "The current password is incorrect.",
+    "zh": "当前密码不正确。",
+    "ar": "كلمة المرور الحالية غير صحيحة."
+  },
+  "Compte introuvable.": {
+    "en": "Account not found.",
+    "zh": "未找到该账户。",
+    "ar": "الحساب غير موجود."
+  },
+  "Numéro de téléphone invalide.": {
+    "en": "Invalid phone number.",
+    "zh": "电话号码无效。",
+    "ar": "رقم الهاتف غير صالح."
+  },
+  "Ce numéro de téléphone est déjà associé à un autre compte.": {
+    "en": "This phone number is already linked to another account.",
+    "zh": "该电话号码已与另一个账户关联。",
+    "ar": "رقم الهاتف هذا مرتبط بحساب آخر."
+  },
+  "Ce compte est désactivé.": {
+    "en": "This account is disabled.",
+    "zh": "该账户已被停用。",
+    "ar": "هذا الحساب معطّل."
+  },
+  "Connectez-vous pour modifier votre profil.": {
+    "en": "Sign in to edit your profile.",
+    "zh": "请登录后编辑您的资料。",
+    "ar": "سجّلوا الدخول لتعديل ملفكم الشخصي."
+  }
 }
