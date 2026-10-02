@@ -272,7 +272,8 @@ export function Members() {
                       </td>
                       <td><RoleBadge role={m.role} /></td>
                       <td>
-                        {isMe ? <span className="small muted">{tr("Votre propre rôle n’est pas modifiable")}</span>
+                        {m.primary && !isMe ? <span className="small muted">{tr("Administrateur principal : compte protégé")}</span>
+                          : isMe ? <span className="small muted">{tr("Votre propre rôle n’est pas modifiable")}</span>
                           : confirmId === m.id ? (
                             <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
                               <span className="small">{tr("Retirer l’accès ?")}</span>
@@ -288,7 +289,7 @@ export function Members() {
                               {m.role === 'team' && <Button kind="s" icon="shield" full={false} onClick={() => change(m.id, 'admin')}>{tr("Nommer admin")}</Button>}
                               {m.role === 'admin' && <Button kind="s" full={false} onClick={() => change(m.id, 'team')}>{tr("Rétrograder en équipe")}</Button>}
                               {m.role !== 'traveler' && <Button kind="s" icon="x" full={false} onClick={() => setConfirmId(m.id)}>{tr("Retirer")}</Button>}
-                              {s.user?.role === 'admin' && <Button kind="s" icon="edit" full={false} onClick={() => { setConfirmId(null); setOpenMember(m); }}>{tr("Modifier")}</Button>}
+                              {s.user?.role === 'admin' && !m.primary && <Button kind="s" icon="edit" full={false} onClick={() => { setConfirmId(null); setOpenMember(m); }}>{tr("Modifier")}</Button>}
                             </span>
                           )}
                       </td>
@@ -318,9 +319,11 @@ export function Members() {
             <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <RoleBadge role={openMember.role} />
               {openMember.id === meId && <span className="small muted">{tr("C’est votre compte")}</span>}
+              {openMember.primary && <span className="small muted">{tr("Administrateur principal")}</span>}
             </div>
             <SheetActions>
-              {openMember.id === meId ? <p className="small muted" style={{ margin: 0 }}>{tr("Votre propre rôle n’est pas modifiable.")}</p>
+              {openMember.primary && openMember.id !== meId ? <p className="small muted" style={{ margin: 0 }}>{tr("Administrateur principal : aucun autre compte ne peut le modifier, le supprimer ni changer son mot de passe.")}</p>
+                : openMember.id === meId ? <p className="small muted" style={{ margin: 0 }}>{tr("Votre propre rôle n’est pas modifiable.")}</p>
                 : confirmId === openMember.id ? (
                   <>
                     <SheetDanger>{tr("Retirer l’accès ?")}</SheetDanger>
@@ -341,14 +344,14 @@ export function Members() {
                 )}
             </SheetActions>
 
-            {s.user?.role === 'admin' && (
+            {s.user?.role === 'admin' && !(openMember.primary && openMember.id !== meId) && (
               <MemberEdit key={openMember.id} m={openMember} onSaved={(msg) => { setErr(null); setOk(msg); setOpenMember(null); void reload(); }} />
             )}
 
             {/* Réinitialisation du mot de passe : réservée aux administrateurs.
                 Utile surtout pour les comptes créés avec un seul numéro, qui ne
                 peuvent recevoir aucun lien par e-mail. */}
-            {s.user?.role === 'admin' && openMember.id !== meId && (
+            {s.user?.role === 'admin' && openMember.id !== meId && !openMember.primary && (
               <div className="stack" style={{ gap: 8 }}>
                 <SheetDanger>{tr("Mot de passe oublié")}</SheetDanger>
                 <p className="small muted" style={{ margin: 0 }}>{tr("Crée un mot de passe temporaire à transmettre à la personne. Elle devra le changer après sa première connexion.")}</p>

@@ -10,6 +10,8 @@ export interface Member {
   status: AccountStatus;
   suspendedAt: string | null;
   suspendedReason: string | null;
+  /** Administrateur principal : aucun autre compte ne peut le modifier ni le supprimer (supabase/admin_principal.sql). */
+  primary: boolean;
 }
 export interface Invitation { email: string; role: Exclude<Role, 'traveler'>; createdAt: string; name: string | null; phone: string | null; avatarPath: string | null }
 export const STATUS_LABEL: Record<AccountStatus, string> = {
@@ -28,11 +30,11 @@ export const ROLE_LABEL: Record<Role, string> = {
 export async function fetchMembers(): Promise<Member[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from('profiles').select('id, name, phone, email, role, status, suspended_at, suspended_reason, created_at, avatar_path').order('created_at', { ascending: true });
+    .from('profiles').select('id, name, phone, email, role, status, suspended_at, suspended_reason, created_at, avatar_path, is_primary_admin').order('created_at', { ascending: true });
   if (error) { warn('chargement des comptes', error); return []; }
   return (data as {
     id: string; name: string | null; phone: string | null; email: string; role: Role;
-    status: AccountStatus | null; suspended_at: string | null; suspended_reason: string | null; created_at: string; avatar_path: string | null;
+    status: AccountStatus | null; suspended_at: string | null; suspended_reason: string | null; created_at: string; avatar_path: string | null; is_primary_admin: boolean | null;
   }[]).map((r) => ({
     id: r.id, name: r.name, phone: r.phone,
     // Compte inscrit avec son seul numéro : l'adresse interne n'est jamais
@@ -40,6 +42,7 @@ export async function fetchMembers(): Promise<Member[]> {
     email: isInternalEmail(r.email) ? phoneOf(r.phone, r.email) : r.email,
     role: r.role, createdAt: r.created_at, avatarPath: r.avatar_path,
     status: r.status ?? 'active', suspendedAt: r.suspended_at, suspendedReason: r.suspended_reason,
+    primary: r.is_primary_admin === true,
   }));
 }
 

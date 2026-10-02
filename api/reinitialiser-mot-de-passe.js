@@ -67,6 +67,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Pour votre propre compte, utilisez « Mot de passe oublié » à la connexion.' });
   }
 
+  // L'administrateur principal est intouchable : son mot de passe ne se change
+  // que par lui-même (« Mot de passe oublié »). Vérifié avant toute écriture.
+  const prot = await fetch(`${url}/rest/v1/profiles?select=is_primary_admin&id=eq.${encodeURIComponent(cible)}`, {
+    headers: { apikey: service, authorization: `Bearer ${service}` },
+  });
+  const protLignes = await prot.json().catch(() => null);
+  if (!prot.ok || !Array.isArray(protLignes)) {
+    return res.status(500).json({ error: 'Vérification du compte impossible. Réessayez.' });
+  }
+  if (protLignes[0]?.is_primary_admin) {
+    return res.status(403).json({ error: 'Ce compte est l’administrateur principal : son mot de passe ne peut être changé que par lui-même.' });
+  }
+
   // Mot de passe choisi par l'administrateur (facultatif) : sinon, un mot de
   // passe temporaire est généré.
   const choisi = typeof corps.motDePasse === 'string' ? corps.motDePasse : null;
