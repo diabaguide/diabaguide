@@ -1,6 +1,8 @@
 import { useI18n } from '../i18n';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useStore } from '../store';
+import { cityName } from '../data';
 import { Button, Field, Icon, Logo, Screen, Select, TextArea, TopBar } from '../ui';
 import {
   devisFret, annoncerColis, fetchMesColis, fetchEtapesColis, fetchFactures, fetchColisByCode,
@@ -14,6 +16,7 @@ const TYPES = [
   { v: 'electronique', l: 'Électronique et téléphones' }, { v: 'batterie', l: 'Batteries et produits à risque' },
   { v: 'cosmetique', l: 'Cosmétiques' }, { v: 'liquide', l: 'Liquides' }, { v: 'alimentaire', l: 'Produits alimentaires' },
 ];
+const isMaritime = (m: FretMode) => m.startsWith('maritime');
 const toNum = (s: string): number | null => { const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? null : n; };
 const money = (n: number, d = 'XOF') => `${n.toLocaleString('fr-FR')} ${d === 'XOF' ? 'FCFA' : d}`;
 
@@ -42,18 +45,21 @@ export function MesEnvois() {
   };
 
   // ---- Annoncer un colis ----
-  const [an, setAn] = useState({ mode: 'maritime_groupage' as FretMode, type: 'general', description: '', marque: '', poids: '', volume: '' });
+  const { s } = useStore();
+  const villes = s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }));
+  const [an, setAn] = useState({ mode: 'maritime_groupage' as FretMode, ville: '', type: 'general', description: '', marque: '', poids: '', volume: '' });
+  const ville = an.ville || s.city;
   const [busy, setBusy] = useState(false);
   const annoncer = async (e: FormEvent) => {
     e.preventDefault(); setErr(null); setOk(null); setBusy(true);
     const res = await annoncerColis({
-      mode: an.mode, typeMarchandise: an.type, description: an.description, marqueColis: an.marque,
-      poidsKg: toNum(an.poids), volumeM3: toNum(an.volume),
+      mode: an.mode, villeDepart: ville, typeMarchandise: an.type, description: an.description, marqueColis: an.marque,
+      poidsKg: isMaritime(an.mode) ? null : toNum(an.poids), volumeM3: isMaritime(an.mode) ? toNum(an.volume) : null,
     });
     setBusy(false);
     if (res.error) { setErr(res.error); return; }
     setOk(`Colis annoncé (${res.code}). L’équipe Diaba le confirmera à la réception en Chine.`);
-    setAn({ mode: 'maritime_groupage', type: 'general', description: '', marque: '', poids: '', volume: '' });
+    setAn({ mode: 'maritime_groupage', ville: '', type: 'general', description: '', marque: '', poids: '', volume: '' });
     await reload();
   };
 
@@ -93,13 +99,13 @@ export function MesEnvois() {
           <p className="small muted" style={{ margin: 0 }}>{tr("Prévenez Diaba d’un colis en route vers l’entrepôt en Chine. Vous pourrez ensuite suivre son avancement ici.")}</p>
           <form onSubmit={annoncer} className="stack" style={{ gap: 10 }} noValidate>
             <Select id="an-mode" label={tr("Mode d’envoi")} value={an.mode} onChange={(v) => setAn({ ...an, mode: v as FretMode })} options={MODE_OPTIONS} />
+            <Select id="an-ville" label={tr("Ville de départ")} value={ville} onChange={(v) => setAn({ ...an, ville: v })} options={villes} />
             <Select id="an-type" label={tr("Type de marchandise")} value={an.type} onChange={(v) => setAn({ ...an, type: v })} options={TYPES} />
             <Field id="an-marque" label={tr("Marquage / fournisseur")} value={an.marque} onChange={(v) => setAn({ ...an, marque: v })} placeholder={tr("Nom du fournisseur ou marquage")} />
             <TextArea id="an-desc" label={tr("Description")} value={an.description} onChange={(v) => setAn({ ...an, description: v })} rows={2} placeholder={tr("Ce que contient le colis")} />
-            <div className="row" style={{ gap: 10 }}>
-              <div className="grow"><Field id="an-poids" label={tr("Poids estimé (kg)")} value={an.poids} onChange={(v) => setAn({ ...an, poids: v })} placeholder="0" /></div>
-              <div className="grow"><Field id="an-vol" label={tr("Volume estimé (m³)")} value={an.volume} onChange={(v) => setAn({ ...an, volume: v })} placeholder="0" /></div>
-            </div>
+            {isMaritime(an.mode)
+              ? <Field id="an-vol" label={tr("Volume estimé (m³)")} value={an.volume} onChange={(v) => setAn({ ...an, volume: v })} placeholder="0" />
+              : <Field id="an-poids" label={tr("Poids estimé (kg)")} value={an.poids} onChange={(v) => setAn({ ...an, poids: v })} placeholder="0" />}
             <Button type="submit" icon="box" disabled={busy}>{tr(busy ? 'Envoi…' : 'Annoncer le colis')}</Button>
           </form>
         </section>
@@ -129,7 +135,7 @@ function ColisCard({ c, facture }: { c: Colis; facture?: Facture }) {
       <div className="row" style={{ justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
         <div className="stack" style={{ gap: 2 }}>
           <strong>{c.code}</strong>
-          <span className="small muted">{tr(MODE_LABEL[c.mode])}{c.marqueColis ? ` · ${c.marqueColis}` : ''}</span>
+          <span className="small muted">{tr(MODE_LABEL[c.mode])}{c.villeDepart ? ` · ${cityName(c.villeDepart)}` : ''}{c.marqueColis ? ` · ${c.marqueColis}` : ''}</span>
         </div>
         <span className="tag tag-info">{tr(COLIS_STATUT_LABEL[c.statut])}</span>
       </div>
