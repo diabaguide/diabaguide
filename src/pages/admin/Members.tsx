@@ -7,7 +7,7 @@ import { SortTh, compare, useSort } from './tableSort';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { Role } from '../../lib/auth';
 import {
-  fetchInvitations, fetchMembers, inviteMember, resetPasswordFor, revokeInvitation, setMemberRole,
+  fetchInvitations, fetchMembers, inviteMember, resetPasswordFor, revokeInvitation, setMemberRole, updateMember,
   ROLE_LABEL, type Invitation, type Member,
 } from '../../lib/members';
 import { formatPhone, phoneKey } from '../../lib/phone';
@@ -29,6 +29,34 @@ const RoleBadge = ({ role }: { role: Role }) => {
     </span>
   );
 };
+
+/** Modification du nom et du téléphone d'un compte (administrateurs). */
+function MemberEdit({ m, onSaved }: { m: Member; onSaved: (msg: string) => void }) {
+  const { tr } = useI18n();
+  const [name, setName] = useState(m.name ?? '');
+  const [phone, setPhone] = useState(m.phone ?? '');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const save = async () => {
+    setErr(null);
+    if (name.trim().length < 2) { setErr('Le nom doit contenir au moins 2 caractères.'); return; }
+    setBusy(true);
+    const res = await updateMember(m.id, name, phone);
+    setBusy(false);
+    if (res.error) { setErr(res.error); return; }
+    onSaved('Membre modifié.');
+  };
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <SheetDanger>{tr("Modifier le membre")}</SheetDanger>
+      {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+      <Field id="mb-name" label={tr("Nom")} value={name} onChange={setName} req />
+      <Field id="mb-phone" label={tr("Téléphone")} type="tel" value={phone} onChange={setPhone}
+        placeholder={tr("Non renseigné")} hint={tr("Facultatif : espaces et indicatif acceptés.")} />
+      <Button icon="check" full={false} disabled={busy} onClick={() => void save()}>{tr(busy ? 'Enregistrement…' : 'Enregistrer')}</Button>
+    </div>
+  );
+}
 
 export function Members() {
   const { tr } = useI18n();
@@ -204,6 +232,7 @@ export function Members() {
                               {m.role === 'team' && <Button kind="s" icon="shield" full={false} onClick={() => change(m.id, 'admin')}>{tr("Nommer admin")}</Button>}
                               {m.role === 'admin' && <Button kind="s" full={false} onClick={() => change(m.id, 'team')}>{tr("Rétrograder en équipe")}</Button>}
                               {m.role !== 'traveler' && <Button kind="s" icon="x" full={false} onClick={() => setConfirmId(m.id)}>{tr("Retirer")}</Button>}
+                              {s.user?.role === 'admin' && <Button kind="s" icon="edit" full={false} onClick={() => { setConfirmId(null); setOpenMember(m); }}>{tr("Modifier")}</Button>}
                             </span>
                           )}
                       </td>
@@ -252,6 +281,10 @@ export function Members() {
                   </>
                 )}
             </SheetActions>
+
+            {s.user?.role === 'admin' && (
+              <MemberEdit key={openMember.id} m={openMember} onSaved={(msg) => { setErr(null); setOk(msg); setOpenMember(null); void reload(); }} />
+            )}
 
             {/* Réinitialisation du mot de passe : réservée aux administrateurs.
                 Utile surtout pour les comptes créés avec un seul numéro, qui ne

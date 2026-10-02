@@ -52,6 +52,13 @@ export async function updateTraveler(id: string, name: string, phone: string): P
   return { error: error ? humanize(error.message) : undefined };
 }
 
+/** Modifie le nom et le téléphone d'un compte, quel que soit son rôle (supabase/admin_update_member.sql). */
+export async function updateMember(id: string, name: string, phone: string): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { error } = await supabase.rpc('admin_update_member', { p_id: id, p_name: name, p_phone: phone });
+  return { error: error ? humanize(error.message) : undefined };
+}
+
 /** Désactive ou réactive un compte voyageur (bloque aussi la connexion). */
 export async function setTravelerStatus(
   id: string, status: AccountStatus, reason = '',
