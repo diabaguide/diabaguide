@@ -40,7 +40,7 @@ export function MesEnvois() {
   const [calcBusy, setCalcBusy] = useState(false);
   const calcDevis = async (e: FormEvent) => {
     e.preventDefault(); setCalcBusy(true);
-    const m = await devisFret(dv.mode, dv.type, toNum(dv.poids), toNum(dv.volume));
+    const m = await devisFret(dv.mode, dv.type, isMaritime(dv.mode) ? null : toNum(dv.poids), isMaritime(dv.mode) ? toNum(dv.volume) : null);
     setCalcBusy(false); setDevis(m);
   };
 
@@ -77,10 +77,9 @@ export function MesEnvois() {
           <form onSubmit={calcDevis} className="stack" style={{ gap: 10 }} noValidate>
             <Select id="dv-mode" label={tr("Mode d’envoi")} value={dv.mode} onChange={(v) => setDv({ ...dv, mode: v as FretMode })} options={MODE_OPTIONS} />
             <Select id="dv-type" label={tr("Type de marchandise")} value={dv.type} onChange={(v) => setDv({ ...dv, type: v })} options={TYPES} />
-            <div className="row" style={{ gap: 10 }}>
-              <div className="grow"><Field id="dv-poids" label={tr("Poids (kg)")} value={dv.poids} onChange={(v) => setDv({ ...dv, poids: v })} placeholder="0" /></div>
-              <div className="grow"><Field id="dv-vol" label={tr("Volume (m³)")} value={dv.volume} onChange={(v) => setDv({ ...dv, volume: v })} placeholder="0" /></div>
-            </div>
+            {isMaritime(dv.mode)
+              ? <Field id="dv-vol" label={tr("Volume (m³)")} value={dv.volume} onChange={(v) => setDv({ ...dv, volume: v })} placeholder="0" />
+              : <Field id="dv-poids" label={tr("Poids (kg)")} value={dv.poids} onChange={(v) => setDv({ ...dv, poids: v })} placeholder="0" />}
             <Button type="submit" icon="refresh" disabled={calcBusy}>{tr(calcBusy ? 'Calcul…' : 'Estimer')}</Button>
           </form>
           {devis !== 'none' && (
