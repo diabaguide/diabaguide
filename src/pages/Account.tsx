@@ -119,6 +119,17 @@ export function Profile() {
 /** Modification de son propre profil : nom, téléphone et mot de passe. */
 export function EditProfile() {
   const { tr } = useI18n();
+  return (
+    <Screen>
+      <TopBar title={tr("Modifier mon profil")} back="/profil" />
+      <div className="main" style={{ gap: 20 }}><ProfileForms /></div>
+    </Screen>
+  );
+}
+
+/** Formulaires du profil, partagés entre l'espace voyageur et l'espace fret. */
+export function ProfileForms() {
+  const { tr } = useI18n();
   const { s, d } = useStore();
   const u = s.user;
   const [name, setName] = useState(u?.name ?? '');
@@ -163,9 +174,7 @@ export function EditProfile() {
   };
 
   return (
-    <Screen>
-      <TopBar title={tr("Modifier mon profil")} back="/profil" />
-      <div className="main" style={{ gap: 20 }}>
+    <>
         <form className="stack" onSubmit={save} noValidate>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Mes informations")}</h2>
           {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
@@ -185,8 +194,7 @@ export function EditProfile() {
           <Field id="me-pw2" label={tr("Confirmer le nouveau mot de passe")} type="password" value={pw2} onChange={setPw2} req />
           <Button type="submit" icon="lock" kind="s" disabled={pwBusy}>{tr(pwBusy ? 'Enregistrement…' : 'Changer le mot de passe')}</Button>
         </form>
-      </div>
-    </Screen>
+    </>
   );
 }
 

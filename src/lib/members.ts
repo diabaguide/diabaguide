@@ -17,6 +17,7 @@ export const STATUS_LABEL: Record<AccountStatus, string> = {
 
 export const ROLE_LABEL: Record<Role, string> = {
   traveler: 'Voyageur',
+  livreur: 'Livreur',
   team: 'Équipe',
   admin: 'Administrateur',
 };

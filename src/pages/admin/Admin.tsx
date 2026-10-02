@@ -44,6 +44,8 @@ export function AdminLayout() {
   const isAdmin = s.user?.role === 'admin';
   const items: [string, string, Parameters<typeof Icon>[0]['name'], boolean][] = [
     ['/equipe', 'Tableau de bord', 'grid', true], ['/equipe/propositions', 'Propositions', 'inbox', false], ['/equipe/fiches', 'Fiches', 'list', false], ['/equipe/recherches', 'Recherches des voyageurs', 'search', false], ['/equipe/historique', 'Historique des décisions', 'history', false], ['/equipe/expeditions', 'Expéditions', 'ship', false],
+    // Espace fret : le même que celui du livreur (tableau de bord, voyageurs).
+    ['/fret', 'Espace fret', 'truck', false],
     // Annonces de services : l'équipe consulte, l'administration rédige.
     ['/equipe/annonces', 'Annonces', 'send', false],
     // Administration : réservée au rôle admin.

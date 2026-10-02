@@ -3,7 +3,8 @@ import { supabase } from './supabase';
 /**
  * Accès aux données du module Fret (expéditions, colis, suivi).
  * Tables : voir supabase/fret_module.sql et supabase/fret_tarifs.sql.
- * RLS : réservé à l'équipe (is_team) ; le client lit ses propres colis.
+ * RLS : réservé à l'équipe fret (is_fret : livreur, équipe, admin) ; le
+ * client lit ses propres colis. Voir supabase/livreur.sql.
  */
 
 export type FretMode = 'maritime_groupage' | 'maritime_complet' | 'aerien_fret' | 'aerien_express';
@@ -121,6 +122,33 @@ export async function fetchColis(expeditionCode?: string): Promise<Colis[]> {
   const { data, error } = await q;
   if (error) { warn('chargement des colis', error); return []; }
   return (data as Row[]).map(toColis);
+}
+
+/** Tous les colis (tableau de bord fret), ou ceux d'un voyageur. */
+export async function fetchTousColis(profileId?: string): Promise<Colis[]> {
+  if (!supabase) return [];
+  let q = supabase.from('colis')
+    .select('code, expedition_code, client_nom, client_tel, marque_colis, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
+    .order('created_at', { ascending: false });
+  if (profileId) q = q.eq('profile_id', profileId);
+  const { data, error } = await q;
+  if (error) { warn('chargement des colis', error); return []; }
+  return (data as Row[]).map(toColis);
+}
+
+export interface VoyageurFret {
+  id: string; name: string | null; phone: string | null;
+  nbColis: number; colisEnCours: number; dernierColis: string | null;
+}
+/** Voyageurs ayant au moins un colis (supabase/livreur.sql : fret_voyageurs). */
+export async function fetchVoyageursFret(q = ''): Promise<VoyageurFret[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc('fret_voyageurs', { p_q: q });
+  if (error) { warn('chargement des voyageurs du fret', error); return []; }
+  return (data as Row[]).map((r) => ({
+    id: String(r.id), name: str(r.name), phone: str(r.phone),
+    nbColis: Number(r.nb_colis ?? 0), colisEnCours: Number(r.colis_en_cours ?? 0), dernierColis: str(r.dernier_colis),
+  }));
 }
 
 /* ---------- Écritures ---------- */

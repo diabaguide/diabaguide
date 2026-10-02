@@ -4,7 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Field, Icon, Logo, Photo, Screen, TopBar } from '../ui';
 import { useStore, type Lang } from '../store';
 import { supabase } from '../lib/supabase';
-import { isTeamRole, sendPasswordReset, signIn, signOut, signUp, updatePassword, ACCOUNT_NOTICE_KEY } from '../lib/auth';
+import { homeFor, sendPasswordReset, signIn, signOut, signUp, updatePassword, ACCOUNT_NOTICE_KEY } from '../lib/auth';
 import { EMAIL, PHONE } from '../lib/phone';
 
 const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }, { v: 'ar', l: 'العربية', flag: '🇸🇦' }];
@@ -203,7 +203,7 @@ export function Login() {
     setBusy(false);
     if (res.error || !res.user) { setErr(res.error ?? 'Connexion impossible.'); return; }
     // Le store se synchronise via onAuthStateChange ; on navigue selon le rôle.
-    nav(next ?? (isTeamRole(res.user.role) ? '/equipe' : '/accueil'), { replace: true });
+    nav(next ?? homeFor(res.user.role), { replace: true });
   };
   return (
     <Screen nav={false}>

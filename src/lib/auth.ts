@@ -2,7 +2,8 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { identifiantEstUnNumero, isInternalEmail, phoneLoginId, phoneOf } from './phone';
 
-export type Role = 'traveler' | 'team' | 'admin';
+/** « livreur » : membre de l'équipe limité au module fret (voir supabase/livreur.sql). */
+export type Role = 'traveler' | 'livreur' | 'team' | 'admin';
 /** État du compte : un compte désactivé par un administrateur ne peut plus se connecter. */
 export type AccountStatus = 'active' | 'suspended';
 /**
@@ -13,6 +14,10 @@ export const ACCOUNT_NOTICE_KEY = 'diaba-account-notice';
 export interface AuthUser { id: string; name: string; phone: string; email: string; role: Role; status: AccountStatus }
 /** Un admin dispose aussi de tous les droits « équipe ». */
 export const isTeamRole = (r: Role | undefined) => r === 'team' || r === 'admin';
+/** Accès au module fret : le livreur, l'équipe et les administrateurs. */
+export const isFretRole = (r: Role | undefined) => r === 'livreur' || isTeamRole(r);
+/** Page d'arrivée après connexion, selon le rôle. */
+export const homeFor = (r: Role | undefined) => (r === 'livreur' ? '/fret' : isTeamRole(r) ? '/equipe' : '/accueil');
 
 /** Traduit les messages d'erreur Supabase courants en français. */
 function translate(msg: string): string {

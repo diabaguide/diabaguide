@@ -2,7 +2,7 @@ import { useI18n } from './i18n';
 import { logSessionEvent } from './lib/sessionLog';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useStore } from './store';
-import { isTeamRole } from './lib/auth';
+import { homeFor, isFretRole, isTeamRole } from './lib/auth';
 import { lazy, Suspense } from 'react';
 import { Welcome, Signup, SignupDone, Login, Forgot, ResetPassword } from './pages/Access';
 import { Home, Locate } from './pages/Home';
@@ -31,12 +31,17 @@ const Travelers = lazy(() => import('./pages/admin/Travelers').then(m => ({ defa
 const AdminCities = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminCities })));
 const AdminCategories = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminCategories })));
 const AdminProductTags = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminProductTags })));
+const FretLayout = lazy(() => import('./pages/admin/FretConsole').then(m => ({ default: m.FretLayout })));
+const FretDashboard = lazy(() => import('./pages/admin/FretConsole').then(m => ({ default: m.FretDashboard })));
+const FretVoyageurs = lazy(() => import('./pages/admin/FretConsole').then(m => ({ default: m.FretVoyageurs })));
+const FretTarifs = lazy(() => import('./pages/admin/FretConsole').then(m => ({ default: m.FretTarifs })));
+const FretProfil = lazy(() => import('./pages/admin/FretConsole').then(m => ({ default: m.FretProfil })));
 const AdminAnnonces = lazy(() => import('./pages/admin/Annonces').then(m => ({ default: m.AdminAnnonces })));
 
 /* Compte obligatoire : toute page de contenu redirige vers la connexion.
    L’URL demandée est conservée (?next=) : lien partagé > connexion > fiche. */
 /* Niveau d'accès requis : simple connexion, espace équipe, ou administration. */
-function RequireAuth({ need = 'user' }: { need?: 'user' | 'team' | 'admin' }) {
+function RequireAuth({ need = 'user' }: { need?: 'user' | 'fret' | 'team' | 'admin' }) {
   const { tr } = useI18n();
   const { s } = useStore();
   const loc = useLocation();
@@ -51,6 +56,9 @@ function RequireAuth({ need = 'user' }: { need?: 'user' | 'team' | 'admin' }) {
     logSessionEvent('rejet_vers_connexion', loc.pathname);
     return <Navigate to={`/connexion?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
   }
+  // Le livreur n'a accès qu'à l'espace fret : tout le reste le ramène à /fret.
+  if (s.user.role === 'livreur' && need !== 'fret') return <Navigate to="/fret" replace />;
+  if (need === 'fret' && !isFretRole(s.user.role)) return <Navigate to="/accueil" replace />;
   if (need === 'team' && !isTeamRole(s.user.role)) return <Navigate to="/accueil" replace />;
   if (need === 'admin' && s.user.role !== 'admin') return <Navigate to="/equipe" replace />;
   return <Outlet />;
@@ -68,7 +76,7 @@ function GuestOnly() {
   if (!s.authReady) {
     return <div className="center-screen" style={{ minHeight: '60vh' }} role="status" aria-live="polite">{tr("Chargement…")}</div>;
   }
-  if (s.user) return <Navigate to="/accueil" replace />;
+  if (s.user) return <Navigate to={homeFor(s.user.role)} replace />;
   return <Outlet />;
 }
 
@@ -112,6 +120,18 @@ export default function App() {
           <Route path="/profil" element={<Profile />} />
           <Route path="/profil/modifier" element={<EditProfile />} />
           <Route path="/profil/telechargements" element={<Downloads />} />
+        </Route>
+
+        {/* Espace fret : livreur, équipe et administrateurs. */}
+        <Route element={<RequireAuth need="fret" />}>
+          <Route element={<FretLayout />}>
+            <Route path="/fret" element={<FretDashboard />} />
+            <Route path="/fret/expeditions" element={<ExpeditionsList />} />
+            <Route path="/fret/expeditions/:code" element={<ExpeditionDetail />} />
+            <Route path="/fret/voyageurs" element={<FretVoyageurs />} />
+            <Route path="/fret/tarifs" element={<FretTarifs />} />
+            <Route path="/fret/profil" element={<FretProfil />} />
+          </Route>
         </Route>
 
         <Route element={<RequireAuth need="team" />}>

@@ -1,6 +1,7 @@
 import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { useStore } from '../../store';
 import { Button, Field, Icon, Select } from '../../ui';
 import { SortTh, compare, useSort } from './tableSort';
 import {
@@ -20,6 +21,10 @@ const TYPES = [
   { v: 'electronique', l: 'Électronique et téléphones' }, { v: 'batterie', l: 'Batteries et produits à risque' },
   { v: 'cosmetique', l: 'Cosmétiques' }, { v: 'liquide', l: 'Liquides' }, { v: 'alimentaire', l: 'Produits alimentaires' },
 ];
+/** Les écrans servent dans deux espaces : la console équipe (/equipe) et
+    l'espace fret (/fret). Les liens restent dans l'espace d'origine. */
+const useBase = () => (useLocation().pathname.startsWith('/fret') ? '/fret' : '/equipe');
+
 const toNum = (s: string): number | null => { const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? null : n; };
 
 /* ============================================================
@@ -27,6 +32,7 @@ const toNum = (s: string): number | null => { const n = parseFloat(s.replace(','
    ============================================================ */
 export function ExpeditionsList() {
   const { tr } = useI18n();
+  const base = useBase();
   const [exps, setExps] = useState<Expedition[]>([]);
   const [totaux, setTotaux] = useState<Record<string, ExpeditionTotaux>>({});
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -227,7 +233,7 @@ export function ExpeditionsList() {
                   const t = totaux[e.code];
                   return (
                     <tr key={e.code}>
-                      <td><Link to={`/equipe/expeditions/${encodeURIComponent(e.code)}`}><strong>{e.code}</strong></Link><div className="small muted">{e.destination}</div></td>
+                      <td><Link to={`${base}/expeditions/${encodeURIComponent(e.code)}`}><strong>{e.code}</strong></Link><div className="small muted">{e.destination}</div></td>
                       <td>{tr(MODE_LABEL[e.mode])}</td>
                       <td><span className="small">{tr(EXPEDITION_STATUT_LABEL[e.statut])}</span></td>
                       <td>{t?.nbColis ?? 0}</td>
@@ -273,6 +279,9 @@ const ETAPES_ORDRE: EtapeType[] = ['recu_chine', 'regroupe', 'depart', 'en_trans
 
 export function ExpeditionDetail() {
   const { tr } = useI18n();
+  const base = useBase();
+  // Émettre une facture est réservé à l'équipe ; le livreur la marque payée.
+  const peutFacturer = useStore().s.user?.role !== 'livreur';
   const { code = '' } = useParams();
   const [exp, setExp] = useState<Expedition | null>(null);
   const [tot, setTot] = useState<ExpeditionTotaux | undefined>();
@@ -318,7 +327,7 @@ export function ExpeditionDetail() {
   };
 
   if (loading) return <div className="admin-body"><p className="muted" role="status">{tr("Chargement…")}</p></div>;
-  if (!exp) return <div className="admin-body"><p className="muted">{tr("Expédition introuvable.")} <Link to="/equipe/expeditions">{tr("Retour à la liste")}</Link></p></div>;
+  if (!exp) return <div className="admin-body"><p className="muted">{tr("Expédition introuvable.")} <Link to={`${base}/expeditions`}>{tr("Retour à la liste")}</Link></p></div>;
 
   const unite = MODE_UNITE[exp.mode];
 
@@ -329,7 +338,7 @@ export function ExpeditionDetail() {
           <h1>{exp.code}</h1>
           <div className="muted" style={{ marginTop: 4 }}>{tr(MODE_LABEL[exp.mode])} · {exp.destination} · {tr(EXPEDITION_STATUT_LABEL[exp.statut])}</div>
         </div>
-        <Button to="/equipe/expeditions" kind="s" icon="chevL" full={false}>{tr("Toutes les expéditions")}</Button>
+        <Button to={`${base}/expeditions`} kind="s" icon="chevL" full={false}>{tr("Toutes les expéditions")}</Button>
       </header>
 
       <div className="admin-body" style={{ gap: 18 }}>
@@ -369,10 +378,11 @@ export function ExpeditionDetail() {
                             <span className="small"><strong>{money(f.montantTotal, f.devise)}</strong> · {tr(FACTURE_STATUT_LABEL[f.statut])}</span>
                             <span className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
                               {f.statut === 'a_payer' && <Button kind="s" full={false} onClick={() => payer(c.code)}>{tr("Marquer payé")}</Button>}
-                              <Button kind="s" full={false} onClick={() => facturer(c.code)}>{tr("Refacturer")}</Button>
+                              {peutFacturer && <Button kind="s" full={false} onClick={() => facturer(c.code)}>{tr("Refacturer")}</Button>}
                             </span>
                           </div>
-                        ) : <Button kind="s" icon="send" full={false} onClick={() => facturer(c.code)}>{tr("Facturer")}</Button>;
+                        ) : peutFacturer ? <Button kind="s" icon="send" full={false} onClick={() => facturer(c.code)}>{tr("Facturer")}</Button>
+                          : <span className="small muted">{tr("Pas encore facturé")}</span>;
                       })()}
                     </td>
                     <td>

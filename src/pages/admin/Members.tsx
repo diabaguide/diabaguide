@@ -19,6 +19,7 @@ const RoleBadge = ({ role }: { role: Role }) => {
   const { tr } = useI18n();
   const style: Record<Role, { bg: string; fg: string; icon: Parameters<typeof Icon>[0]['name'] }> = {
     admin: { bg: '#EAE4F5', fg: '#4B3A7A', icon: 'shield' },
+    livreur: { bg: '#FBEBDD', fg: '#7A3E12', icon: 'truck' },
     team: { bg: '#E3ECF7', fg: '#1F4A7A', icon: 'users' },
     traveler: { bg: '#E6EAF3', fg: '#2F3C57', icon: 'user' },
   };
@@ -99,7 +100,7 @@ export function Members() {
   const [openInvite, setOpenInvite] = useState<Invitation | null>(null);
 
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'team' | 'admin'>('team');
+  const [role, setRole] = useState<'livreur' | 'team' | 'admin'>('team');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -171,8 +172,8 @@ export function Members() {
             {tr("Si la personne a déjà un compte, son rôle est appliqué immédiatement. Sinon, l’invitation est conservée et le rôle lui est accordé à sa première connexion.")}</p>
           <form onSubmit={invite} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
             <div className="grow"><Field id="inv-mail" label={tr("Adresse e-mail")} type="email" value={email} onChange={setEmail} placeholder={tr("nom@exemple.com")} /></div>
-            <Select id="inv-role" label={tr("Rôle")} value={role} onChange={(v) => setRole(v as 'team' | 'admin')}
-              options={[{ v: 'team', l: 'Équipe' }, { v: 'admin', l: 'Administrateur' }]} />
+            <Select id="inv-role" label={tr("Rôle")} value={role} onChange={(v) => setRole(v as 'livreur' | 'team' | 'admin')}
+              options={[{ v: 'team', l: 'Équipe' }, { v: 'livreur', l: 'Livreur (fret uniquement)' }, { v: 'admin', l: 'Administrateur' }]} />
             <Button type="submit" icon="plus" full={false} disabled={busy}>{tr(busy ? 'Ajout…' : 'Ajouter')}</Button>
           </form>
         </section>
@@ -242,6 +243,9 @@ export function Members() {
                           ) : (
                             <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
                               {m.role === 'traveler' && <Button kind="s" full={false} onClick={() => change(m.id, 'team')}>{tr("Ajouter à l’équipe")}</Button>}
+                              {m.role === 'traveler' && <Button kind="s" icon="truck" full={false} onClick={() => change(m.id, 'livreur')}>{tr("Nommer livreur")}</Button>}
+                              {m.role === 'livreur' && <Button kind="s" icon="users" full={false} onClick={() => change(m.id, 'team')}>{tr("Passer en équipe")}</Button>}
+                              {m.role === 'team' && <Button kind="s" icon="truck" full={false} onClick={() => change(m.id, 'livreur')}>{tr("Limiter au fret")}</Button>}
                               {m.role === 'team' && <Button kind="s" icon="shield" full={false} onClick={() => change(m.id, 'admin')}>{tr("Nommer admin")}</Button>}
                               {m.role === 'admin' && <Button kind="s" full={false} onClick={() => change(m.id, 'team')}>{tr("Rétrograder en équipe")}</Button>}
                               {m.role !== 'traveler' && <Button kind="s" icon="x" full={false} onClick={() => setConfirmId(m.id)}>{tr("Retirer")}</Button>}
@@ -281,13 +285,16 @@ export function Members() {
                 : confirmId === openMember.id ? (
                   <>
                     <SheetDanger>{tr("Retirer l’accès ?")}</SheetDanger>
-                    <p className="small muted" style={{ margin: 0 }}>{tr("La personne redevient voyageur et perd l’accès à l’espace équipe et à l’administration.")}</p>
+                    <p className="small muted" style={{ margin: 0 }}>{tr("La personne redevient voyageur et perd l’accès à l’espace équipe, à l’espace fret et à l’administration.")}</p>
                     <Button kind="d" icon="x" full={false} onClick={() => void change(openMember.id, 'traveler')}>{tr("Confirmer le retrait")}</Button>
                     <Button kind="t" icon="x" full={false} onClick={() => setConfirmId(null)}>{tr("Annuler")}</Button>
                   </>
                 ) : (
                   <>
                     {openMember.role === 'traveler' && <Button kind="s" icon="users" full={false} onClick={() => void change(openMember.id, 'team')}>{tr("Ajouter à l’équipe")}</Button>}
+                    {openMember.role === 'traveler' && <Button kind="s" icon="truck" full={false} onClick={() => void change(openMember.id, 'livreur')}>{tr("Nommer livreur")}</Button>}
+                    {openMember.role === 'livreur' && <Button kind="s" icon="users" full={false} onClick={() => void change(openMember.id, 'team')}>{tr("Passer en équipe")}</Button>}
+                    {openMember.role === 'team' && <Button kind="s" icon="truck" full={false} onClick={() => void change(openMember.id, 'livreur')}>{tr("Limiter au fret")}</Button>}
                     {openMember.role === 'team' && <Button kind="s" icon="shield" full={false} onClick={() => void change(openMember.id, 'admin')}>{tr("Nommer administrateur")}</Button>}
                     {openMember.role === 'admin' && <Button kind="s" icon="users" full={false} onClick={() => void change(openMember.id, 'team')}>{tr("Rétrograder en équipe")}</Button>}
                     {openMember.role !== 'traveler' && <Button kind="d" icon="x" full={false} onClick={() => setConfirmId(openMember.id)}>{tr("Retirer l’accès")}</Button>}

@@ -26,7 +26,8 @@ Deno.serve(async (req) => {
 
   const { data: caller, error: roleError } = await admin.from('profiles')
     .select('role').eq('id', auth.user.id).single();
-  if (roleError || !['team', 'admin'].includes(caller?.role ?? '')) {
+  // Le livreur crée aussi des voyageurs, pour leur rattacher un colis.
+  if (roleError || !['livreur', 'team', 'admin'].includes(caller?.role ?? '')) {
     return json({ error: 'Accès réservé à l’équipe.' }, 403);
   }
 
