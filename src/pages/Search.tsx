@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { catIcon, catLabel, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
+import { catIcon, catLabel, citiesWithPublicEntries, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
 import { Button, Chip, DemoNote, Field, Icon, Screen, Select, Stars, StoredPhoto, useWide } from '../ui';
@@ -204,6 +204,8 @@ export function Search() {
 function FilterPanel({ q, patch, onReset }: { q: ReturnType<typeof useQuery>['q']; patch: (o: Record<string, string | null>) => void; onReset: () => void }) {
   const { tr } = useI18n();
   const { s } = useStore();
+  const cityOptions = citiesWithPublicEntries(s.cities, s.providers);
+  const cityValue = cityOptions.some((c) => c.id === q.city) ? q.city : (cityOptions[0]?.id ?? q.city);
   const radios = (name: string, val: string, opts: { v: string; l: string }[], on: (v: string) => void) => (
     <div className="chips">
       {opts.map((o) => (
@@ -223,7 +225,7 @@ function FilterPanel({ q, patch, onReset }: { q: ReturnType<typeof useQuery>['q'
         {radios('pcat', q.cat ?? '', [{ v: '', l: 'Toutes' }, ...s.categories.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => patch({ cat: v || null, fret: null }))}
       </section>
       <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Ville")}</h3>
-        {radios('pville', q.city, s.cities.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.name })), (v) => patch({ ville: v }))}
+        {radios('pville', cityValue, cityOptions.map((c) => ({ v: c.id as string, l: c.name })), (v) => patch({ ville: v }))}
       </section>
       <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Proximité")}</h3>
         {radios('pprox', q.prox ?? '0', [{ v: '2', l: 'Moins de 2 km' }, { v: '5', l: 'Moins de 5 km' }, { v: '10', l: 'Moins de 10 km' }, { v: '0', l: 'Toute la ville' }], (v) => patch({ prox: v === '0' ? null : v }))}
@@ -281,12 +283,14 @@ export function Filters() {
   const { s } = useStore();
   const nav = useNavigate();
   const wide = useWide();
+  const cityOptions = citiesWithPublicEntries(s.cities, s.providers);
   const [f, setF] = useState({ q: q.q, cat: q.cat, city: q.city, prox: q.prox ?? '0', fret: q.fret ?? 'both' });
+  const cityValue = cityOptions.some((c) => c.id === f.city) ? f.city : (cityOptions[0]?.id ?? f.city);
   const apply = () => {
     const n = new URLSearchParams();
     if (f.q) n.set('q', f.q);
     if (f.cat) n.set('cat', f.cat);
-    n.set('ville', f.city);
+    n.set('ville', cityValue);
     if (f.prox !== '0') n.set('prox', f.prox);
     if (f.cat && isFreight(f.cat) && f.fret !== 'both') n.set('fret', f.fret);
     if (sp.get('view')) n.set('view', sp.get('view')!);
@@ -315,9 +319,9 @@ export function Filters() {
         </section>
         <section className="stack"><h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>
           {wide
-            ? tr(radios<City>('ville', f.city, s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name })), (v) => setF({ ...f, city: v })))
-            : <Select<City> id="filter-city" label="Ville" value={f.city}
-                options={s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }))}
+            ? tr(radios<City>('ville', cityValue, cityOptions.map((c) => ({ v: c.id, l: c.name })), (v) => setF({ ...f, city: v })))
+            : <Select<City> id="filter-city" label="Ville" value={cityValue}
+                options={cityOptions.map((c) => ({ v: c.id, l: c.name }))}
                 onChange={(v) => setF({ ...f, city: v })} />}
         </section>
         <section className="stack"><h2 style={{ fontSize: 17 }}>{tr("Proximité")}</h2>
