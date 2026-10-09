@@ -58,6 +58,10 @@ h1, h2, h3, p { margin: 0; }
 .quick-action-copy strong { font-size: 14px; line-height: 1.2; }
 .quick-action-copy small { color: var(--muted); font-size: 12px; line-height: 1.2; }
 @media (max-width: 360px) { .quick-actions { grid-template-columns: 1fr; } }
+.home-intro { display: flex; flex-direction: column; gap: 7px; padding: 2px 2px 0; }
+.home-intro .eyebrow { color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.home-intro h1 { font-size: clamp(25px, 7vw, 34px); max-width: 15ch; }
+.home-intro p:last-child { color: var(--muted); max-width: 42ch; }
 
 /* Boutons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 18px; border-radius: 14px; font: inherit; font-weight: 600; font-size: 16px; text-decoration: none; text-align: center; cursor: pointer; border: 1.5px solid transparent; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
