@@ -218,6 +218,24 @@ export function ExpeditionDetail() {
     if (res.error) { setErr(res.error); return; }
     setOk(`Facture de ${colisCode} marquée payée.`); await reload();
   };
+  const partagerSuivi = async () => {
+    const url = `${window.location.origin}/suivi/${encodeURIComponent(code)}`;
+    setErr(null); setOk(null);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Suivi ${code}`, url });
+        setOk('Lien de suivi partagé.');
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        setOk('Lien de suivi copié.');
+      } else {
+        throw new Error('Partage non disponible sur cet appareil.');
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      setErr(error instanceof Error ? error.message : 'Partage non disponible sur cet appareil.');
+    }
+  };
 
   const [aff, setAff] = useState('');
   const affecter = async () => {
@@ -322,7 +340,10 @@ export function ExpeditionDetail() {
           <h1>{exp.code}</h1>
           <div className="muted" style={{ marginTop: 4 }}>{tr(MODE_LABEL[exp.mode])} · {exp.destination} · {tr(EXPEDITION_STATUT_LABEL[exp.statut])}</div>
         </div>
-        <Button to={`${base}/expeditions`} kind="s" icon="chevL" full={false}>{tr("Toutes les expéditions")}</Button>
+        <div className="row" style={{ gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <Button kind="s" icon="share" full={false} onClick={() => void partagerSuivi()}>{tr("Partager")}</Button>
+          <Button to={`${base}/expeditions`} kind="s" icon="chevL" full={false}>{tr("Toutes les expéditions")}</Button>
+        </div>
       </header>
 
       <div className="admin-body" style={{ gap: 18 }}>

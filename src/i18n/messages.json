@@ -814,6 +814,21 @@
     "zh": "分享",
     "ar": "مشاركة"
   },
+  "Lien de suivi partagé.": {
+    "en": "Tracking link shared.",
+    "zh": "跟踪链接已分享。",
+    "ar": "تمت مشاركة رابط التتبع."
+  },
+  "Lien de suivi copié.": {
+    "en": "Tracking link copied.",
+    "zh": "跟踪链接已复制。",
+    "ar": "تم نسخ رابط التتبع."
+  },
+  "Partage non disponible sur cet appareil.": {
+    "en": "Sharing is not available on this device.",
+    "zh": "此设备不支持分享。",
+    "ar": "المشاركة غير متاحة على هذا الجهاز."
+  },
   "Proposer une correction": {
     "en": "Suggest a correction",
     "zh": "提出更正",
