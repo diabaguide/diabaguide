@@ -2,7 +2,7 @@ import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../../store';
-import { Button, Field, Icon, Select, useWide } from '../../ui';
+import { Button, Field, Icon, Select, TextArea, useWide } from '../../ui';
 import { AdminCard, AdminSheet } from './mobile';
 import { SortTh, compare, useSort } from './tableSort';
 import {
@@ -217,7 +217,7 @@ export function ExpeditionDetail() {
   const [showEdit, setShowEdit] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
-    mode: 'maritime_groupage' as FretMode, warehouseId: '', destination: '', containerNo: '', blNo: '', awbNo: '', seuilKg: '', seuilM3: '', arriveePrevue: '',
+    mode: 'maritime_groupage' as FretMode, warehouseId: '', destination: '', containerNo: '', blNo: '', awbNo: '', seuilKg: '', seuilM3: '', arriveePrevue: '', noteInterne: '',
   });
 
   const reload = useCallback(async () => {
@@ -264,7 +264,7 @@ export function ExpeditionDetail() {
     setEditErr(null);
     setEditForm({
       mode: exp.mode, warehouseId: exp.warehouseId ?? '', destination: exp.destination, containerNo: exp.containerNo ?? '',
-      blNo: exp.blNo ?? '', awbNo: exp.awbNo ?? '', seuilKg: exp.seuilKg == null ? '' : String(exp.seuilKg), seuilM3: exp.seuilM3 == null ? '' : String(exp.seuilM3), arriveePrevue: exp.arriveePrevue ?? '',
+      blNo: exp.blNo ?? '', awbNo: exp.awbNo ?? '', seuilKg: exp.seuilKg == null ? '' : String(exp.seuilKg), seuilM3: exp.seuilM3 == null ? '' : String(exp.seuilM3), arriveePrevue: exp.arriveePrevue ?? '', noteInterne: exp.noteInterne ?? '',
     });
     setShowEdit(true);
   };
@@ -275,7 +275,7 @@ export function ExpeditionDetail() {
     const res = await updateExpedition({
       code, mode: editForm.mode, warehouseId: editForm.warehouseId || null, destination: editForm.destination,
       containerNo: editForm.containerNo, blNo: editForm.blNo, awbNo: editForm.awbNo,
-      seuilKg: toNum(editForm.seuilKg), seuilM3: toNum(editForm.seuilM3), arriveePrevue: editForm.arriveePrevue || null,
+      seuilKg: toNum(editForm.seuilKg), seuilM3: toNum(editForm.seuilM3), arriveePrevue: editForm.arriveePrevue || null, noteInterne: editForm.noteInterne,
     });
     setBusy(false);
     if (res.error) { setEditErr(res.error); return; }
@@ -540,6 +540,7 @@ export function ExpeditionDetail() {
             <Select id="edit-mode" label={tr("Mode")} value={editForm.mode} onChange={(v) => setEditForm({ ...editForm, mode: v as FretMode })} options={MODE_OPTIONS} />
             <Field id="edit-destination" label={tr("Destination au Sénégal")} value={editForm.destination} onChange={(v) => setEditForm({ ...editForm, destination: v })} req />
             <Field id="edit-arrivee" label={tr("Arrivée prévue")} type="date" value={editForm.arriveePrevue} onChange={(v) => setEditForm({ ...editForm, arriveePrevue: v })} />
+            <TextArea id="edit-note" label={tr("Note interne (équipe uniquement)")} value={editForm.noteInterne} onChange={(v) => setEditForm({ ...editForm, noteInterne: v })} rows={3} placeholder={tr("Jamais visible du voyageur")} />
             <Field id="edit-container" label={tr("Numéro de conteneur")} value={editForm.containerNo} onChange={(v) => setEditForm({ ...editForm, containerNo: v })} placeholder={tr("facultatif")} />
             <Field id="edit-bl" label={tr("Numéro BL")} value={editForm.blNo} onChange={(v) => setEditForm({ ...editForm, blNo: v })} placeholder={tr("facultatif")} />
             <Field id="edit-awb" label={tr("Numéro AWB")} value={editForm.awbNo} onChange={(v) => setEditForm({ ...editForm, awbNo: v })} placeholder={tr("facultatif")} />
