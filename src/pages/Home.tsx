@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { cityName, type City } from '../data';
+import { citiesWithPublicEntries, cityName, publicEntryCount, type City } from '../data';
 import { districtPos, requestPosition, setPos } from '../geo';
 import { useStore } from '../store';
 import { Button, DemoNote, Icon, Logo, RadioCard, Screen, TopBar } from '../ui';
@@ -22,8 +22,12 @@ const CITY_BUTTONS_MAX = 4;
 function CitySwitch() {
   const { tr } = useI18n();
   const { s, d } = useStore();
-  const active = s.cities.filter((c) => c.active);
-  const count = (id: string) => s.providers.filter((p) => p.city === id).length;
+  const active = citiesWithPublicEntries(s.cities, s.providers);
+  const count = (id: string) => publicEntryCount(id, s.providers);
+  useEffect(() => {
+    if (active.length > 0 && !active.some((c) => c.id === s.city)) d({ t: 'city', v: active[0].id });
+  }, [active, s.city, d]);
+  if (active.length === 0) return null;
   if (active.length > CITY_BUTTONS_MAX) {
     return (
       <label className="city-switch">

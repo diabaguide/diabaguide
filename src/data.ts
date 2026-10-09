@@ -103,6 +103,13 @@ export interface Provider {
   deletionReason?: string;
 }
 
+export const CITY_DIRECTORY_CATEGORIES: Cat[] = ['gros', 'hotel', 'resto'];
+export const isPublicDirectoryProvider = (p: Provider) => CITY_DIRECTORY_CATEGORIES.includes(p.cat);
+export const citiesWithPublicEntries = (cities: CityRef[], providers: Provider[]) =>
+  cities.filter((c) => c.active && providers.some((p) => p.city === c.id && isPublicDirectoryProvider(p)));
+export const publicEntryCount = (city: City, providers: Provider[]) =>
+  providers.filter((p) => p.city === city && isPublicDirectoryProvider(p)).length;
+
 export const PROVIDERS: Provider[] = [
   {
     id: 'baiyun', name: 'Baiyun Textile Trading', cn: '白云纺织贸易有限公司', cat: 'gros', city: 'guangzhou', district: 'Baiyun',
