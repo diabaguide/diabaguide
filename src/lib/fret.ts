@@ -63,7 +63,7 @@ export interface Warehouse { id: string; nom: string; usage: 'fret_express' | 'c
 export interface Expedition {
   code: string; mode: FretMode; warehouseId: string | null; destination: string;
   containerNo: string | null; blNo: string | null; awbNo: string | null;
-  seuilKg: number | null; seuilM3: number | null; statut: ExpeditionStatut; createdAt: string;
+  seuilKg: number | null; seuilM3: number | null; arriveePrevue: string | null; statut: ExpeditionStatut; createdAt: string;
 }
 export interface ExpeditionTotaux {
   code: string; mode: FretMode; statut: ExpeditionStatut; seuilKg: number | null; seuilM3: number | null;
@@ -72,7 +72,7 @@ export interface ExpeditionTotaux {
 export interface SuiviPublicEtape { type: EtapeType; au: string }
 export interface SuiviPublic {
   code: string; mode: FretMode; destination: string; statut: ExpeditionStatut;
-  clotureeLe: string | null; partieLe: string | null; arriveeLe: string | null;
+  arriveePrevue: string | null; clotureeLe: string | null; partieLe: string | null; arriveeLe: string | null;
   etapes: SuiviPublicEtape[];
 }
 export interface Colis {
@@ -106,7 +106,7 @@ export async function fetchWarehouses(): Promise<Warehouse[]> {
 export async function fetchExpeditions(): Promise<Expedition[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from('expeditions')
-    .select('code, mode, warehouse_id, destination, container_no, bl_no, awb_no, seuil_kg, seuil_m3, statut, created_at')
+    .select('code, mode, warehouse_id, destination, container_no, bl_no, awb_no, seuil_kg, seuil_m3, arrivee_prevue, statut, created_at')
     .order('created_at', { ascending: false });
   if (error) { warn('chargement des expéditions', error); return []; }
   return (data as Row[]).map(toExpedition);
@@ -121,7 +121,7 @@ export async function fetchSuiviPublic(code: string): Promise<SuiviPublic | null
   const r = data as Row;
   return {
     code: String(r.code), mode: r.mode as FretMode, destination: String(r.destination ?? ''), statut: r.statut as ExpeditionStatut,
-    clotureeLe: str(r.cloturee_le), partieLe: str(r.partie_le), arriveeLe: str(r.arrivee_le),
+    arriveePrevue: str(r.arrivee_prevue), clotureeLe: str(r.cloturee_le), partieLe: str(r.partie_le), arriveeLe: str(r.arrivee_le),
     etapes: Array.isArray(r.etapes) ? (r.etapes as Row[]).map((e) => ({ type: e.type as EtapeType, au: String(e.au) })) : [],
   };
 }
@@ -184,12 +184,12 @@ export async function fetchVoyageursFret(q = ''): Promise<VoyageurFret[]> {
 
 export async function createExpedition(e: {
   code: string; mode: FretMode; warehouseId?: string | null; destination?: string;
-  seuilKg?: number | null; seuilM3?: number | null;
+  seuilKg?: number | null; seuilM3?: number | null; arriveePrevue?: string | null;
 }): Promise<{ error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
   const { error } = await supabase.from('expeditions').insert({
     code: e.code.trim(), mode: e.mode, warehouse_id: e.warehouseId ?? null,
-    destination: e.destination?.trim() || 'Dakar', seuil_kg: e.seuilKg ?? null, seuil_m3: e.seuilM3 ?? null,
+    destination: e.destination?.trim() || 'Dakar', seuil_kg: e.seuilKg ?? null, seuil_m3: e.seuilM3 ?? null, arrivee_prevue: e.arriveePrevue || null,
   });
   return { error: error ? humanize(error.message) : undefined };
 }
@@ -197,13 +197,13 @@ export async function createExpedition(e: {
 export async function updateExpedition(e: {
   code: string; mode: FretMode; warehouseId?: string | null; destination: string;
   containerNo?: string | null; blNo?: string | null; awbNo?: string | null;
-  seuilKg?: number | null; seuilM3?: number | null;
+  seuilKg?: number | null; seuilM3?: number | null; arriveePrevue?: string | null;
 }): Promise<{ error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
   const { error } = await supabase.from('expeditions').update({
     mode: e.mode, warehouse_id: e.warehouseId ?? null, destination: e.destination.trim() || 'Dakar',
     container_no: e.containerNo?.trim() || null, bl_no: e.blNo?.trim() || null, awb_no: e.awbNo?.trim() || null,
-    seuil_kg: e.seuilKg ?? null, seuil_m3: e.seuilM3 ?? null, updated_at: new Date().toISOString(),
+    seuil_kg: e.seuilKg ?? null, seuil_m3: e.seuilM3 ?? null, arrivee_prevue: e.arriveePrevue || null, updated_at: new Date().toISOString(),
   }).eq('code', e.code);
   return { error: error ? humanize(error.message) : undefined };
 }
@@ -516,7 +516,7 @@ function toExpedition(r: Row): Expedition {
   return {
     code: String(r.code), mode: r.mode as FretMode, warehouseId: str(r.warehouse_id), destination: String(r.destination ?? 'Dakar'),
     containerNo: str(r.container_no), blNo: str(r.bl_no), awbNo: str(r.awb_no),
-    seuilKg: num(r.seuil_kg), seuilM3: num(r.seuil_m3), statut: r.statut as ExpeditionStatut, createdAt: String(r.created_at),
+    seuilKg: num(r.seuil_kg), seuilM3: num(r.seuil_m3), arriveePrevue: str(r.arrivee_prevue), statut: r.statut as ExpeditionStatut, createdAt: String(r.created_at),
   };
 }
 function toColis(r: Row): Colis {
