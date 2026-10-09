@@ -11,7 +11,7 @@ import {
   suggestExpeditionCode, suggestColisCode,
   fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
   MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL, caracLabel,
-  type Expedition, type ExpeditionTotaux, type EtapeExpedition, type Colis, type FretMode, type Warehouse, type EtapeType, type Facture, type ClientLite,
+  type Expedition, type ExpeditionTotaux, type EtapeExpedition, type Colis, type FretMode, type ExpeditionStatut, type Warehouse, type EtapeType, type Facture, type ClientLite,
 } from '../../lib/fret';
 
 const money = (n: number, d = 'FCFA') => `${n.toLocaleString('fr-FR')} ${d === 'XOF' ? 'FCFA' : d}`;
@@ -44,6 +44,8 @@ export function ExpeditionsList() {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statutFilter, setStatutFilter] = useState<ExpeditionStatut | ''>('');
 
   const reload = useCallback(async () => {
     const [e, t, w] = await Promise.all([fetchExpeditions(), fetchExpeditionTotaux(), fetchWarehouses()]);
@@ -71,8 +73,13 @@ export function ExpeditionsList() {
   };
 
   const { sort, toggle } = useSort<'code' | 'statut'>({ k: 'code', dir: -1 });
-  const shown = [...exps].sort((a, b) =>
-    compare(sort.k === 'statut' ? a.statut : a.code, sort.k === 'statut' ? b.statut : b.code, sort.dir));
+  const needle = search.trim().toLocaleLowerCase('fr');
+  const shown = [...exps]
+    .filter((e) => {
+      const haystack = [e.code, e.destination, MODE_LABEL[e.mode], EXPEDITION_STATUT_LABEL[e.statut]].join(' ').toLocaleLowerCase('fr');
+      return (!needle || haystack.includes(needle)) && (!statutFilter || e.statut === statutFilter);
+    })
+    .sort((a, b) => compare(sort.k === 'statut' ? a.statut : a.code, sort.k === 'statut' ? b.statut : b.code, sort.dir));
   const ouvrir = (code: string) => nav(`${base}/expeditions/${encodeURIComponent(code)}`);
 
   return (
@@ -89,9 +96,18 @@ export function ExpeditionsList() {
         {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
 
         <section className="card stack" style={{ gap: 12 }}>
-          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Expéditions")} ({exps.length})</h2>
+          <div className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Expéditions")} ({shown.length}/{exps.length})</h2>
+            <span className="small muted">{tr("Résultats filtrés")}</span>
+          </div>
+          <div className="filters">
+            <div className="grow"><Field id="exp-search" label={tr("Rechercher un lot")} value={search} onChange={setSearch} placeholder={tr("Code, destination ou statut")} /></div>
+            <div className="grow"><Select id="exp-status-filter" label={tr("Filtrer par statut")} value={statutFilter} onChange={(v) => setStatutFilter(v as ExpeditionStatut | '')}
+              options={[{ v: '', l: 'Tous les statuts' }, ...(Object.keys(EXPEDITION_STATUT_LABEL) as ExpeditionStatut[]).map((v) => ({ v, l: EXPEDITION_STATUT_LABEL[v] }))]} /></div>
+          </div>
           {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
             : exps.length === 0 ? <p className="muted">{tr("Aucune expédition. Utilisez le bouton + pour en créer une.")}</p>
+            : shown.length === 0 ? <p className="muted">{tr("Aucune expédition ne correspond aux filtres.")}</p>
             : wide ? (
             <div className="table dense"><table>
               <thead><tr>
