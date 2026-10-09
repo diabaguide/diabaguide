@@ -8,7 +8,7 @@ import { Button, Field, Icon, Select, TextArea, useWide } from '../../ui';
 import { AdminCard, AdminSheet } from './mobile';
 import { SortTh, compare, useSort } from './tableSort';
 import {
-  fetchExpeditions, fetchExpeditionTotaux, fetchColis, fetchWarehouses,
+  fetchExpeditions, fetchExpeditionTotaux, fetchExpeditionArticleCounts, fetchColis, fetchWarehouses,
   createExpedition, updateExpedition, updateExpeditionPhoto, deleteExpedition, createExpeditionArticle, updateExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
   suggestExpeditionCode, suggestColisCode,
   fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
@@ -41,6 +41,7 @@ export function ExpeditionsList() {
   const wide = useWide();
   const [exps, setExps] = useState<Expedition[]>([]);
   const [totaux, setTotaux] = useState<Record<string, ExpeditionTotaux>>({});
+  const [articleCounts, setArticleCounts] = useState<Record<string, number>>({});
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -50,8 +51,8 @@ export function ExpeditionsList() {
   const [statutFilter, setStatutFilter] = useState<ExpeditionStatut | ''>('');
 
   const reload = useCallback(async () => {
-    const [e, t, w] = await Promise.all([fetchExpeditions(), fetchExpeditionTotaux(), fetchWarehouses()]);
-    setExps(e); setTotaux(t); setWarehouses(w); setLoading(false);
+    const [e, t, a, w] = await Promise.all([fetchExpeditions(), fetchExpeditionTotaux(), fetchExpeditionArticleCounts(), fetchWarehouses()]);
+    setExps(e); setTotaux(t); setArticleCounts(a); setWarehouses(w); setLoading(false);
   }, []);
   useEffect(() => { void reload(); }, [reload]);
 
@@ -115,7 +116,7 @@ export function ExpeditionsList() {
               <thead><tr>
                 <SortTh k="code" label="Code" sort={sort} onSort={toggle} />
                 <th>{tr("Mode")}</th><SortTh k="statut" label="Statut" sort={sort} onSort={toggle} />
-                <th>{tr("Colis")}</th><th>{tr("Remplissage")}</th>
+                <th>{tr("Colis")}</th><th>{tr("Articles détaillés")}</th><th>{tr("Remplissage")}</th>
               </tr></thead>
               <tbody>
                 {shown.map((e) => {
@@ -128,6 +129,7 @@ export function ExpeditionsList() {
                       <td>{tr(MODE_LABEL[e.mode])}</td>
                       <td><span className="small">{tr(EXPEDITION_STATUT_LABEL[e.statut])}</span></td>
                       <td>{t?.nbColis ?? 0}</td>
+                      <td>{articleCounts[e.code] ?? 0}</td>
                       <td><Remplissage exp={e} tot={t} /></td>
                     </tr>
                   );
@@ -138,7 +140,7 @@ export function ExpeditionsList() {
             <div className="acards">
               {shown.map((e) => (
                 <AdminCard key={e.code} toneSeed={e.code} title={e.code}
-                  sub={`${tr(MODE_LABEL[e.mode])} · ${totaux[e.code]?.nbColis ?? 0} ${tr("colis")}`}
+                  sub={`${tr(MODE_LABEL[e.mode])} · ${totaux[e.code]?.nbColis ?? 0} ${tr("colis")} · ${articleCounts[e.code] ?? 0} ${tr("articles détaillés")}`}
                   badge={<span className="small">{tr(EXPEDITION_STATUT_LABEL[e.statut])}</span>}
                   onOpen={() => ouvrir(e.code)} />
               ))}

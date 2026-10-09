@@ -157,6 +157,17 @@ export async function fetchExpeditionArticles(code: string): Promise<ExpeditionA
   }));
 }
 
+export async function fetchExpeditionArticleCounts(): Promise<Record<string, number>> {
+  if (!supabase) return {};
+  const { data, error } = await supabase.from('expedition_articles').select('expedition_code');
+  if (error) { warn('chargement des compteurs d’articles', error); return {}; }
+  return ((data ?? []) as Row[]).reduce<Record<string, number>>((counts, row) => {
+    const code = String(row.expedition_code);
+    counts[code] = (counts[code] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
 export async function fetchColis(expeditionCode?: string): Promise<Colis[]> {
   if (!supabase) return [];
   let q = supabase.from('colis')
