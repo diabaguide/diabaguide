@@ -4,7 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { catIcon, catLabel, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
-import { Button, Chip, DemoNote, Field, Icon, Screen, Stars, StoredPhoto, useWide } from '../ui';
+import { Button, Chip, DemoNote, Field, Icon, Screen, Select, Stars, StoredPhoto, useWide } from '../ui';
 import { logSearch } from '../lib/searchLogs';
 import { sansAccent } from '../lib/texte';
 
@@ -280,6 +280,7 @@ export function Filters() {
   const { q, sp } = useQuery();
   const { s } = useStore();
   const nav = useNavigate();
+  const wide = useWide();
   const [f, setF] = useState({ q: q.q, cat: q.cat, city: q.city, prox: q.prox ?? '0', fret: q.fret ?? 'both' });
   const apply = () => {
     const n = new URLSearchParams();
@@ -313,7 +314,11 @@ export function Filters() {
           {tr(radios<string>('cat', f.cat ?? '', [{ v: '', l: 'Toutes' }, ...s.categories.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => setF({ ...f, cat: (v || null) as Cat | null })))}
         </section>
         <section className="stack"><h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>
-          {tr(radios<City>('ville', f.city, s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name })), (v) => setF({ ...f, city: v })))}
+          {wide
+            ? tr(radios<City>('ville', f.city, s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name })), (v) => setF({ ...f, city: v })))
+            : <Select<City> id="filter-city" label="Ville" value={f.city}
+                options={s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }))}
+                onChange={(v) => setF({ ...f, city: v })} />}
         </section>
         <section className="stack"><h2 style={{ fontSize: 17 }}>{tr("Proximité")}</h2>
           {tr(radios('prox', f.prox, [{ v: '2', l: 'Moins de 2 km' }, { v: '5', l: 'Moins de 5 km' }, { v: '10', l: 'Moins de 10 km' }, { v: '0', l: 'Toute la ville' }], (v) => setF({ ...f, prox: v })))}
