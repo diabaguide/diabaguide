@@ -65,6 +65,9 @@ export interface Expedition {
   containerNo: string | null; blNo: string | null; awbNo: string | null;
   seuilKg: number | null; seuilM3: number | null; arriveePrevue: string | null; noteInterne: string | null; statut: ExpeditionStatut; createdAt: string;
 }
+export interface ExpeditionArticle {
+  id: string; expeditionCode: string; nom: string; quantite: number; poidsKg: number | null; createdAt: string;
+}
 export interface ExpeditionTotaux {
   code: string; mode: FretMode; statut: ExpeditionStatut; seuilKg: number | null; seuilM3: number | null;
   nbColis: number; totalKg: number; totalM3: number; pctKg: number | null; pctM3: number | null;
@@ -142,6 +145,18 @@ export async function fetchExpeditionTotaux(): Promise<Record<string, Expedition
   return out;
 }
 
+export async function fetchExpeditionArticles(code: string): Promise<ExpeditionArticle[]> {
+  if (!supabase || !code) return [];
+  const { data, error } = await supabase.from('expedition_articles')
+    .select('id, expedition_code, nom, quantite, poids_kg, created_at')
+    .eq('expedition_code', code).order('created_at');
+  if (error) { warn('chargement des articles du lot', error); return []; }
+  return ((data ?? []) as Row[]).map((r) => ({
+    id: String(r.id), expeditionCode: String(r.expedition_code), nom: String(r.nom),
+    quantite: Number(r.quantite ?? 0), poidsKg: num(r.poids_kg), createdAt: String(r.created_at),
+  }));
+}
+
 export async function fetchColis(expeditionCode?: string): Promise<Colis[]> {
   if (!supabase) return [];
   let q = supabase.from('colis')
@@ -181,6 +196,22 @@ export async function fetchVoyageursFret(q = ''): Promise<VoyageurFret[]> {
 }
 
 /* ---------- Écritures ---------- */
+
+export async function createExpeditionArticle(input: {
+  expeditionCode: string; nom: string; quantite: number; poidsKg?: number | null;
+}): Promise<{ id?: string; error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { data, error } = await supabase.rpc('admin_ajouter_article', {
+    p_expedition_code: input.expeditionCode, p_nom: input.nom.trim(), p_quantite: input.quantite, p_poids_kg: input.poidsKg ?? null,
+  });
+  return { id: data ? String(data) : undefined, error: error ? humanize(error.message) : undefined };
+}
+
+export async function deleteExpeditionArticle(id: string): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { error } = await supabase.rpc('admin_supprimer_article', { p_id: id });
+  return { error: error ? humanize(error.message) : undefined };
+}
 
 export async function createExpedition(e: {
   code: string; mode: FretMode; warehouseId?: string | null; destination?: string;

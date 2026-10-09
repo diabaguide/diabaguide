@@ -7,11 +7,11 @@ import { AdminCard, AdminSheet } from './mobile';
 import { SortTh, compare, useSort } from './tableSort';
 import {
   fetchExpeditions, fetchExpeditionTotaux, fetchColis, fetchWarehouses,
-  createExpedition, updateExpedition, deleteExpedition, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
+  createExpedition, updateExpedition, deleteExpedition, createExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
   suggestExpeditionCode, suggestColisCode,
   fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
   MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL, caracLabel,
-  type Expedition, type ExpeditionTotaux, type EtapeExpedition, type Colis, type FretMode, type ExpeditionStatut, type Warehouse, type EtapeType, type Facture, type ClientLite,
+  type Expedition, type ExpeditionTotaux, type ExpeditionArticle, type EtapeExpedition, type Colis, type FretMode, type ExpeditionStatut, type Warehouse, type EtapeType, type Facture, type ClientLite,
 } from '../../lib/fret';
 
 const money = (n: number, d = 'FCFA') => `${n.toLocaleString('fr-FR')} ${d === 'XOF' ? 'FCFA' : d}`;
@@ -209,6 +209,7 @@ export function ExpeditionDetail() {
   const [colis, setColis] = useState<Colis[]>([]);
   const [libres, setLibres] = useState<Colis[]>([]);
   const [etapes, setEtapes] = useState<EtapeExpedition[]>([]);
+  const [articles, setArticles] = useState<ExpeditionArticle[]>([]);
   const [factures, setFactures] = useState<Record<string, Facture>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -221,11 +222,11 @@ export function ExpeditionDetail() {
   });
 
   const reload = useCallback(async () => {
-    const [exps, totaux, cs, l, f, et] = await Promise.all([
-      fetchExpeditions(), fetchExpeditionTotaux(), fetchColis(code), fetchColis(), fetchFactures(), fetchEtapesExpedition(code),
+    const [exps, totaux, cs, l, f, et, ar] = await Promise.all([
+      fetchExpeditions(), fetchExpeditionTotaux(), fetchColis(code), fetchColis(), fetchFactures(), fetchEtapesExpedition(code), fetchExpeditionArticles(code),
     ]);
     setExp(exps.find((e) => e.code === code) ?? null);
-    setTot(totaux[code]); setColis(cs); setLibres(l); setFactures(f); setEtapes(et); setLoading(false);
+    setTot(totaux[code]); setColis(cs); setLibres(l); setFactures(f); setEtapes(et); setArticles(ar); setLoading(false);
   }, [code]);
   useEffect(() => { void reload(); }, [reload]);
 
@@ -319,6 +320,30 @@ export function ExpeditionDetail() {
     if (res.error) { setErr(res.error); return; }
     setOk(`Étape « ${tr(ETAPE_LABEL[nouvelleEtape])} » ajoutée : les colis de l’expédition avancent avec elle.`);
     setNouvelleEtape(''); await reload();
+  };
+
+  const [articleForm, setArticleForm] = useState({ nom: '', quantite: '1', poidsKg: '' });
+  const [articleErr, setArticleErr] = useState<string | null>(null);
+  const [articleBusy, setArticleBusy] = useState(false);
+  const ajouterArticle = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!articleForm.nom.trim()) { setArticleErr('Le nom de l’article est obligatoire.'); return; }
+    const quantite = toNum(articleForm.quantite);
+    if (!quantite || quantite <= 0) { setArticleErr('La quantité doit être supérieure à zéro.'); return; }
+    setArticleBusy(true); setArticleErr(null);
+    const res = await createExpeditionArticle({ expeditionCode: code, nom: articleForm.nom, quantite, poidsKg: toNum(articleForm.poidsKg) });
+    setArticleBusy(false);
+    if (res.error) { setArticleErr(res.error); return; }
+    setArticleForm({ nom: '', quantite: '1', poidsKg: '' });
+    setOk('Article ajouté.'); await reload();
+  };
+  const supprimerArticle = async (article: ExpeditionArticle) => {
+    if (!window.confirm(t('Supprimer cet article ?'))) return;
+    setErr(null); setOk(null); setArticleBusy(true);
+    const res = await deleteExpeditionArticle(article.id);
+    setArticleBusy(false);
+    if (res.error) { setErr(res.error); return; }
+    setOk('Article supprimé.'); await reload();
   };
 
   // ---- Nouveau colis dans cette expédition ----
@@ -442,6 +467,27 @@ export function ExpeditionDetail() {
               options={[{ v: '', l: etapesDisponibles.length ? 'Choisir une étape…' : 'Suivi terminé' }, ...etapesDisponibles.map((t) => ({ v: t, l: ETAPE_LABEL[t] }))]} />
             <Button icon="plus" full={false} disabled={!nouvelleEtape || busy || !etapesDisponibles.includes(nouvelleEtape as EtapeType)} onClick={() => void ajouterEtape()}>{tr("Ajouter")}</Button>
           </div>
+        </section>
+
+        <section className="card stack" style={{ gap: 12 }}>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Articles du lot")} ({articles.length})</h2>
+          {articleErr && <div role="alert" className="notice err"><Icon name="alert" size={18} /><span>{tr(articleErr)}</span></div>}
+          {articles.length === 0 ? <p className="small muted" style={{ margin: 0 }}>{tr("Aucun article détaillé pour l’instant.")}</p> : (
+            <div className="stack" style={{ gap: 8 }}>
+              {articles.map((article) => (
+                <div key={article.id} className="row" style={{ justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                  <div><strong>{article.nom}</strong><div className="small muted">{article.quantite} · {article.poidsKg == null ? '—' : `${article.poidsKg} kg`}</div></div>
+                  <Button kind="d" icon="trash" full={false} disabled={articleBusy} onClick={() => void supprimerArticle(article)} aria-label={t('Supprimer')}>{tr("Supprimer")}</Button>
+                </div>
+              ))}
+            </div>
+          )}
+          <form onSubmit={ajouterArticle} className="filters" style={{ alignItems: 'flex-end' }} noValidate>
+            <div className="grow"><Field id="article-nom" label={tr("Nom de l’article")} value={articleForm.nom} onChange={(v) => setArticleForm({ ...articleForm, nom: v })} placeholder={tr("Ex. vêtements")}/></div>
+            <div className="grow"><Field id="article-quantite" label={tr("Quantité")} value={articleForm.quantite} onChange={(v) => setArticleForm({ ...articleForm, quantite: v })} placeholder="1" /></div>
+            <div className="grow"><Field id="article-poids" label={tr("Poids de l’article (kg)")} value={articleForm.poidsKg} onChange={(v) => setArticleForm({ ...articleForm, poidsKg: v })} placeholder={tr("facultatif")} /></div>
+            <Button type="submit" icon="plus" full={false} disabled={articleBusy}>{tr("Ajouter")}</Button>
+          </form>
         </section>
 
         {/* ---- Colis de l'expédition ---- */}
