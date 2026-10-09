@@ -5,9 +5,9 @@ import { useStore } from '../store';
 import { cityName } from '../data';
 import { Button, Field, Icon, Logo, Screen, Select, TextArea, TopBar } from '../ui';
 import {
-  devisFret, annoncerColis, fetchMesColis, fetchEtapesColis, fetchFactures, fetchColisByCode,
-  MODE_LABEL, COLIS_STATUT_LABEL, CARACTERISTIQUES, caracLabel, ETAPE_LABEL, FACTURE_STATUT_LABEL,
-  type FretMode, type Caracteristique, type Colis, type EtapeVue, type Facture,
+  devisFret, annoncerColis, fetchMesColis, fetchEtapesColis, fetchSuiviPublic, fetchFactures, fetchColisByCode,
+  MODE_LABEL, COLIS_STATUT_LABEL, EXPEDITION_STATUT_LABEL, CARACTERISTIQUES, caracLabel, ETAPE_LABEL, FACTURE_STATUT_LABEL,
+  type FretMode, type Caracteristique, type Colis, type EtapeVue, type Facture, type SuiviPublic,
 } from '../lib/fret';
 
 const MODE_OPTIONS = (Object.keys(MODE_LABEL) as FretMode[]).map((v) => ({ v, l: MODE_LABEL[v] }));
@@ -62,6 +62,7 @@ export function MesEnvois() {
     setAn({ mode: 'maritime_groupage', ville: '', carac: [], type: 'general', description: '', marque: '', poids: '', volume: '' });
     await reload();
   };
+  const lots = [...new Set(colis.map((c) => c.expeditionCode).filter((code): code is string => Boolean(code)))];
 
   return (
     <Screen>
@@ -124,6 +125,13 @@ export function MesEnvois() {
           </form>
         </section>
 
+        {lots.length > 0 && (
+          <section className="card stack" style={{ gap: 12 }}>
+            <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Suivi de lot")}</h2>
+            {lots.map((code) => <LotTrackingCard key={code} code={code} />)}
+          </section>
+        )}
+
         {/* ---- Mes colis ---- */}
         <section className="card stack" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr(`Mes colis (${colis.length})`)}</h2>
@@ -133,6 +141,46 @@ export function MesEnvois() {
         </section>
       </div>
     </Screen>
+  );
+}
+
+function LotTrackingCard({ code }: { code: string }) {
+  const { tr } = useI18n();
+  const [suivi, setSuivi] = useState<SuiviPublic | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let live = true;
+    fetchSuiviPublic(code).then((value) => {
+      if (!live) return;
+      setSuivi(value); setLoading(false);
+    });
+    return () => { live = false; };
+  }, [code]);
+
+  if (loading) return <div className="card" style={{ padding: 12 }}><p className="small muted" role="status">{tr("Chargement…")}</p></div>;
+  if (!suivi) return <div className="notice warn"><Icon name="info" size={18} /><span>{tr("Le suivi du lot n’est pas encore disponible.")} · {code}</span></div>;
+
+  const publicUrl = `${window.location.origin}/suivi/${encodeURIComponent(code)}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`Suivi du lot ${code} : ${publicUrl}`)}`;
+  const derniereEtape = suivi.etapes[suivi.etapes.length - 1];
+
+  return (
+    <div className="card stack" style={{ padding: 12, gap: 8 }}>
+      <div className="row" style={{ justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <div className="stack" style={{ gap: 2 }}>
+          <strong>{code}</strong>
+          <span className="small muted">{tr(MODE_LABEL[suivi.mode])} · {suivi.destination}</span>
+        </div>
+        <span className="tag tag-info">{tr(EXPEDITION_STATUT_LABEL[suivi.statut])}</span>
+      </div>
+      {derniereEtape ? (
+        <div className="small muted"><strong>{tr("Étape franchie")} :</strong> {tr(ETAPE_LABEL[derniereEtape.type])} · {new Date(derniereEtape.au).toLocaleDateString('fr-FR')}</div>
+      ) : <div className="small muted">{tr("Pas encore d’étape visible. Vous serez informé dès que le colis avance.")}</div>}
+      <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+        <Button kind="s" icon="route" full={false} to={`/suivi/${encodeURIComponent(code)}`}>{tr("Suivre ce lot")}</Button>
+        <Button kind="g" icon="chat" full={false} href={whatsappUrl}>{tr("WhatsApp")}</Button>
+      </div>
+    </div>
   );
 }
 
