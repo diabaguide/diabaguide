@@ -15,6 +15,10 @@ const ETAPES_PUBLIQUES: EtapeType[] = ['annonce', 'en_transit', 'arrive_dakar', 
 
 function formatDate(value: string | null) {
   if (!value) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(year, month - 1, day));
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
@@ -135,8 +139,9 @@ export function SuiviPublic() {
               )}
             </Section>
 
-            {(suivi.partieLe || suivi.arriveeLe || suivi.clotureeLe) && (
+            {(suivi.arriveePrevue || suivi.partieLe || suivi.arriveeLe || suivi.clotureeLe) && (
               <Section title="Dates clés">
+                {suivi.arriveePrevue && <div className="kv"><span>Arrivée prévue</span><span>{formatDate(suivi.arriveePrevue)}</span></div>}
                 {suivi.partieLe && <div className="kv"><span>Départ</span><span>{formatDate(suivi.partieLe)}</span></div>}
                 {suivi.arriveeLe && <div className="kv"><span>Arrivée</span><span>{formatDate(suivi.arriveeLe)}</span></div>}
                 {suivi.clotureeLe && <div className="kv"><span>Clôture</span><span>{formatDate(suivi.clotureeLe)}</span></div>}

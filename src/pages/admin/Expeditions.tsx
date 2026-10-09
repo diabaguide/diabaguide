@@ -54,7 +54,7 @@ export function ExpeditionsList() {
   useEffect(() => { void reload(); }, [reload]);
 
   const [showNew, setShowNew] = useState(false);
-  const [ne, setNe] = useState({ code: suggestExpeditionCode(), mode: 'maritime_groupage' as FretMode, warehouseId: '', seuilKg: '', seuilM3: '' });
+  const [ne, setNe] = useState({ code: suggestExpeditionCode(), mode: 'maritime_groupage' as FretMode, warehouseId: '', seuilKg: '', seuilM3: '', arriveePrevue: '' });
   const [neErr, setNeErr] = useState<string | null>(null);
   const creerExp = async (ev: FormEvent) => {
     ev.preventDefault(); setNeErr(null); setOk(null);
@@ -62,12 +62,12 @@ export function ExpeditionsList() {
     setBusy(true);
     const res = await createExpedition({
       code: ne.code, mode: ne.mode, warehouseId: ne.warehouseId || null,
-      seuilKg: toNum(ne.seuilKg), seuilM3: toNum(ne.seuilM3),
+      seuilKg: toNum(ne.seuilKg), seuilM3: toNum(ne.seuilM3), arriveePrevue: ne.arriveePrevue || null,
     });
     setBusy(false);
     if (res.error) { setNeErr(res.error); return; }
     setOk(`Expédition ${ne.code} créée.`);
-    setNe({ code: suggestExpeditionCode(), mode: 'maritime_groupage', warehouseId: '', seuilKg: '', seuilM3: '' });
+    setNe({ code: suggestExpeditionCode(), mode: 'maritime_groupage', warehouseId: '', seuilKg: '', seuilM3: '', arriveePrevue: '' });
     setShowNew(false);
     await reload();
   };
@@ -157,6 +157,7 @@ export function ExpeditionsList() {
             <Select id="ne-mode" label={tr("Mode")} value={ne.mode} onChange={(v) => setNe({ ...ne, mode: v as FretMode })} options={MODE_OPTIONS} />
             <Select id="ne-wh" label={tr("Entrepôt (Chine)")} value={ne.warehouseId} onChange={(v) => setNe({ ...ne, warehouseId: v })}
               options={[{ v: '', l: '—' }, ...warehouses.map((w) => ({ v: w.id, l: w.nom }))]} />
+            <Field id="ne-arrivee" label={tr("Arrivée prévue")} type="date" value={ne.arriveePrevue} onChange={(v) => setNe({ ...ne, arriveePrevue: v })} />
             <div className="filters">
               <div className="grow"><Field id="ne-skg" label={tr("Seuil kg")} value={ne.seuilKg} onChange={(v) => setNe({ ...ne, seuilKg: v })} placeholder={tr("facultatif")} /></div>
               <div className="grow"><Field id="ne-sm3" label={tr("Seuil m³")} value={ne.seuilM3} onChange={(v) => setNe({ ...ne, seuilM3: v })} placeholder={tr("facultatif")} /></div>
@@ -216,7 +217,7 @@ export function ExpeditionDetail() {
   const [showEdit, setShowEdit] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
-    mode: 'maritime_groupage' as FretMode, warehouseId: '', destination: '', containerNo: '', blNo: '', awbNo: '', seuilKg: '', seuilM3: '',
+    mode: 'maritime_groupage' as FretMode, warehouseId: '', destination: '', containerNo: '', blNo: '', awbNo: '', seuilKg: '', seuilM3: '', arriveePrevue: '',
   });
 
   const reload = useCallback(async () => {
@@ -263,7 +264,7 @@ export function ExpeditionDetail() {
     setEditErr(null);
     setEditForm({
       mode: exp.mode, warehouseId: exp.warehouseId ?? '', destination: exp.destination, containerNo: exp.containerNo ?? '',
-      blNo: exp.blNo ?? '', awbNo: exp.awbNo ?? '', seuilKg: exp.seuilKg == null ? '' : String(exp.seuilKg), seuilM3: exp.seuilM3 == null ? '' : String(exp.seuilM3),
+      blNo: exp.blNo ?? '', awbNo: exp.awbNo ?? '', seuilKg: exp.seuilKg == null ? '' : String(exp.seuilKg), seuilM3: exp.seuilM3 == null ? '' : String(exp.seuilM3), arriveePrevue: exp.arriveePrevue ?? '',
     });
     setShowEdit(true);
   };
@@ -274,7 +275,7 @@ export function ExpeditionDetail() {
     const res = await updateExpedition({
       code, mode: editForm.mode, warehouseId: editForm.warehouseId || null, destination: editForm.destination,
       containerNo: editForm.containerNo, blNo: editForm.blNo, awbNo: editForm.awbNo,
-      seuilKg: toNum(editForm.seuilKg), seuilM3: toNum(editForm.seuilM3),
+      seuilKg: toNum(editForm.seuilKg), seuilM3: toNum(editForm.seuilM3), arriveePrevue: editForm.arriveePrevue || null,
     });
     setBusy(false);
     if (res.error) { setEditErr(res.error); return; }
@@ -538,6 +539,7 @@ export function ExpeditionDetail() {
             {editErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(editErr)}</span></div>}
             <Select id="edit-mode" label={tr("Mode")} value={editForm.mode} onChange={(v) => setEditForm({ ...editForm, mode: v as FretMode })} options={MODE_OPTIONS} />
             <Field id="edit-destination" label={tr("Destination au Sénégal")} value={editForm.destination} onChange={(v) => setEditForm({ ...editForm, destination: v })} req />
+            <Field id="edit-arrivee" label={tr("Arrivée prévue")} type="date" value={editForm.arriveePrevue} onChange={(v) => setEditForm({ ...editForm, arriveePrevue: v })} />
             <Field id="edit-container" label={tr("Numéro de conteneur")} value={editForm.containerNo} onChange={(v) => setEditForm({ ...editForm, containerNo: v })} placeholder={tr("facultatif")} />
             <Field id="edit-bl" label={tr("Numéro BL")} value={editForm.blNo} onChange={(v) => setEditForm({ ...editForm, blNo: v })} placeholder={tr("facultatif")} />
             <Field id="edit-awb" label={tr("Numéro AWB")} value={editForm.awbNo} onChange={(v) => setEditForm({ ...editForm, awbNo: v })} placeholder={tr("facultatif")} />
