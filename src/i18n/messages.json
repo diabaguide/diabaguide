@@ -4219,5 +4219,20 @@
   "Liquide / produit chimique": {"en": "Liquid / chemical", "zh": "液体 / 化学品", "ar": "سائل / مادة كيميائية"},
   "Administrateur principal : compte protégé": {"en": "Primary administrator: protected account", "zh": "主管理员：受保护账户", "ar": "المسؤول الرئيسي: حساب محمي"},
   "Administrateur principal": {"en": "Primary administrator", "zh": "主管理员", "ar": "المسؤول الرئيسي"},
-  "Administrateur principal : aucun autre compte ne peut le modifier, le supprimer ni changer son mot de passe.": {"en": "Primary administrator: no other account can edit, delete or change the password of this account.", "zh": "主管理员：任何其他账户都不能修改、删除该账户或更改其密码。", "ar": "المسؤول الرئيسي: لا يمكن لأي حساب آخر تعديله أو حذفه أو تغيير كلمة مروره."}
+  "Administrateur principal : aucun autre compte ne peut le modifier, le supprimer ni changer son mot de passe.": {"en": "Primary administrator: no other account can edit, delete or change the password of this account.", "zh": "主管理员：任何其他账户都不能修改、删除该账户或更改其密码。", "ar": "المسؤول الرئيسي: لا يمكن لأي حساب آخر تعديله أو حذفه أو تغيير كلمة مروره."},
+  "Mes achats": {"en": "My purchases", "zh": "我的采购", "ar": "مشترياتي"},
+  "Actions rapides": {"en": "Quick actions", "zh": "快捷操作", "ar": "إجراءات سريعة"},
+  "Que voulez-vous faire ?": {"en": "What would you like to do?", "zh": "您想做什么？", "ar": "ماذا تريدون أن تفعلوا؟"},
+  "Trouver une adresse": {"en": "Find an address", "zh": "查找地址", "ar": "العثور على عنوان"},
+  "Explorer les fournisseurs": {"en": "Explore suppliers", "zh": "探索供应商", "ar": "استكشاف المورّدين"},
+  "Préparer mes achats": {"en": "Prepare my purchases", "zh": "准备采购清单", "ar": "تحضير مشترياتي"},
+  "Créer ou retrouver une liste": {"en": "Create or find a list", "zh": "创建或查找清单", "ar": "إنشاء قائمة أو العثور عليها"},
+  "Suivre un envoi": {"en": "Track a shipment", "zh": "跟踪货运", "ar": "تتبّع شحنة"},
+  "Voir mes expéditions": {"en": "View my shipments", "zh": "查看我的货运", "ar": "عرض شحناتي"},
+  "Près de moi": {"en": "Near me", "zh": "附近地点", "ar": "بالقرب مني"},
+  "Chercher dans un quartier": {"en": "Search in a neighborhood", "zh": "在街区内搜索", "ar": "البحث في حي"},
+  "Votre guide du voyageur": {"en": "Your traveler guide", "zh": "您的旅行指南", "ar": "دليلكم للمسافرين"},
+  "Trouvez les bonnes adresses, simplement.": {"en": "Find the right places, simply.", "zh": "轻松找到合适的地点。", "ar": "اعثروا على العناوين المناسبة بسهولة."},
+  "Explorez votre ville, préparez vos achats et gardez vos envois sous la main.": {"en": "Explore your city, prepare your purchases and keep your shipments close at hand.", "zh": "探索您的城市，准备采购，并随时掌握货运信息。", "ar": "استكشفوا مدينتكم، حضّروا مشترياتكم وتابعوا شحناتكم بسهولة."},
+  "Adresses enregistrées pour les retrouver rapidement": {"en": "Saved addresses to find them quickly", "zh": "保存地址，方便快速查找", "ar": "عناوين محفوظة للعثور عليها بسرعة"}
 }

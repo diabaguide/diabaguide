@@ -7,6 +7,10 @@ const files = {
   app: await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
 };
 
+const [catalog] = await Promise.all([
+  readFile(new URL('../src/i18n/messages.json', import.meta.url), 'utf8').then(JSON.parse),
+]);
+const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.'];
 const navBlock = files.ui.slice(files.ui.indexOf('const NAV:'), files.ui.indexOf('export function BottomNav'));
 
 const checks = [
@@ -17,6 +21,7 @@ const checks = [
   ['navigation accessible au clavier', () => files.styles.includes('.bottomnav a:focus-visible')],
   ['mise en page des petits écrans', () => files.styles.includes('@media (max-width: 390px)')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
+  ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];
 
 const failed = checks.filter(([, test]) => !test());
