@@ -7,7 +7,7 @@ import { AdminCard, AdminSheet } from './mobile';
 import { SortTh, compare, useSort } from './tableSort';
 import {
   fetchExpeditions, fetchExpeditionTotaux, fetchColis, fetchWarehouses,
-  createExpedition, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
+  createExpedition, updateExpedition, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
   suggestExpeditionCode, suggestColisCode,
   fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
   MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL, caracLabel,
@@ -212,6 +212,11 @@ export function ExpeditionDetail() {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editErr, setEditErr] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    mode: 'maritime_groupage' as FretMode, warehouseId: '', destination: '', containerNo: '', blNo: '', awbNo: '', seuilKg: '', seuilM3: '',
+  });
 
   const reload = useCallback(async () => {
     const [exps, totaux, cs, l, f, et] = await Promise.all([
@@ -251,6 +256,28 @@ export function ExpeditionDetail() {
       if (error instanceof DOMException && error.name === 'AbortError') return;
       setErr(error instanceof Error ? error.message : 'Partage non disponible sur cet appareil.');
     }
+  };
+  const ouvrirEdition = () => {
+    if (!exp) return;
+    setEditErr(null);
+    setEditForm({
+      mode: exp.mode, warehouseId: exp.warehouseId ?? '', destination: exp.destination, containerNo: exp.containerNo ?? '',
+      blNo: exp.blNo ?? '', awbNo: exp.awbNo ?? '', seuilKg: exp.seuilKg == null ? '' : String(exp.seuilKg), seuilM3: exp.seuilM3 == null ? '' : String(exp.seuilM3),
+    });
+    setShowEdit(true);
+  };
+  const enregistrerEdition = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!editForm.destination.trim()) { setEditErr('La destination est obligatoire.'); return; }
+    setEditErr(null); setBusy(true);
+    const res = await updateExpedition({
+      code, mode: editForm.mode, warehouseId: editForm.warehouseId || null, destination: editForm.destination,
+      containerNo: editForm.containerNo, blNo: editForm.blNo, awbNo: editForm.awbNo,
+      seuilKg: toNum(editForm.seuilKg), seuilM3: toNum(editForm.seuilM3),
+    });
+    setBusy(false);
+    if (res.error) { setEditErr(res.error); return; }
+    setShowEdit(false); setOk('Lot modifié.'); await reload();
   };
 
   const [aff, setAff] = useState('');
@@ -357,6 +384,7 @@ export function ExpeditionDetail() {
           <div className="muted" style={{ marginTop: 4 }}>{tr(MODE_LABEL[exp.mode])} · {exp.destination} · {tr(EXPEDITION_STATUT_LABEL[exp.statut])}</div>
         </div>
         <div className="row" style={{ gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <Button kind="s" icon="edit" full={false} onClick={ouvrirEdition}>{tr("Modifier")}</Button>
           <Button kind="s" icon="share" full={false} onClick={() => void partagerSuivi()}>{tr("Partager")}</Button>
           <Button to={`${base}/expeditions`} kind="s" icon="chevL" full={false}>{tr("Toutes les expéditions")}</Button>
         </div>
@@ -485,6 +513,24 @@ export function ExpeditionDetail() {
               <div className="grow"><Field id="rc-vol" label={tr("Volume (m³)")} value={rc.volume} onChange={(v) => setRc({ ...rc, volume: v })} placeholder="0" /></div>
             </div>
             <Button type="submit" icon="box" disabled={busy}>{tr(busy ? 'Enregistrement…' : 'Enregistrer le colis')}</Button>
+          </form>
+        </AdminSheet>
+      )}
+
+      {showEdit && (
+        <AdminSheet title={tr("Modifier l’expédition")} sub={exp.code} onClose={() => setShowEdit(false)}>
+          <form onSubmit={enregistrerEdition} className="stack" style={{ gap: 12 }} noValidate>
+            {editErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(editErr)}</span></div>}
+            <Select id="edit-mode" label={tr("Mode")} value={editForm.mode} onChange={(v) => setEditForm({ ...editForm, mode: v as FretMode })} options={MODE_OPTIONS} />
+            <Field id="edit-destination" label={tr("Destination au Sénégal")} value={editForm.destination} onChange={(v) => setEditForm({ ...editForm, destination: v })} req />
+            <Field id="edit-container" label={tr("Numéro de conteneur")} value={editForm.containerNo} onChange={(v) => setEditForm({ ...editForm, containerNo: v })} placeholder={tr("facultatif")} />
+            <Field id="edit-bl" label={tr("Numéro BL")} value={editForm.blNo} onChange={(v) => setEditForm({ ...editForm, blNo: v })} placeholder={tr("facultatif")} />
+            <Field id="edit-awb" label={tr("Numéro AWB")} value={editForm.awbNo} onChange={(v) => setEditForm({ ...editForm, awbNo: v })} placeholder={tr("facultatif")} />
+            <div className="filters">
+              <div className="grow"><Field id="edit-seuil-kg" label={tr("Seuil kg")} value={editForm.seuilKg} onChange={(v) => setEditForm({ ...editForm, seuilKg: v })} placeholder={tr("facultatif")} /></div>
+              <div className="grow"><Field id="edit-seuil-m3" label={tr("Seuil m³")} value={editForm.seuilM3} onChange={(v) => setEditForm({ ...editForm, seuilM3: v })} placeholder={tr("facultatif")} /></div>
+            </div>
+            <Button type="submit" icon="check" disabled={busy}>{tr(busy ? 'Enregistrement…' : 'Enregistrer les modifications')}</Button>
           </form>
         </AdminSheet>
       )}
