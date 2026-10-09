@@ -7,7 +7,7 @@ import { AdminCard, AdminSheet } from './mobile';
 import { SortTh, compare, useSort } from './tableSort';
 import {
   fetchExpeditions, fetchExpeditionTotaux, fetchColis, fetchWarehouses,
-  createExpedition, updateExpedition, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
+  createExpedition, updateExpedition, deleteExpedition, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
   suggestExpeditionCode, suggestColisCode,
   fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
   MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL, caracLabel,
@@ -197,8 +197,9 @@ function Remplissage({ exp, tot }: { exp: Expedition; tot?: ExpeditionTotaux }) 
 const ETAPES_ORDRE: EtapeType[] = ['regroupe', 'depart', 'en_transit', 'arrive_dakar', 'chez_diaba', 'dispo_retrait', 'en_livraison', 'remis'];
 
 export function ExpeditionDetail() {
-  const { tr } = useI18n();
+  const { tr, t } = useI18n();
   const base = useBase();
+  const nav = useNavigate();
   // Émettre une facture est réservé à l'équipe ; le livreur la marque payée.
   const peutFacturer = useStore().s.user?.role !== 'livreur';
   const { code = '' } = useParams();
@@ -278,6 +279,19 @@ export function ExpeditionDetail() {
     setBusy(false);
     if (res.error) { setEditErr(res.error); return; }
     setShowEdit(false); setOk('Lot modifié.'); await reload();
+  };
+  const supprimerExp = async () => {
+    if (!exp) return;
+    if ((tot?.nbColis ?? 0) > 0) {
+      setErr('Impossible de supprimer une expédition qui contient encore des colis.');
+      return;
+    }
+    if (!window.confirm(t('Supprimer définitivement le lot {0} ?', { 0: exp.code }))) return;
+    setErr(null); setOk(null); setBusy(true);
+    const res = await deleteExpedition(exp.code);
+    setBusy(false);
+    if (res.error) { setErr(res.error); return; }
+    nav(`${base}/expeditions`);
   };
 
   const [aff, setAff] = useState('');
@@ -385,6 +399,7 @@ export function ExpeditionDetail() {
         </div>
         <div className="row" style={{ gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <Button kind="s" icon="edit" full={false} onClick={ouvrirEdition}>{tr("Modifier")}</Button>
+          <Button kind="d" icon="trash" full={false} disabled={busy || (tot?.nbColis ?? 0) > 0} onClick={() => void supprimerExp()}>{tr("Supprimer définitivement")}</Button>
           <Button kind="s" icon="share" full={false} onClick={() => void partagerSuivi()}>{tr("Partager")}</Button>
           <Button to={`${base}/expeditions`} kind="s" icon="chevL" full={false}>{tr("Toutes les expéditions")}</Button>
         </div>

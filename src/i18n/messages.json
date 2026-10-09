@@ -3179,6 +3179,7 @@
 "Lot {0} supprimé.": {"en": "Shipment {0} deleted.", "zh": "已删除运单 {0}。", "ar": "حُذفت الإرسالية {0}."},
 "Départ {0}": {"en": "Departure {0}", "zh": "出发 {0}", "ar": "المغادرة {0}"},
 "Supprimer définitivement le lot {0} ?": {"en": "Permanently delete shipment {0}?", "zh": "永久删除运单 {0}？", "ar": "حذف الإرسالية {0} نهائيًا؟"},
+"Impossible de supprimer une expédition qui contient encore des colis.": {"en": "A shipment with parcels cannot be deleted.", "zh": "仍包含包裹的运单无法删除。", "ar": "لا يمكن حذف إرسالية ما زالت تحتوي على طرود."},
 "Lot {0} créé.": {"en": "Shipment {0} created.", "zh": "已创建运单 {0}。", "ar": "أُنشئت الإرسالية {0}."},
 "{0} lot(s)": {"en": "{0} shipment(s)", "zh": "{0} 个运单", "ar": "{0} إرسالية"},
 "Arrivée prévue {0}": {"en": "Expected arrival {0}", "zh": "预计到达 {0}", "ar": "الوصول المتوقع {0}"},
