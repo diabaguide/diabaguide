@@ -3306,6 +3306,8 @@
 "Partager le suivi": {"en": "Share tracking", "zh": "分享跟踪", "ar": "مشاركة التتبع"},
 "Saisissez le code du lot pour voir où en est votre marchandise entre la Chine et Dakar.": {"en": "Enter the shipment code to see where your goods are between China and Dakar.", "zh": "输入货物编号，查看您的货物在中国与达喀尔之间的位置。", "ar": "أدخل رمز الشحنة لمعرفة مكان بضائعك بين الصين وداكار."},
 "Suivi de lot": {"en": "Shipment tracking", "zh": "货物跟踪", "ar": "تتبع الشحنة"},
+"Frise du suivi": {"en": "Tracking timeline", "zh": "跟踪时间线", "ar": "الخط الزمني للتتبع"},
+"Prochaine étape": {"en": "Next step", "zh": "下一步", "ar": "الخطوة التالية"},
 "Le suivi du lot n’est pas encore disponible.": {"en": "Shipment tracking is not available yet.", "zh": "货物跟踪尚未可用。", "ar": "تتبع الشحنة غير متاح بعد."},
 "Suivi du lot {0} : {1}": {"en": "Tracking for shipment {0}: {1}", "zh": "货物 {0} 跟踪：{1}", "ar": "تتبع الشحنة {0}: {1}"},
 "Suivre ce lot": {"en": "Track this shipment", "zh": "跟踪此货物", "ar": "تتبع هذه الشحنة"},
