@@ -208,6 +208,12 @@ export async function updateExpedition(e: {
   return { error: error ? humanize(error.message) : undefined };
 }
 
+export async function deleteExpedition(code: string): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { error } = await supabase.from('expeditions').delete().eq('code', code);
+  return { error: error ? humanize(error.message) : undefined };
+}
+
 /** Un client (voyageur) minimal, pour rattacher un colis à un compte. */
 export interface ClientLite { id: string; name: string | null; phone: string | null }
 /** Recherche de clients par nom, téléphone ou e-mail (équipe). */
