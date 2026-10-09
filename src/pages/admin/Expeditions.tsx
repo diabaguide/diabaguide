@@ -29,6 +29,8 @@ const TYPES = [
 const useBase = () => (useLocation().pathname.startsWith('/fret') ? '/fret' : '/equipe');
 
 const toNum = (s: string): number | null => { const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? null : n; };
+const dateLocale = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const estEnRetard = (e: Expedition) => Boolean(e.arriveePrevue && e.arriveePrevue < dateLocale(new Date()) && !['livree', 'cloturee', 'annulee'].includes(e.statut));
 
 /* ============================================================
    Liste des expéditions : uniquement la liste. Un clic ouvre l'expédition
@@ -125,7 +127,7 @@ export function ExpeditionsList() {
                     <tr key={e.code} className="clickable" tabIndex={0} style={{ cursor: 'pointer' }}
                       onClick={() => ouvrir(e.code)}
                       onKeyDown={(k) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); ouvrir(e.code); } }}>
-                      <td><strong>{e.code}</strong><div className="small muted">{e.destination}</div>{e.arriveePrevue && <div className="small muted">{tr("Arrivée prévue")} : {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(`${e.arriveePrevue}T00:00:00`))}</div>}</td>
+                      <td><strong>{e.code}</strong><div className="small muted">{e.destination}</div>{e.arriveePrevue && <div className="small muted">{tr("Arrivée prévue")} : {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(`${e.arriveePrevue}T00:00:00`))}</div>}{estEnRetard(e) && <div className="small" style={{ color: '#a34a00', fontWeight: 700 }}><Icon name="alert" size={13} /> {tr("Arrivée en retard")}</div>}</td>
                       <td>{tr(MODE_LABEL[e.mode])}</td>
                       <td><span className="small">{tr(EXPEDITION_STATUT_LABEL[e.statut])}</span></td>
                       <td>{t?.nbColis ?? 0}</td>
@@ -140,7 +142,7 @@ export function ExpeditionsList() {
             <div className="acards">
               {shown.map((e) => (
                 <AdminCard key={e.code} toneSeed={e.code} title={e.code}
-                  sub={`${tr(MODE_LABEL[e.mode])} · ${totaux[e.code]?.nbColis ?? 0} ${tr("colis")} · ${articleCounts[e.code] ?? 0} ${tr("articles détaillés")}`}
+                  sub={`${tr(MODE_LABEL[e.mode])} · ${totaux[e.code]?.nbColis ?? 0} ${tr("colis")} · ${articleCounts[e.code] ?? 0} ${tr("articles détaillés")}${estEnRetard(e) ? ` · ${tr("En retard")}` : ''}`}
                   badge={<span className="small">{tr(EXPEDITION_STATUT_LABEL[e.statut])}</span>}
                   onOpen={() => ouvrir(e.code)} />
               ))}

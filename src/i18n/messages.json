@@ -3152,6 +3152,8 @@
 "Articles du lot": {"en": "Shipment items", "zh": "货物明细", "ar": "محتويات الشحنة"},
 "Articles détaillés": {"en": "Detailed items", "zh": "详细物品", "ar": "البضائع المفصلة"},
 "articles détaillés": {"en": "detailed items", "zh": "详细物品", "ar": "بضائع مفصلة"},
+"Arrivée en retard": {"en": "Arrival overdue", "zh": "预计到达已逾期", "ar": "تأخر الوصول"},
+"En retard": {"en": "Overdue", "zh": "已逾期", "ar": "متأخر"},
 "Aucun article détaillé pour l’instant.": {"en": "No detailed item yet.", "zh": "目前没有详细物品。", "ar": "لا توجد تفاصيل عن البضائع بعد."},
 "Nom de l’article": {"en": "Item name", "zh": "物品名称", "ar": "اسم البضاعة"},
 "Poids de l’article (kg)": {"en": "Item weight (kg)", "zh": "物品重量（公斤）", "ar": "وزن البضاعة (كغ)"},
