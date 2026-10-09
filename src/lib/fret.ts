@@ -194,6 +194,20 @@ export async function createExpedition(e: {
   return { error: error ? humanize(error.message) : undefined };
 }
 
+export async function updateExpedition(e: {
+  code: string; mode: FretMode; warehouseId?: string | null; destination: string;
+  containerNo?: string | null; blNo?: string | null; awbNo?: string | null;
+  seuilKg?: number | null; seuilM3?: number | null;
+}): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { error } = await supabase.from('expeditions').update({
+    mode: e.mode, warehouse_id: e.warehouseId ?? null, destination: e.destination.trim() || 'Dakar',
+    container_no: e.containerNo?.trim() || null, bl_no: e.blNo?.trim() || null, awb_no: e.awbNo?.trim() || null,
+    seuil_kg: e.seuilKg ?? null, seuil_m3: e.seuilM3 ?? null, updated_at: new Date().toISOString(),
+  }).eq('code', e.code);
+  return { error: error ? humanize(error.message) : undefined };
+}
+
 /** Un client (voyageur) minimal, pour rattacher un colis à un compte. */
 export interface ClientLite { id: string; name: string | null; phone: string | null }
 /** Recherche de clients par nom, téléphone ou e-mail (équipe). */

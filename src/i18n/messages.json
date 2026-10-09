@@ -3259,6 +3259,8 @@
 "Poids (kg)": {"en": "Weight (kg)", "zh": "重量（公斤）", "ar": "الوزن (كغ)"},
 "Nom de l’article": {"en": "Item name", "zh": "货物名称", "ar": "اسم البضاعة"},
 "Lot modifié.": {"en": "Shipment updated.", "zh": "运单已修改。", "ar": "تم تعديل الإرسالية."},
+"Modifier l’expédition": {"en": "Edit shipment", "zh": "编辑运单", "ar": "تعديل الإرسالية"},
+"Numéro BL": {"en": "Bill of lading number", "zh": "提单号（BL）", "ar": "رقم بوليصة الشحن (BL)"},
 "Numéro AWB": {"en": "AWB number", "zh": "运单号（AWB）", "ar": "رقم بوليصة الجو (AWB)"},
 "Numéro de conteneur": {"en": "Container number", "zh": "集装箱号", "ar": "رقم الحاوية"},
 "Connectez-vous pour effectuer cette action.": {"en": "Sign in to perform this action.", "zh": "请登录后再执行此操作。", "ar": "سجّلوا الدخول لتنفيذ هذا الإجراء."},
