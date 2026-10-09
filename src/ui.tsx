@@ -279,12 +279,14 @@ export function TopBar({ title, back, right }: { title: string; back?: string | 
   );
 }
 
+/* Navigation voyageur principale : cinq destinations orientées vers les tâches
+   fréquentes. Les fonctions secondaires restent accessibles depuis Profil ou
+   les écrans concernés, sans encombrer la barre mobile. */
 const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: '/accueil', label: 'Accueil', icon: 'home' },
   { to: '/recherche', label: 'Explorer', icon: 'compass' },
-  { to: '/favoris', label: 'Favoris', icon: 'heart' },
+  { to: '/liste-achats', label: 'Mes achats', icon: 'list' },
   { to: '/mes-envois', label: 'Mes envois', icon: 'box' },
-  { to: '/contributions', label: 'Contributions', icon: 'pen' },
   { to: '/profil', label: 'Profil', icon: 'user' },
 ];
 export function BottomNav() {
