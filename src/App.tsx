@@ -13,6 +13,7 @@ import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contrib
 import { ShoppingLists, ShoppingListPage } from './pages/Shopping';
 import { ReviewsAdminPage } from './pages/Reviews';
 import { MesEnvois, FactureView } from './pages/Fret';
+import { SuiviPublic } from './pages/Suivi';
 
 const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminDashboard })));
@@ -94,9 +95,8 @@ export default function App() {
         {/* Réinitialisation : le lien reçu par e-mail ouvre une session de
             récupération — cette page doit rester accessible même connecté. */}
         <Route path="/reinitialiser" element={<ResetPassword />} />
-        {/* L'ancien lien de suivi mène désormais au parcours par compte. */}
-        <Route path="/suivi" element={<Navigate to="/mes-envois" replace />} />
-        <Route path="/suivi/:code" element={<Navigate to="/mes-envois" replace />} />
+        <Route path="/suivi" element={<SuiviPublic />} />
+        <Route path="/suivi/:code" element={<SuiviPublic />} />
 
         <Route element={<RequireAuth />}>
           <Route path="/accueil" element={<Home />} />
