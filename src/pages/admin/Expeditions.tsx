@@ -231,6 +231,12 @@ export function ExpeditionDetail() {
   const [nouvelleEtape, setNouvelleEtape] = useState<EtapeType | ''>('');
   const ajouterEtape = async () => {
     if (!nouvelleEtape) return;
+    const indexNouvelle = ETAPES_ORDRE.indexOf(nouvelleEtape);
+    const dernierIndex = Math.max(-1, ...etapes.map((e) => ETAPES_ORDRE.indexOf(e.type)));
+    if (indexNouvelle < 0 || indexNouvelle <= dernierIndex) {
+      setErr('Une étape ne peut pas faire reculer le suivi de l’expédition.');
+      return;
+    }
     setErr(null); setOk(null); setBusy(true);
     const res = await addEtapeExpedition(code, nouvelleEtape);
     setBusy(false);
@@ -306,6 +312,8 @@ export function ExpeditionDetail() {
 
   const unite = MODE_UNITE[exp.mode];
   const dejaFaites = new Set(etapes.map((e) => e.type));
+  const dernierIndex = Math.max(-1, ...etapes.map((e) => ETAPES_ORDRE.indexOf(e.type)));
+  const etapesDisponibles = ETAPES_ORDRE.filter((t, index) => index > dernierIndex && !dejaFaites.has(t));
 
   return (
     <>
@@ -350,8 +358,8 @@ export function ExpeditionDetail() {
           )}
           <div className="filters" style={{ alignItems: 'flex-end' }}>
             <Select id="nouvelle-etape" label={tr("Ajouter une étape")} value={nouvelleEtape} onChange={(v) => setNouvelleEtape(v as EtapeType | '')}
-              options={[{ v: '', l: 'Choisir une étape…' }, ...ETAPES_ORDRE.map((t) => ({ v: t, l: `${ETAPE_LABEL[t]}${dejaFaites.has(t) ? ' (déjà ajoutée)' : ''}` }))]} />
-            <Button icon="plus" full={false} disabled={!nouvelleEtape || busy} onClick={() => void ajouterEtape()}>{tr("Ajouter")}</Button>
+              options={[{ v: '', l: etapesDisponibles.length ? 'Choisir une étape…' : 'Suivi terminé' }, ...etapesDisponibles.map((t) => ({ v: t, l: ETAPE_LABEL[t] }))]} />
+            <Button icon="plus" full={false} disabled={!nouvelleEtape || busy || !etapesDisponibles.includes(nouvelleEtape as EtapeType)} onClick={() => void ajouterEtape()}>{tr("Ajouter")}</Button>
           </div>
         </section>
 
