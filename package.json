@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "verify:traveler-ui": "node scripts/verify-traveler-ui.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
