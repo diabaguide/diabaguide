@@ -213,6 +213,16 @@ export async function createExpeditionArticle(input: {
   return { id: data ? String(data) : undefined, error: error ? humanize(error.message) : undefined };
 }
 
+export async function updateExpeditionArticle(input: {
+  id: string; nom: string; quantite: number; poidsKg?: number | null;
+}): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { error } = await supabase.rpc('admin_modifier_article', {
+    p_id: input.id, p_nom: input.nom.trim(), p_quantite: input.quantite, p_poids_kg: input.poidsKg ?? null,
+  });
+  return { error: error ? humanize(error.message) : undefined };
+}
+
 export async function deleteExpeditionArticle(id: string): Promise<{ error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
   const { error } = await supabase.rpc('admin_supprimer_article', { p_id: id });

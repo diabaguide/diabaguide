@@ -3159,6 +3159,7 @@
 "Le nom de l’article est obligatoire.": {"en": "The item name is required.", "zh": "物品名称为必填项。", "ar": "اسم البضاعة مطلوب."},
 "La quantité doit être supérieure à zéro.": {"en": "Quantity must be greater than zero.", "zh": "数量必须大于零。", "ar": "يجب أن تكون الكمية أكبر من صفر."},
 "Article ajouté.": {"en": "Item added.", "zh": "物品已添加。", "ar": "تمت إضافة البضاعة."},
+"Article modifié.": {"en": "Item updated.", "zh": "物品已修改。", "ar": "تم تعديل البضاعة."},
 "Article supprimé.": {"en": "Item deleted.", "zh": "物品已删除。", "ar": "تم حذف البضاعة."},
 "Un article par ligne": {"en": "One item per line", "zh": "每行一件物品", "ar": "عنصر واحد في كل سطر"},
 "Transitaire": {"en": "Freight forwarder", "zh": "货代", "ar": "وكيل الشحن"},
