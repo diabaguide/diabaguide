@@ -1,13 +1,17 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button, Field, Screen, Section, TopBar } from '../ui';
+import { useI18n } from '../i18n';
 import {
   ETAPE_LABEL,
   EXPEDITION_STATUT_LABEL,
   MODE_LABEL,
   fetchSuiviPublic,
   type SuiviPublic,
+  type EtapeType,
 } from '../lib/fret';
+
+const ETAPES_PUBLIQUES: EtapeType[] = ['annonce', 'en_transit', 'arrive_dakar', 'dispo_retrait', 'en_livraison', 'remis'];
 
 function formatDate(value: string | null) {
   if (!value) return null;
@@ -17,6 +21,7 @@ function formatDate(value: string | null) {
 }
 
 export function SuiviPublic() {
+  const { tr } = useI18n();
   const { code: routeCode } = useParams<{ code?: string }>();
   const [code, setCode] = useState(routeCode ?? '');
   const [suivi, setSuivi] = useState<SuiviPublic | null>(null);
@@ -40,6 +45,11 @@ export function SuiviPublic() {
     event.preventDefault();
     void rechercher(code);
   };
+
+  const prochaineEtape = suivi
+    ? ETAPES_PUBLIQUES.find((type, index) => index > Math.max(-1, ...suivi.etapes.map((etape) => ETAPES_PUBLIQUES.indexOf(etape.type))))
+    : null;
+  const etapesParType = new Map(suivi?.etapes.map((etape) => [etape.type, etape]) ?? []);
 
   return (
     <Screen nav={false}>
@@ -78,6 +88,36 @@ export function SuiviPublic() {
               <div className="kv"><span>Transport</span><span>{MODE_LABEL[suivi.mode] ?? suivi.mode}</span></div>
               <div className="kv"><span>Destination</span><span>{suivi.destination}</span></div>
               <div className="kv"><span>Statut</span><strong>{EXPEDITION_STATUT_LABEL[suivi.statut] ?? suivi.statut}</strong></div>
+            </Section>
+
+            <Section title="Frise du suivi" icon="route">
+              {prochaineEtape && (
+                <div className="notice info" style={{ marginBottom: 12 }}>
+                  <strong>{tr("Prochaine étape")} :</strong>&nbsp;{tr(ETAPE_LABEL[prochaineEtape])}
+                </div>
+              )}
+              <ol className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 0 }}>
+                {ETAPES_PUBLIQUES.map((type, index) => {
+                  const etape = etapesParType.get(type);
+                  const dernierIndex = Math.max(-1, ...suivi.etapes.map((item) => ETAPES_PUBLIQUES.indexOf(item.type)));
+                  const actuelle = index === dernierIndex;
+                  const franchie = Boolean(etape);
+                  return (
+                    <li key={type} aria-current={actuelle ? 'step' : undefined} style={{ display: 'flex', gap: 10, minHeight: 52 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <span aria-hidden="true" style={{ width: 12, height: 12, borderRadius: '50%', marginTop: 4, background: franchie ? 'var(--accent)' : 'var(--border)', boxShadow: actuelle ? '0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent)' : undefined }} />
+                        {index < ETAPES_PUBLIQUES.length - 1 && <span aria-hidden="true" style={{ width: 2, flex: 1, background: franchie ? 'var(--accent)' : 'var(--border)', opacity: franchie ? 0.65 : 0.45 }} />}
+                      </div>
+                      <div style={{ paddingBottom: 12 }}>
+                        <strong>{tr(ETAPE_LABEL[type])}</strong>
+                        <div className="small muted">
+                          {etape ? formatDate(etape.au) : actuelle ? tr("En cours") : tr("À venir")}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
             </Section>
 
             <Section title="Étapes visibles" icon="route">
