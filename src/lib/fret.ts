@@ -344,6 +344,12 @@ export async function fetchEtapesExpedition(expeditionCode: string): Promise<Eta
  * Ajoute une étape à une expédition : tous ses colis avancent avec elle
  * (supabase/expedition_etapes.sql). Visibilité voyageur : défaut selon l'étape.
  */
+export async function addEtapesExpeditions(codes: string[], type: EtapeType): Promise<{ count: number; error?: string }> {
+  if (!supabase) return { count: 0 };
+  const { data, error } = await supabase.rpc('ajouter_etapes_expeditions', { p_codes: codes, p_type: type });
+  return { count: Number(data ?? 0), error: error ? humanize(error.message) : undefined };
+}
+
 export async function addEtapeExpedition(expeditionCode: string, type: EtapeType, visibleClient?: boolean, note?: string): Promise<{ error?: string }> {
   if (!supabase) return {};
   const { error } = await supabase.rpc('ajouter_etape_expedition', {

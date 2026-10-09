@@ -9,7 +9,7 @@ import { AdminCard, AdminSheet } from './mobile';
 import { SortTh, compare, useSort } from './tableSort';
 import {
   fetchExpeditions, fetchExpeditionTotaux, fetchExpeditionArticleCounts, fetchColis, fetchWarehouses,
-  createExpedition, updateExpedition, updateExpeditionPhoto, deleteExpedition, createExpeditionArticle, updateExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
+  createExpedition, updateExpedition, updateExpeditionPhoto, deleteExpedition, createExpeditionArticle, updateExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapesExpeditions, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
   suggestExpeditionCode, suggestColisCode,
   fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
   MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL, caracLabel,
@@ -51,6 +51,9 @@ export function ExpeditionsList() {
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [statutFilter, setStatutFilter] = useState<ExpeditionStatut | ''>('');
+  const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const [bulkEtape, setBulkEtape] = useState<EtapeType | ''>('');
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const reload = useCallback(async () => {
     const [e, t, a, w] = await Promise.all([fetchExpeditions(), fetchExpeditionTotaux(), fetchExpeditionArticleCounts(), fetchWarehouses()]);
@@ -86,6 +89,21 @@ export function ExpeditionsList() {
     })
     .sort((a, b) => compare(sort.k === 'statut' ? a.statut : a.code, sort.k === 'statut' ? b.statut : b.code, sort.dir));
   const ouvrir = (code: string) => nav(`${base}/expeditions/${encodeURIComponent(code)}`);
+  const toggleSelection = (code: string) => setSelectedCodes((current) => current.includes(code) ? current.filter((v) => v !== code) : [...current, code]);
+  const toggleAllShown = () => {
+    const visibleCodes = shown.map((e) => e.code);
+    setSelectedCodes((current) => visibleCodes.every((code) => current.includes(code)) ? current.filter((code) => !visibleCodes.includes(code)) : [...new Set([...current, ...visibleCodes])]);
+  };
+  const appliquerEtapeEnMasse = async () => {
+    if (!bulkEtape || selectedCodes.length === 0) return;
+    setBulkBusy(true); setErr(null); setOk(null);
+    const res = await addEtapesExpeditions(selectedCodes, bulkEtape);
+    setBulkBusy(false);
+    if (res.error) { setErr(res.error); return; }
+    setSelectedCodes([]); setBulkEtape('');
+    setOk(res.count === selectedCodes.length ? `${res.count} expédition(s) mise(s) à jour.` : `${res.count} expédition(s) mise(s) à jour ; les autres étaient déjà à cette étape ou plus avancées.`);
+    await reload();
+  };
 
   return (
     <>
@@ -110,12 +128,25 @@ export function ExpeditionsList() {
             <div className="grow"><Select id="exp-status-filter" label={tr("Filtrer par statut")} value={statutFilter} onChange={(v) => setStatutFilter(v as ExpeditionStatut | '')}
               options={[{ v: '', l: 'Tous les statuts' }, ...(Object.keys(EXPEDITION_STATUT_LABEL) as ExpeditionStatut[]).map((v) => ({ v, l: EXPEDITION_STATUT_LABEL[v] }))]} /></div>
           </div>
+          {wide && <div className="card stack" style={{ gap: 10, background: 'var(--info-bg)' }}>
+            <div className="row" style={{ justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+              <strong>{tr("Mise à jour en lot")}</strong>
+              <span className="small muted">{selectedCodes.length} {tr("expédition(s) sélectionnée(s)")}</span>
+            </div>
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <div className="grow"><Select id="bulk-etape" label={tr("Nouvelle étape")} value={bulkEtape} onChange={(v) => setBulkEtape(v as EtapeType | '')}
+                options={[{ v: '', l: '—' }, ...ETAPES_ORDRE.map((v) => ({ v, l: ETAPE_LABEL[v] }))]} /></div>
+              <Button icon="check" full={false} disabled={bulkBusy || selectedCodes.length === 0 || !bulkEtape} onClick={() => void appliquerEtapeEnMasse()}>{tr(bulkBusy ? "Mise à jour…" : "Appliquer")}</Button>
+              {selectedCodes.length > 0 && <Button kind="s" full={false} disabled={bulkBusy} onClick={() => setSelectedCodes([])}>{tr("Désélectionner")}</Button>}
+            </div>
+          </div>}
           {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
             : exps.length === 0 ? <p className="muted">{tr("Aucune expédition. Utilisez le bouton + pour en créer une.")}</p>
             : shown.length === 0 ? <p className="muted">{tr("Aucune expédition ne correspond aux filtres.")}</p>
             : wide ? (
             <div className="table dense"><table>
               <thead><tr>
+                <th><input type="checkbox" aria-label={tr("Sélectionner les expéditions visibles")} checked={shown.length > 0 && shown.every((e) => selectedCodes.includes(e.code))} onChange={toggleAllShown} /></th>
                 <SortTh k="code" label="Code" sort={sort} onSort={toggle} />
                 <th>{tr("Mode")}</th><SortTh k="statut" label="Statut" sort={sort} onSort={toggle} />
                 <th>{tr("Colis")}</th><th>{tr("Articles détaillés")}</th><th>{tr("Remplissage")}</th>
@@ -127,6 +158,7 @@ export function ExpeditionsList() {
                     <tr key={e.code} className="clickable" tabIndex={0} style={{ cursor: 'pointer' }}
                       onClick={() => ouvrir(e.code)}
                       onKeyDown={(k) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); ouvrir(e.code); } }}>
+                      <td onClick={(k) => k.stopPropagation()}><input type="checkbox" aria-label={`${tr("Sélectionner")} ${e.code}`} checked={selectedCodes.includes(e.code)} onChange={() => toggleSelection(e.code)} /></td>
                       <td><strong>{e.code}</strong><div className="small muted">{e.destination}</div>{e.arriveePrevue && <div className="small muted">{tr("Arrivée prévue")} : {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(`${e.arriveePrevue}T00:00:00`))}</div>}{estEnRetard(e) && <div className="small" style={{ color: '#a34a00', fontWeight: 700 }}><Icon name="alert" size={13} /> {tr("Arrivée en retard")}</div>}</td>
                       <td>{tr(MODE_LABEL[e.mode])}</td>
                       <td><span className="small">{tr(EXPEDITION_STATUT_LABEL[e.statut])}</span></td>
