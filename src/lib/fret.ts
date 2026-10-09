@@ -69,6 +69,12 @@ export interface ExpeditionTotaux {
   code: string; mode: FretMode; statut: ExpeditionStatut; seuilKg: number | null; seuilM3: number | null;
   nbColis: number; totalKg: number; totalM3: number; pctKg: number | null; pctM3: number | null;
 }
+export interface SuiviPublicEtape { type: EtapeType; au: string }
+export interface SuiviPublic {
+  code: string; mode: FretMode; destination: string; statut: ExpeditionStatut;
+  clotureeLe: string | null; partieLe: string | null; arriveeLe: string | null;
+  etapes: SuiviPublicEtape[];
+}
 export interface Colis {
   code: string; expeditionCode: string | null; clientNom: string | null; clientTel: string | null;
   codeClient: string | null; marqueColis: string | null; villeDepart: string | null; caracteristiques: Caracteristique[]; mode: FretMode; typeMarchandise: string | null;
@@ -104,6 +110,20 @@ export async function fetchExpeditions(): Promise<Expedition[]> {
     .order('created_at', { ascending: false });
   if (error) { warn('chargement des expéditions', error); return []; }
   return (data as Row[]).map(toExpedition);
+}
+
+/** Suivi public : la RPC ne renvoie ni identité, ni téléphone, ni contenu de colis. */
+export async function fetchSuiviPublic(code: string): Promise<SuiviPublic | null> {
+  if (!supabase || !code.trim()) return null;
+  const { data, error } = await supabase.rpc('suivi_expedition_public', { p_code: code.trim() });
+  if (error) { warn('chargement du suivi public', error); return null; }
+  if (!data) return null;
+  const r = data as Row;
+  return {
+    code: String(r.code), mode: r.mode as FretMode, destination: String(r.destination ?? ''), statut: r.statut as ExpeditionStatut,
+    clotureeLe: str(r.cloturee_le), partieLe: str(r.partie_le), arriveeLe: str(r.arrivee_le),
+    etapes: Array.isArray(r.etapes) ? (r.etapes as Row[]).map((e) => ({ type: e.type as EtapeType, au: String(e.au) })) : [],
+  };
 }
 
 export async function fetchExpeditionTotaux(): Promise<Record<string, ExpeditionTotaux>> {
