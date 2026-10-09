@@ -194,6 +194,12 @@ h1, h2, h3, p { margin: 0; }
 .photo-thumb.on { border-color: var(--accent); }
 .zhaddr { font-size: 22px; font-weight: 500; line-height: 1.4; }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 390px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .rcard-body { gap: 10px; padding: 10px; }
+  .rcard .name { font-size: 16px; }
+  .carac-item { min-height: 92px; padding-inline: 4px; }
+}
 details.qr { border: 1.5px solid var(--chip-border); border-radius: 12px; padding: 0 14px; }
 details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 52px; font-weight: 600; cursor: pointer; }
 .driver { min-height: 100dvh; background: var(--primary); color: #fff; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
