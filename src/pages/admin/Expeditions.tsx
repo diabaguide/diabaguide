@@ -9,7 +9,7 @@ import { AdminCard, AdminSheet } from './mobile';
 import { SortTh, compare, useSort } from './tableSort';
 import {
   fetchExpeditions, fetchExpeditionTotaux, fetchColis, fetchWarehouses,
-  createExpedition, updateExpedition, updateExpeditionPhoto, deleteExpedition, createExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
+  createExpedition, updateExpedition, updateExpeditionPhoto, deleteExpedition, createExpeditionArticle, updateExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
   suggestExpeditionCode, suggestColisCode,
   fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
   MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL, caracLabel,
@@ -356,19 +356,31 @@ export function ExpeditionDetail() {
   };
 
   const [articleForm, setArticleForm] = useState({ nom: '', quantite: '1', poidsKg: '' });
+  const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
   const [articleErr, setArticleErr] = useState<string | null>(null);
   const [articleBusy, setArticleBusy] = useState(false);
+  const modifierArticle = (article: ExpeditionArticle) => {
+    setEditingArticleId(article.id);
+    setArticleForm({ nom: article.nom, quantite: String(article.quantite), poidsKg: article.poidsKg == null ? '' : String(article.poidsKg) });
+    setArticleErr(null);
+  };
+  const annulerModificationArticle = () => {
+    setEditingArticleId(null); setArticleForm({ nom: '', quantite: '1', poidsKg: '' }); setArticleErr(null);
+  };
   const ajouterArticle = async (event: FormEvent) => {
     event.preventDefault();
     if (!articleForm.nom.trim()) { setArticleErr('Le nom de l’article est obligatoire.'); return; }
     const quantite = toNum(articleForm.quantite);
     if (!quantite || quantite <= 0) { setArticleErr('La quantité doit être supérieure à zéro.'); return; }
     setArticleBusy(true); setArticleErr(null);
-    const res = await createExpeditionArticle({ expeditionCode: code, nom: articleForm.nom, quantite, poidsKg: toNum(articleForm.poidsKg) });
+    const res = editingArticleId
+      ? await updateExpeditionArticle({ id: editingArticleId, nom: articleForm.nom, quantite, poidsKg: toNum(articleForm.poidsKg) })
+      : await createExpeditionArticle({ expeditionCode: code, nom: articleForm.nom, quantite, poidsKg: toNum(articleForm.poidsKg) });
     setArticleBusy(false);
     if (res.error) { setArticleErr(res.error); return; }
-    setArticleForm({ nom: '', quantite: '1', poidsKg: '' });
-    setOk('Article ajouté.'); await reload();
+    const wasEditing = Boolean(editingArticleId);
+    annulerModificationArticle();
+    setOk(wasEditing ? 'Article modifié.' : 'Article ajouté.'); await reload();
   };
   const supprimerArticle = async (article: ExpeditionArticle) => {
     if (!window.confirm(t('Supprimer cet article ?'))) return;
@@ -523,7 +535,10 @@ export function ExpeditionDetail() {
               {articles.map((article) => (
                 <div key={article.id} className="row" style={{ justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                   <div><strong>{article.nom}</strong><div className="small muted">{article.quantite} · {article.poidsKg == null ? '—' : `${article.poidsKg} kg`}</div></div>
-                  <Button kind="d" icon="trash" full={false} disabled={articleBusy} onClick={() => void supprimerArticle(article)} aria-label={t('Supprimer')}>{tr("Supprimer")}</Button>
+                  <span className="row" style={{ gap: 6 }}>
+                    <Button kind="s" icon="edit" full={false} disabled={articleBusy} onClick={() => modifierArticle(article)}>{tr("Modifier")}</Button>
+                    <Button kind="d" icon="trash" full={false} disabled={articleBusy} onClick={() => void supprimerArticle(article)} aria-label={t('Supprimer')}>{tr("Supprimer")}</Button>
+                  </span>
                 </div>
               ))}
             </div>
@@ -532,7 +547,8 @@ export function ExpeditionDetail() {
             <div className="grow"><Field id="article-nom" label={tr("Nom de l’article")} value={articleForm.nom} onChange={(v) => setArticleForm({ ...articleForm, nom: v })} placeholder={tr("Ex. vêtements")}/></div>
             <div className="grow"><Field id="article-quantite" label={tr("Quantité")} value={articleForm.quantite} onChange={(v) => setArticleForm({ ...articleForm, quantite: v })} placeholder="1" /></div>
             <div className="grow"><Field id="article-poids" label={tr("Poids de l’article (kg)")} value={articleForm.poidsKg} onChange={(v) => setArticleForm({ ...articleForm, poidsKg: v })} placeholder={tr("facultatif")} /></div>
-            <Button type="submit" icon="plus" full={false} disabled={articleBusy}>{tr("Ajouter")}</Button>
+            <Button type="submit" icon={editingArticleId ? "check" : "plus"} full={false} disabled={articleBusy}>{tr(editingArticleId ? "Enregistrer" : "Ajouter")}</Button>
+            {editingArticleId && <Button type="button" kind="s" full={false} disabled={articleBusy} onClick={annulerModificationArticle}>{tr("Annuler")}</Button>}
           </form>
         </section>
 
