@@ -18,6 +18,10 @@ const TYPES = [
 ];
 const isMaritime = (m: FretMode) => m.startsWith('maritime');
 const toNum = (s: string): number | null => { const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? null : n; };
+const formatDateCourte = (value: string) => {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(year, month - 1, day));
+};
 const money = (n: number, d = 'XOF') => `${n.toLocaleString('fr-FR')} ${d === 'XOF' ? 'FCFA' : d}`;
 
 export function MesEnvois() {
@@ -173,6 +177,7 @@ function LotTrackingCard({ code }: { code: string }) {
         </div>
         <span className="tag tag-info">{tr(EXPEDITION_STATUT_LABEL[suivi.statut])}</span>
       </div>
+      {suivi.arriveePrevue && <div className="small muted"><strong>{tr("Arrivée prévue")} :</strong> {formatDateCourte(suivi.arriveePrevue)}</div>}
       {derniereEtape ? (
         <div className="small muted"><strong>{tr("Étape franchie")} :</strong> {tr(ETAPE_LABEL[derniereEtape.type])} · {new Date(derniereEtape.au).toLocaleDateString('fr-FR')}</div>
       ) : <div className="small muted">{tr("Pas encore d’étape visible. Vous serez informé dès que le colis avance.")}</div>}

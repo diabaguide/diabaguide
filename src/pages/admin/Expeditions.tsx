@@ -122,7 +122,7 @@ export function ExpeditionsList() {
                     <tr key={e.code} className="clickable" tabIndex={0} style={{ cursor: 'pointer' }}
                       onClick={() => ouvrir(e.code)}
                       onKeyDown={(k) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); ouvrir(e.code); } }}>
-                      <td><strong>{e.code}</strong><div className="small muted">{e.destination}</div></td>
+                      <td><strong>{e.code}</strong><div className="small muted">{e.destination}</div>{e.arriveePrevue && <div className="small muted">{tr("Arrivée prévue")} : {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(`${e.arriveePrevue}T00:00:00`))}</div>}</td>
                       <td>{tr(MODE_LABEL[e.mode])}</td>
                       <td><span className="small">{tr(EXPEDITION_STATUT_LABEL[e.statut])}</span></td>
                       <td>{t?.nbColis ?? 0}</td>
