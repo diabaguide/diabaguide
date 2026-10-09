@@ -1,13 +1,15 @@
 import { useI18n } from '../../i18n';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../../store';
+import { compressImage } from '../../lib/image';
+import { photoUrl, removePhoto, uploadPhoto } from '../../lib/photos';
 import { Button, Field, Icon, Select, TextArea, useWide } from '../../ui';
 import { AdminCard, AdminSheet } from './mobile';
 import { SortTh, compare, useSort } from './tableSort';
 import {
   fetchExpeditions, fetchExpeditionTotaux, fetchColis, fetchWarehouses,
-  createExpedition, updateExpedition, deleteExpedition, createExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
+  createExpedition, updateExpedition, updateExpeditionPhoto, deleteExpedition, createExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
   suggestExpeditionCode, suggestColisCode,
   fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
   MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL, caracLabel,
@@ -210,6 +212,14 @@ export function ExpeditionDetail() {
   const [libres, setLibres] = useState<Colis[]>([]);
   const [etapes, setEtapes] = useState<EtapeExpedition[]>([]);
   const [articles, setArticles] = useState<ExpeditionArticle[]>([]);
+  const [photoSrc, setPhotoSrc] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setPhotoSrc(null);
+    if (exp?.photo) void photoUrl(exp.photo, 3600, 'fret-photos').then((url) => { if (active) setPhotoSrc(url); });
+    return () => { active = false; };
+  }, [exp?.photo]);
   const [factures, setFactures] = useState<Record<string, Facture>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -320,6 +330,29 @@ export function ExpeditionDetail() {
     if (res.error) { setErr(res.error); return; }
     setOk(`Étape « ${tr(ETAPE_LABEL[nouvelleEtape])} » ajoutée : les colis de l’expédition avancent avec elle.`);
     setNouvelleEtape(''); await reload();
+  };
+
+  const modifierPhoto = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]; event.target.value = '';
+    if (!file || !exp) return;
+    setPhotoBusy(true); setErr(null); setOk(null);
+    try {
+      const image = await compressImage(file, 1600, 0.82);
+      const upload = await uploadPhoto(image, 'fret-photos');
+      if (upload.error || !upload.path) { setErr(upload.error ?? 'L’envoi de la photo a échoué.'); return; }
+      const res = await updateExpeditionPhoto(exp.code, upload.path);
+      if (res.error) { await removePhoto(upload.path, 'fret-photos'); setErr(res.error); return; }
+      if (exp.photo) await removePhoto(exp.photo, 'fret-photos');
+      setOk('Photo du lot mise à jour.'); await reload();
+    } catch (error) { setErr((error as Error).message); }
+    finally { setPhotoBusy(false); }
+  };
+  const supprimerPhoto = async () => {
+    if (!exp?.photo || !window.confirm(t('Supprimer la photo du lot ?'))) return;
+    setPhotoBusy(true); setErr(null); setOk(null);
+    const res = await updateExpeditionPhoto(exp.code, null);
+    if (res.error) { setErr(res.error); setPhotoBusy(false); return; }
+    await removePhoto(exp.photo, 'fret-photos'); setOk('Photo du lot supprimée.'); await reload(); setPhotoBusy(false);
   };
 
   const [articleForm, setArticleForm] = useState({ nom: '', quantite: '1', poidsKg: '' });
@@ -467,6 +500,19 @@ export function ExpeditionDetail() {
               options={[{ v: '', l: etapesDisponibles.length ? 'Choisir une étape…' : 'Suivi terminé' }, ...etapesDisponibles.map((t) => ({ v: t, l: ETAPE_LABEL[t] }))]} />
             <Button icon="plus" full={false} disabled={!nouvelleEtape || busy || !etapesDisponibles.includes(nouvelleEtape as EtapeType)} onClick={() => void ajouterEtape()}>{tr("Ajouter")}</Button>
           </div>
+        </section>
+
+        <section className="card stack" style={{ gap: 12 }}>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Photo du lot")}</h2>
+          {photoSrc && <img src={photoSrc} alt={tr("Photo du lot")} style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 12 }} />}
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <label className="button secondary" style={{ cursor: photoBusy ? 'wait' : 'pointer' }}>
+              {tr(exp?.photo ? "Remplacer la photo" : "Ajouter une photo")}
+              <input type="file" accept="image/jpeg,image/webp,image/png" className="sr" disabled={photoBusy} onChange={modifierPhoto} />
+            </label>
+            {exp?.photo && <Button kind="d" icon="trash" full={false} disabled={photoBusy} onClick={() => void supprimerPhoto()}>{tr("Supprimer")}</Button>}
+          </div>
+          <p className="small muted" style={{ margin: 0 }}>{tr("Photo privée, visible uniquement par l’équipe fret.")}</p>
         </section>
 
         <section className="card stack" style={{ gap: 12 }}>

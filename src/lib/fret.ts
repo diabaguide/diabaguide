@@ -63,7 +63,7 @@ export interface Warehouse { id: string; nom: string; usage: 'fret_express' | 'c
 export interface Expedition {
   code: string; mode: FretMode; warehouseId: string | null; destination: string;
   containerNo: string | null; blNo: string | null; awbNo: string | null;
-  seuilKg: number | null; seuilM3: number | null; arriveePrevue: string | null; noteInterne: string | null; statut: ExpeditionStatut; createdAt: string;
+  seuilKg: number | null; seuilM3: number | null; arriveePrevue: string | null; noteInterne: string | null; photo: string | null; statut: ExpeditionStatut; createdAt: string;
 }
 export interface ExpeditionArticle {
   id: string; expeditionCode: string; nom: string; quantite: number; poidsKg: number | null; createdAt: string;
@@ -109,7 +109,7 @@ export async function fetchWarehouses(): Promise<Warehouse[]> {
 export async function fetchExpeditions(): Promise<Expedition[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from('expeditions')
-    .select('code, mode, warehouse_id, destination, container_no, bl_no, awb_no, seuil_kg, seuil_m3, arrivee_prevue, note_interne, statut, created_at')
+    .select('code, mode, warehouse_id, destination, container_no, bl_no, awb_no, seuil_kg, seuil_m3, arrivee_prevue, note_interne, photo, statut, created_at')
     .order('created_at', { ascending: false });
   if (error) { warn('chargement des expéditions', error); return []; }
   return (data as Row[]).map(toExpedition);
@@ -196,6 +196,12 @@ export async function fetchVoyageursFret(q = ''): Promise<VoyageurFret[]> {
 }
 
 /* ---------- Écritures ---------- */
+
+export async function updateExpeditionPhoto(code: string, photo: string | null): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { error } = await supabase.rpc('admin_maj_expedition_photo', { p_code: code, p_photo: photo });
+  return { error: error ? humanize(error.message) : undefined };
+}
 
 export async function createExpeditionArticle(input: {
   expeditionCode: string; nom: string; quantite: number; poidsKg?: number | null;
@@ -547,7 +553,7 @@ function toExpedition(r: Row): Expedition {
   return {
     code: String(r.code), mode: r.mode as FretMode, warehouseId: str(r.warehouse_id), destination: String(r.destination ?? 'Dakar'),
     containerNo: str(r.container_no), blNo: str(r.bl_no), awbNo: str(r.awb_no),
-    seuilKg: num(r.seuil_kg), seuilM3: num(r.seuil_m3), arriveePrevue: str(r.arrivee_prevue), noteInterne: str(r.note_interne), statut: r.statut as ExpeditionStatut, createdAt: String(r.created_at),
+    seuilKg: num(r.seuil_kg), seuilM3: num(r.seuil_m3), arriveePrevue: str(r.arrivee_prevue), noteInterne: str(r.note_interne), photo: str(r.photo), statut: r.statut as ExpeditionStatut, createdAt: String(r.created_at),
   };
 }
 function toColis(r: Row): Colis {
