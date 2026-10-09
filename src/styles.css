@@ -45,6 +45,19 @@ h1, h2, h3, p { margin: 0; }
 .bottomnav a { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 64px; text-decoration: none; color: var(--muted); font-size: 12px; font-weight: 500; }
 .bottomnav a.active { color: var(--accent); font-weight: 700; }
 .bottomnav a.active::before { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 3px; background: var(--gold); border-radius: 0 0 3px 3px; }
+.bottomnav a:focus-visible { z-index: 1; outline-offset: -3px; }
+
+/* Actions prioritaires de l'accueil : une seule colonne, grandes zones tactiles,
+   lisible à une main et facilement extensible sans modifier la navigation. */
+.quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quick-action { display: flex; align-items: center; gap: 10px; min-height: 78px; padding: 12px; background: var(--surface); border: 1px solid var(--card-line); border-radius: 16px; color: var(--ink); text-decoration: none; box-shadow: 0 4px 12px rgba(21, 62, 159, .04); }
+.quick-action:active { transform: scale(.98); }
+.quick-action > .icon { color: var(--muted); margin-inline-start: auto; }
+.quick-action-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: 0 0 40px; border-radius: 12px; background: var(--info-bg); color: var(--accent); }
+.quick-action-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.quick-action-copy strong { font-size: 14px; line-height: 1.2; }
+.quick-action-copy small { color: var(--muted); font-size: 12px; line-height: 1.2; }
+@media (max-width: 360px) { .quick-actions { grid-template-columns: 1fr; } }
 
 /* Boutons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 18px; border-radius: 14px; font: inherit; font-weight: 600; font-size: 16px; text-decoration: none; text-align: center; cursor: pointer; border: 1.5px solid transparent; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }

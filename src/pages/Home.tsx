@@ -77,6 +77,30 @@ function AnnoncesDiaba() {
   );
 }
 
+function QuickActions() {
+  const { tr } = useI18n();
+  const actions = [
+    { to: '/recherche', icon: 'search' as const, title: 'Trouver une adresse', sub: 'Explorer les fournisseurs' },
+    { to: '/liste-achats', icon: 'list' as const, title: "Préparer mes achats", sub: 'Créer ou retrouver une liste' },
+    { to: '/mes-envois', icon: 'box' as const, title: 'Suivre un envoi', sub: 'Voir mes expéditions' },
+    { to: '/localisation', icon: 'pin' as const, title: 'Près de moi', sub: 'Chercher dans un quartier' },
+  ];
+  return (
+    <section aria-label={tr("Actions rapides")}>
+      <h2 className="display" style={{ fontSize: 19, marginBottom: 12 }}>{tr("Que voulez-vous faire ?")}</h2>
+      <div className="quick-actions">
+        {actions.map((a) => (
+          <Link key={a.to} to={a.to} className="quick-action">
+            <span className="quick-action-icon"><Icon name={a.icon} size={23} /></span>
+            <span className="quick-action-copy"><strong>{tr(a.title)}</strong><small>{tr(a.sub)}</small></span>
+            <Icon name="chevR" size={18} />
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function Home() {
   const { tr, t } = useI18n();
   const { s, d } = useStore();
@@ -129,6 +153,7 @@ export function Home() {
           </div>
         )}
         <AnnoncesDiaba />
+        <QuickActions />
         <section aria-label={tr("Catégories")}>
           <h2 className="display" style={{ fontSize: 19, marginBottom: 12 }}>{tr("Que cherchez-vous ?")}</h2>
           <div className="cattiles">
