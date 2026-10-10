@@ -15,7 +15,7 @@ const files = {
 const [catalog] = await Promise.all([
   readFile(new URL('../src/i18n/messages.json', import.meta.url), 'utf8').then(JSON.parse),
 ]);
-const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.', 'Progression des achats', 'Progression du lot'];
+const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.', 'Progression des achats', 'Progression du lot', 'Suivre une expédition', 'Suivez votre lot', 'Entrez le code communiqué par Diaba pour consulter les dernières étapes visibles.', 'Code de l’expédition', 'Rechercher', 'Recherche…', 'Aucun lot public ne correspond à ce code. Vérifiez les caractères saisis.', 'Résumé', 'Étapes visibles', 'Dates clés', 'Aucune étape publique n’a encore été enregistrée.'];
 const navBlock = files.ui.slice(files.ui.indexOf('const NAV:'), files.ui.indexOf('export function BottomNav'));
 
 const checks = [
@@ -36,6 +36,7 @@ const checks = [
   ['prochaine étape visible sur les lots suivis', () => files.fret.includes('lot-next-step') && files.fret.includes('prochaineEtapeType') && files.fret.includes('Prochaine étape')],
   ['accès public direct depuis un colis', () => files.fret.includes('c.expeditionCode') && files.fret.includes('`/suivi/${encodeURIComponent(c.expeditionCode)}`')],
   ['suivi détaillé des colis accessible', () => files.fret.includes('aria-expanded={open}') && files.fret.includes('aria-controls={detailId}') && files.fret.includes('id={detailId}')],
+  ['suivi public multilingue', () => files.suivi.includes('title={tr("Suivre une expédition")}') && files.suivi.includes('{tr("Suivez votre lot")}') && files.suivi.includes('label={tr("Code de l’expédition")}')],
   ['accès public au suivi depuis Mes envois', () => files.fret.includes('freight-public-tracking') && files.fret.includes('to="/suivi"') && files.fret.includes('Suivre un envoi')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],

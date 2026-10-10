@@ -73,25 +73,25 @@ export function SuiviPublic() {
 
   return (
     <Screen nav={false}>
-      <TopBar title="Suivre une expédition" back={-1} />
+      <TopBar title={tr("Suivre une expédition")} back={-1} />
       <main className="page stack">
         <section className="hero compact">
           <span className="eyebrow">Diaba Guide · Fret</span>
-          <h2>Suivez votre lot</h2>
-          <p>Entrez le code communiqué par Diaba pour consulter les dernières étapes visibles.</p>
+          <h2>{tr("Suivez votre lot")}</h2>
+          <p>{tr("Entrez le code communiqué par Diaba pour consulter les dernières étapes visibles.")}</p>
         </section>
 
         <form className="card stack" onSubmit={submit}>
           <Field
             id="code-expedition"
-            label="Code de l'expédition"
+            label={tr("Code de l’expédition")}
             value={code}
             onChange={setCode}
             placeholder="Ex. EXP-2026-AB12"
             req
           />
           <Button type="submit" disabled={loading || !code.trim()}>
-            {loading ? 'Recherche…' : 'Rechercher'}
+            {loading ? tr('Recherche…') : tr('Rechercher')}
           </Button>
         </form>
 
@@ -110,20 +110,20 @@ export function SuiviPublic() {
 
         {searched && !loading && !suivi && (
           <div className="notice warn" role="alert">
-            Aucun lot public ne correspond à ce code. Vérifiez les caractères saisis.
+            {tr("Aucun lot public ne correspond à ce code. Vérifiez les caractères saisis.")}
           </div>
         )}
 
         {suivi && (
           <div className="stack">
-            <Section title="Résumé" icon="box">
+            <Section title={tr("Résumé")} icon="box">
               <div className="kv"><span>Code</span><strong>{suivi.code}</strong></div>
               <div className="kv"><span>Transport</span><span>{MODE_LABEL[suivi.mode] ?? suivi.mode}</span></div>
               <div className="kv"><span>Destination</span><span>{suivi.destination}</span></div>
               <div className="kv"><span>Statut</span><strong>{EXPEDITION_STATUT_LABEL[suivi.statut] ?? suivi.statut}</strong></div>
             </Section>
 
-            <Section title="Frise du suivi" icon="route">
+            <Section title={tr("Frise du suivi")} icon="route">
               {prochaineEtape && (
                 <div className="notice info" style={{ marginBottom: 12 }}>
                   <strong>{tr("Prochaine étape")} :</strong>&nbsp;{tr(ETAPE_LABEL[prochaineEtape])}
@@ -153,9 +153,9 @@ export function SuiviPublic() {
               </ol>
             </Section>
 
-            <Section title="Étapes visibles" icon="route">
+            <Section title={tr("Étapes visibles")} icon="route">
               {suivi.etapes.length === 0 ? (
-                <p className="muted">Aucune étape publique n'a encore été enregistrée.</p>
+                <p className="muted">{tr("Aucune étape publique n’a encore été enregistrée.")}</p>
               ) : (
                 <ol className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {suivi.etapes.map((etape, index) => (
@@ -169,7 +169,7 @@ export function SuiviPublic() {
             </Section>
 
             {(suivi.arriveePrevue || suivi.partieLe || suivi.arriveeLe || suivi.clotureeLe) && (
-              <Section title="Dates clés">
+              <Section title={tr("Dates clés")}>
                 {suivi.arriveePrevue && <div className="kv"><span>Arrivée prévue</span><span>{formatDate(suivi.arriveePrevue)}</span></div>}
                 {suivi.partieLe && <div className="kv"><span>Départ</span><span>{formatDate(suivi.partieLe)}</span></div>}
                 {suivi.arriveeLe && <div className="kv"><span>Arrivée</span><span>{formatDate(suivi.arriveeLe)}</span></div>}
