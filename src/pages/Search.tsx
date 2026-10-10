@@ -316,7 +316,7 @@ export function Filters() {
         <section className="stack"><h2 style={{ fontSize: 17 }}>{tr("Catégorie")}</h2>
           {tr(radios<string>('cat', f.cat ?? '', [{ v: '', l: 'Toutes' }, ...s.categories.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => setF({ ...f, cat: (v || null) as Cat | null })))}
         </section>
-        <section className="stack"><h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>
+        <section className="stack">{wide && <h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>}
           {wide
             ? tr(radios<City>('ville', cityValue, cityOptions.map((c) => ({ v: c.id, l: c.name })), (v) => setF({ ...f, city: v })))
             : <Select<City> id="filter-city" label="Ville" value={cityValue}

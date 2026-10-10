@@ -27,6 +27,7 @@ const checks = [
   ['mise en page des petits écrans', () => files.styles.includes('@media (max-width: 390px)')],
   ['recherche persistante sur mobile', () => files.styles.includes('.search-head { position: sticky;')],
   ['application des filtres accessible sur mobile', () => files.search.includes('className="filter-apply"') && files.styles.includes('.filter-apply { position: sticky;')],
+  ['libellé ville unique dans les filtres mobiles', () => files.search.includes('wide && <h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>')],
   ['contact accessible depuis les résultats', () => files.search.includes('className="rcard-contact"') && files.search.includes('/contact')],
   ['actions principales visibles avant les avis sur une fiche', () => files.fiche.includes('className="stack" style={{ order: 2 }}') && files.fiche.includes('title={tr("Avis des voyageurs")}') && files.styles.includes('.fiche-side { display: contents;')],
   ['progression des achats visible dans une liste', () => files.shopping.includes('className="shopping-progress"') && files.shopping.includes('aria-label={tr("Progression des achats")}') && files.styles.includes('.shopping-progress')],
