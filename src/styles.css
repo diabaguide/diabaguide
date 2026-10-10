@@ -162,6 +162,7 @@ h1, h2, h3, p { margin: 0; }
 /* Carte de visite : sous la vérification, alignée à gauche. Elle passe au-dessus
    du lien qui recouvre toute la carte (z-index), sinon le clic ouvrirait la fiche. */
 .rcard-visite { display: inline-flex; align-items: center; gap: 5px; color: var(--seal); font-weight: 700; text-decoration: none; }
+.rcard-contact { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-weight: 700; text-decoration: none; }
 .rcard-verified { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-weight: 600; }
 .rcard-more { margin-left: auto; color: var(--accent); font-weight: 700; white-space: nowrap; text-decoration: none; }
 
