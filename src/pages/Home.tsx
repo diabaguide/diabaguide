@@ -137,6 +137,12 @@ export function Home() {
         <CitySwitch />
       </header>
       <main className="main" style={{ gap: 22, paddingTop: 20 }}>
+        <div className="home-intro">
+          <p className="eyebrow">{tr("Votre guide du voyageur")}</p>
+          <h1 className="display">{tr("Trouvez les bonnes adresses, simplement.")}</h1>
+          <p>{tr("Explorez votre ville, préparez vos achats et gardez vos envois sous la main.")}</p>
+        </div>
+        <QuickActions />
         {!s.installDismissed && (
           <div className="install">
             <Icon name="download" size={22} />
@@ -153,12 +159,6 @@ export function Home() {
           </div>
         )}
         <AnnoncesDiaba />
-        <div className="home-intro">
-          <p className="eyebrow">{tr("Votre guide du voyageur")}</p>
-          <h1 className="display">{tr("Trouvez les bonnes adresses, simplement.")}</h1>
-          <p>{tr("Explorez votre ville, préparez vos achats et gardez vos envois sous la main.")}</p>
-        </div>
-        <QuickActions />
         <section aria-label={tr("Catégories")}>
           <h2 className="display" style={{ fontSize: 19, marginBottom: 12 }}>{tr("Que cherchez-vous ?")}</h2>
           <div className="cattiles">
