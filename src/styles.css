@@ -238,6 +238,7 @@ details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 
 .lot-progress-track { height: 7px; overflow: hidden; border-radius: 999px; background: var(--info-bg); }
 .lot-progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width 180ms ease; }
 .lot-next-step { margin: 0; padding: 9px 10px; }
+.tracking-code-help { display: grid; gap: 3px; padding: 0 2px; line-height: 1.45; }
 
 /* Espace équipe (ordinateur) */
 .admin { display: flex; min-height: 100vh; background: var(--bg); }
