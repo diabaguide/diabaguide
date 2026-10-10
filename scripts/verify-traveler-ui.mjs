@@ -17,7 +17,7 @@ const files = {
 const [catalog] = await Promise.all([
   readFile(new URL('../src/i18n/messages.json', import.meta.url), 'utf8').then(JSON.parse),
 ]);
-const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.', 'Progression des achats', 'Progression du lot', 'Suivre une expédition', 'Suivez votre lot', 'Entrez le code communiqué par Diaba pour consulter les dernières étapes visibles.', 'Code de l’expédition', 'Rechercher', 'Recherche…', 'Aucun lot public ne correspond à ce code. Vérifiez les caractères saisis.', 'Résumé', 'Étapes visibles', 'Dates clés', 'Aucune étape publique n’a encore été enregistrée.'];
+const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.', 'Progression des achats', 'Progression du lot', 'Suivre une expédition', 'Suivez votre lot', 'Entrez le code communiqué par Diaba pour consulter les dernières étapes visibles.', 'Code de l’expédition', 'Rechercher', 'Recherche…', 'Aucun lot public ne correspond à ce code. Vérifiez les caractères saisis.', 'Résumé', 'Étapes visibles', 'Dates clés', 'Aucune étape publique n’a encore été enregistrée.', 'Expédier cette liste', 'Liste d’achats liée', 'Ajoutez au moins un produit avant de préparer l’envoi.', 'Attendez le chargement de la liste d’achats.'];
 const navBlock = files.ui.slice(files.ui.indexOf('const NAV:'), files.ui.indexOf('export function BottomNav'));
 
 const checks = [
@@ -47,6 +47,9 @@ const checks = [
   ['pages voyageur chargées par route', () => ['pages/Home', 'pages/Search', 'pages/Fiche', 'pages/Shopping', 'pages/Fret', 'pages/Suivi'].every((v) => files.app.includes(`import('./${v}')`))],
   ['chunks fournisseurs configurés explicitement', () => files.vite.includes('manualChunks') && files.vite.includes("vendor-react") && files.vite.includes("vendor-supabase")],
   ['récupération PWA gardée même sans sessionStorage', () => files.main.includes("vite:preloadError") && files.main.includes('history.replaceState') && files.main.includes('guardPersisted') && files.main.indexOf('event.preventDefault()') > files.main.indexOf('if (!guardPersisted) return') && files.main.includes('location.reload()')],
+  ['liste d’achats transférée vers l’annonce fret', () => files.shopping.includes('Expédier cette liste') && files.shopping.includes('/mes-envois?liste=') && files.fret.includes('useSearchParams') && files.fret.includes('fetchList') && files.fret.includes('shoppingListId')],
+  ['annonce bloquée pendant le chargement de la liste', () => files.fret.includes('linkLoading') && files.fret.includes('setLinkedList(null)') && files.fret.includes('shoppingListId && !linkedList')],
+  ['erreur de liaison isolée des erreurs d’annonce', () => files.fret.includes('linkErr') && files.fret.includes('setLinkErr(null)')],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];
 

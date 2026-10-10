@@ -275,6 +275,18 @@ export function ShoppingListPage() {
             </div>
           )}
 
+          <div className="card stack shopping-ship" style={{ gap: 10, marginTop: 14 }}>
+            <h2 style={{ fontSize: 16, margin: 0 }}>{tr("Expédier cette liste")}</h2>
+            {items.length > 0 ? (
+              <Button icon="box" to={`/mes-envois?liste=${encodeURIComponent(id)}`}>{tr("Expédier cette liste")}</Button>
+            ) : (
+              <>
+                <Button icon="box" disabled>{tr("Expédier cette liste")}</Button>
+                <p className="small muted" style={{ margin: 0 }}>{tr("Ajoutez au moins un produit avant de préparer l’envoi.")}</p>
+              </>
+            )}
+          </div>
+
           <div className="card stack" style={{ gap: 10, marginTop: 14 }}>
             <h2 style={{ fontSize: 16, margin: 0 }}>{tr("Partager la liste")}</h2>
             <p className="small muted" style={{ margin: 0 }}>{tr("Envoyez la liste à votre associé, ou gardez-la en PDF pour le voyage.")}</p>

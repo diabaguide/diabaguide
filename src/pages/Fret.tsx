@@ -1,8 +1,9 @@
 import { useI18n } from '../i18n';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '../store';
 import { cityName } from '../data';
+import { fetchList } from '../lib/shopping';
 import { Button, Field, Icon, Logo, Screen, Select, TextArea, TopBar } from '../ui';
 import {
   devisFret, annoncerColis, fetchMesColis, fetchEtapesColis, fetchSuiviPublic, fetchFactures, fetchColisByCode,
@@ -36,7 +37,13 @@ export function MesEnvois() {
   const [factures, setFactures] = useState<Record<string, Facture>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [linkErr, setLinkErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const shoppingListId = searchParams.get('liste')?.trim() ?? '';
+  const [linkedList, setLinkedList] = useState<{ id: string; title: string } | null>(null);
+  const [linkLoading, setLinkLoading] = useState(Boolean(shoppingListId));
+  const linkedDescription = useRef('');
 
   const reload = useCallback(async () => {
     const [cs, f] = await Promise.all([fetchMesColis(), fetchFactures()]);
@@ -58,18 +65,48 @@ export function MesEnvois() {
   const { s } = useStore();
   const villes = s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }));
   const [an, setAn] = useState({ mode: 'maritime_groupage' as FretMode, ville: '', carac: [] as Caracteristique[], type: 'general', description: '', marque: '', poids: '', volume: '' });
+  useEffect(() => {
+    setLinkedList(null);
+    setLinkErr(null);
+    setLinkLoading(Boolean(shoppingListId));
+    setAn((current) => current.description === linkedDescription.current ? { ...current, description: '' } : current);
+    linkedDescription.current = '';
+    if (!shoppingListId) return;
+    let live = true;
+    fetchList(shoppingListId).then((result) => {
+      if (!live) return;
+      setLinkLoading(false);
+      if (!result.list || result.error) { setLinkErr(result.error ?? 'Cette liste est introuvable.'); return; }
+      if (result.items.length === 0) { setLinkErr('Ajoutez au moins un produit avant de préparer l’envoi.'); return; }
+      const bought = result.items.filter((item) => item.done);
+      const articles = bought.length > 0 ? bought : result.items;
+      const description = articles.map((item) => `${item.label}${item.qty ? ` (${item.qty})` : ''}`).join(' · ');
+      setLinkedList({ id: result.list.id, title: result.list.title });
+      setAn((current) => {
+        if (current.description) return { ...current, ville: current.ville || result.list?.city || '' };
+        linkedDescription.current = description;
+        return { ...current, ville: current.ville || result.list?.city || '', description };
+      });
+    });
+    return () => { live = false; };
+  }, [shoppingListId]);
   const ville = an.ville || s.city;
   const [busy, setBusy] = useState(false);
   const annoncer = async (e: FormEvent) => {
-    e.preventDefault(); setErr(null); setOk(null); setBusy(true);
+    e.preventDefault(); setErr(null); setOk(null);
+    if (shoppingListId && !linkedList) { setErr('Attendez le chargement de la liste d’achats.'); return; }
+    setBusy(true);
     const res = await annoncerColis({
       mode: an.mode, villeDepart: ville, caracteristiques: an.carac, typeMarchandise: an.type, description: an.description, marqueColis: an.marque,
       poidsKg: isMaritime(an.mode) ? null : toNum(an.poids), volumeM3: isMaritime(an.mode) ? toNum(an.volume) : null,
+      shoppingListId: linkedList?.id ?? null,
     });
     setBusy(false);
     if (res.error) { setErr(res.error); return; }
     setOk(`Colis annoncé (${res.code}). L’équipe Diaba le confirmera à la réception en Chine.`);
     setAn({ mode: 'maritime_groupage', ville: '', carac: [], type: 'general', description: '', marque: '', poids: '', volume: '' });
+    setLinkedList(null);
+    const nextParams = new URLSearchParams(searchParams); nextParams.delete('liste'); setSearchParams(nextParams, { replace: true });
     await reload();
   };
   const lots = [...new Set(colis.map((c) => c.expeditionCode).filter((code): code is string => Boolean(code)))];
@@ -79,6 +116,7 @@ export function MesEnvois() {
       <TopBar title={tr("Mes envois")} />
       <div className="main mes-envois-main" style={{ gap: 16 }}>
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+        {linkErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(linkErr)}</span></div>}
         {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
 
         <section className="card stack freight-section freight-public-tracking" style={{ gap: 12 }}>
@@ -113,6 +151,9 @@ export function MesEnvois() {
         <section className="card stack freight-section freight-announce" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Annoncer un colis")}</h2>
           <p className="small muted" style={{ margin: 0 }}>{tr("Prévenez Diaba d’un colis en route vers l’entrepôt en Chine. Vous pourrez ensuite suivre son avancement ici.")}</p>
+          {linkedList && (
+            <div className="notice info"><Icon name="list" size={20} /><span><strong>{tr("Liste d’achats liée")} :</strong> {linkedList.title}</span></div>
+          )}
           <form onSubmit={annoncer} className="stack" style={{ gap: 10 }} noValidate>
             <Select id="an-mode" label={tr("Mode d’envoi")} value={an.mode} onChange={(v) => setAn({ ...an, mode: v as FretMode })} options={MODE_OPTIONS} />
             <Select id="an-ville" label={tr("Ville de départ")} value={ville} onChange={(v) => setAn({ ...an, ville: v })} options={villes} />
@@ -137,7 +178,7 @@ export function MesEnvois() {
             {isMaritime(an.mode)
               ? <Field id="an-vol" label={tr("Volume estimé (m³)")} value={an.volume} onChange={(v) => setAn({ ...an, volume: v })} placeholder="0" />
               : <Field id="an-poids" label={tr("Poids estimé (kg)")} value={an.poids} onChange={(v) => setAn({ ...an, poids: v })} placeholder="0" />}
-            <Button type="submit" icon="box" disabled={busy}>{tr(busy ? 'Envoi…' : 'Annoncer le colis')}</Button>
+            <Button type="submit" icon="box" disabled={busy || linkLoading || Boolean(shoppingListId && !linkedList)}>{tr(linkLoading ? 'Chargement…' : busy ? 'Envoi…' : 'Annoncer le colis')}</Button>
           </form>
         </section>
 
