@@ -11,6 +11,7 @@
     "build": "tsc --noEmit && vite build && node scripts/verify-bundle.mjs",
     "verify:bundle": "node scripts/verify-bundle.mjs",
     "verify:traveler-ui": "node scripts/verify-traveler-ui.mjs",
+    "verify:shipsgo": "node --test scripts/shipsgo-core.test.mjs scripts/shipsgo-api.test.mjs scripts/shipsgo-integrity.test.mjs scripts/verify-shipsgo-ui.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

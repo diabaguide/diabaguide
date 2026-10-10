@@ -2,6 +2,7 @@ import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../../store';
+import { isTeamRole } from '../../lib/auth';
 import { compressImage } from '../../lib/image';
 import { photoUrl, removePhoto, uploadPhoto } from '../../lib/photos';
 import { Button, Field, Icon, Select, TextArea, useWide } from '../../ui';
@@ -13,11 +14,21 @@ import {
   fetchExpeditions, fetchExpeditionTotaux, fetchExpeditionArticleCounts, fetchColis, fetchWarehouses,
   createExpedition, importExpeditions, updateExpedition, updateExpeditionPhoto, deleteExpedition, createExpeditionArticle, updateExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapesExpeditions, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
   suggestExpeditionCode, suggestColisCode,
-  fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
+  fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients, creerSuiviShipsGo, synchroniserShipsGo,
   MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL, caracLabel,
   type Expedition, type ExpeditionTotaux, type ExpeditionArticle, type EtapeExpedition, type Colis, type FretMode, type ExpeditionStatut, type Warehouse, type EtapeType, type Facture, type ClientLite,
 } from '../../lib/fret';
 
+const shipsGoErrorMessage = (status?: number, error?: string) => {
+  if (status === 401) return 'Session expirée. Reconnectez-vous.';
+  if (status === 403) return 'Action réservée à l’équipe.';
+  if (status === 404) return 'Expédition introuvable.';
+  if (status === 409) return error?.toLocaleLowerCase().includes('en cours')
+    ? 'Le suivi ShipsGo est déjà activé ou en cours.'
+    : 'Vérifiez les références de transport ou réessayez plus tard.';
+  if (status === 400 || status === 422) return 'Vérifiez le numéro de conteneur ou d’AWB dans la fiche du lot.';
+  return 'Le service de suivi est temporairement indisponible.';
+};
 const money = (n: number, d = 'FCFA') => `${n.toLocaleString('fr-FR')} ${d === 'XOF' ? 'FCFA' : d}`;
 
 const MODE_OPTIONS = (Object.keys(MODE_LABEL) as FretMode[]).map((v) => ({ v, l: MODE_LABEL[v] }));
@@ -294,8 +305,9 @@ export function ExpeditionDetail() {
   const { tr, t } = useI18n();
   const base = useBase();
   const nav = useNavigate();
-  // Émettre une facture est réservé à l'équipe ; le livreur la marque payée.
-  const peutFacturer = useStore().s.user?.role !== 'livreur';
+  const userRole = useStore().s.user?.role;
+  const peutFacturer = userRole !== 'livreur';
+  const peutGererShipsGo = isTeamRole(userRole);
   const { code = '' } = useParams();
   const [exp, setExp] = useState<Expedition | null>(null);
   const [tot, setTot] = useState<ExpeditionTotaux | undefined>();
@@ -316,6 +328,7 @@ export function ExpeditionDetail() {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [shipsGoBusy, setShipsGoBusy] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
@@ -330,6 +343,27 @@ export function ExpeditionDetail() {
     setTot(totaux[code]); setColis(cs); setLibres(l); setFactures(f); setEtapes(et); setArticles(ar); setLoading(false);
   }, [code]);
   useEffect(() => { void reload(); }, [reload]);
+
+  const handleTrackShipsGo = async () => {
+    if (!exp || !window.confirm(t('La création du suivi ShipsGo peut consommer un crédit. Continuer ?'))) return;
+    setErr(null); setOk(null); setShipsGoBusy(true);
+    try {
+      const result = await creerSuiviShipsGo(exp.code);
+      if (result.error || !result.ok) { setErr(shipsGoErrorMessage(result.httpStatus, result.error)); return; }
+      setOk(result.reused ? t('Le suivi ShipsGo existant a été réutilisé.') : tr('Le suivi ShipsGo est activé.'));
+      await reload();
+    } finally { setShipsGoBusy(false); }
+  };
+  const handleSyncShipsGo = async () => {
+    if (!exp) return;
+    setErr(null); setOk(null); setShipsGoBusy(true);
+    try {
+      const result = await synchroniserShipsGo(exp.code);
+      if (result.error || !result.ok) { setErr(shipsGoErrorMessage(result.httpStatus, result.error)); return; }
+      setOk(t('Synchronisation ShipsGo terminée : {0} nouvelle(s) étape(s) ajoutée(s).', { 0: String(result.eventsAdded ?? 0) }));
+      await reload();
+    } finally { setShipsGoBusy(false); }
+  };
 
   const facturer = async (colisCode: string) => {
     setErr(null); setOk(null);
@@ -548,6 +582,11 @@ export function ExpeditionDetail() {
   if (!exp) return <div className="admin-body"><p className="muted">{tr("Expédition introuvable.")} <Link to={`${base}/expeditions`}>{tr("Retour à la liste")}</Link></p></div>;
 
   const unite = MODE_UNITE[exp.mode];
+  const shipsGoModeSupported = exp.mode.startsWith('maritime') || exp.mode.startsWith('aerien');
+  const shipsGoReferenceValid = exp.mode.startsWith('maritime')
+    ? /^[A-Z]{4}\d{7}$/.test((exp.containerNo ?? '').replace(/\s+/g, '').toUpperCase())
+    : /^\d{11}$/.test((exp.awbNo ?? '').replace(/[\s-]+/g, ''));
+  const shipsGoActive = exp.shipsgoTrackingState === 'active' && exp.shipsgoId !== null && exp.shipsgoType !== null;
   const dejaFaites = new Set(etapes.map((e) => e.type));
   const dernierIndex = Math.max(-1, ...etapes.map((e) => ETAPES_ORDRE.indexOf(e.type)));
   const etapesDisponibles = ETAPES_ORDRE.filter((t, index) => index > dernierIndex && !dejaFaites.has(t));
@@ -583,6 +622,36 @@ export function ExpeditionDetail() {
           <p className="small muted" style={{ margin: 0 }}>{tr(`Unité de facturation de ce mode : ${unite === 'm3' ? 'm³' : 'kg'}.`)}</p>
         </section>
 
+        {peutGererShipsGo && shipsGoModeSupported && (
+          <section className="card stack" style={{ gap: 12 }}>
+            <h2 style={{ fontSize: 17, margin: 0 }}>{tr('Suivi ShipsGo')}</h2>
+            {shipsGoActive ? (
+              <div className="small muted">
+                <p style={{ margin: 0 }}>{tr('Le suivi ShipsGo est activé.')}{exp.shipsgoStatus ? ` · ${exp.shipsgoStatus}` : ''}</p>
+                {exp.shipsgoSyncedAt
+                  ? <p style={{ margin: '4px 0 0' }}>{tr('Dernière synchronisation')}: {new Date(exp.shipsgoSyncedAt).toLocaleString()}</p>
+                  : <p style={{ margin: '4px 0 0' }}>{tr('Aucune synchronisation effectuée pour l’instant.')}</p>}
+              </div>
+            ) : exp.shipsgoTrackingState === 'creating' ? (
+              <p className="small muted" style={{ margin: 0 }}>{tr('Suivi en cours d’activation…')}</p>
+            ) : <p className="small muted" style={{ margin: 0 }}>{tr('Aucune synchronisation effectuée pour l’instant.')}</p>}
+            {!shipsGoActive && !shipsGoReferenceValid && (
+              <p className="small muted" style={{ margin: 0 }}>{tr('Un numéro valide de conteneur ou d’AWB est requis pour activer ShipsGo.')}</p>
+            )}
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+              {shipsGoActive ? (
+                <Button full={false} disabled={shipsGoBusy} onClick={() => void handleSyncShipsGo()}>
+                  {shipsGoBusy ? tr('Synchronisation…') : tr('Synchroniser maintenant')}
+                </Button>
+              ) : (
+                <Button full={false} disabled={shipsGoBusy || !shipsGoReferenceValid} onClick={() => void handleTrackShipsGo()}>
+                  {shipsGoBusy ? tr('Suivi en cours d’activation…') : tr(exp.shipsgoTrackingState === 'error' || exp.shipsgoTrackingState === 'creating' ? 'Réessayer l’activation' : 'Activer le suivi ShipsGo')}
+                </Button>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* ---- Étapes de l'expédition ---- */}
         <section className="card stack" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Étapes de l’expédition")}</h2>
@@ -594,6 +663,7 @@ export function ExpeditionDetail() {
                   <span style={{ fontWeight: 600 }}>{tr(ETAPE_LABEL[e.type])}</span>
                   <span className="small muted"> · {new Date(e.au).toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                   <span className="small muted"> · {tr(e.visibleClient ? 'Visible par le voyageur' : 'Interne')}</span>
+                  {e.source === 'shipsgo' && <span className="small muted"> · {tr('Synchronisé par ShipsGo')}</span>}
                 </li>
               ))}
             </ol>

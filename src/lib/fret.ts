@@ -65,6 +65,8 @@ export interface Expedition {
   code: string; mode: FretMode; warehouseId: string | null; destination: string;
   containerNo: string | null; blNo: string | null; awbNo: string | null;
   seuilKg: number | null; seuilM3: number | null; arriveePrevue: string | null; noteInterne: string | null; photo: string | null; statut: ExpeditionStatut; createdAt: string;
+  shipsgoId: number | null; shipsgoType: 'ocean' | 'air' | null; shipsgoStatus: string | null;
+  shipsgoTrackingState: 'inactive' | 'creating' | 'active' | 'error'; shipsgoSyncedAt: string | null;
 }
 export interface ExpeditionArticle {
   id: string; expeditionCode: string; nom: string; quantite: number; poidsKg: number | null; createdAt: string;
@@ -110,7 +112,7 @@ export async function fetchWarehouses(): Promise<Warehouse[]> {
 export async function fetchExpeditions(): Promise<Expedition[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from('expeditions')
-    .select('code, mode, warehouse_id, destination, container_no, bl_no, awb_no, seuil_kg, seuil_m3, arrivee_prevue, note_interne, photo, statut, created_at')
+    .select('code, mode, warehouse_id, destination, container_no, bl_no, awb_no, seuil_kg, seuil_m3, arrivee_prevue, note_interne, photo, statut, created_at, shipsgo_id, shipsgo_type, shipsgo_status, shipsgo_tracking_state, shipsgo_synced_at')
     .order('created_at', { ascending: false });
   if (error) { warn('chargement des expéditions', error); return []; }
   return (data as Row[]).map(toExpedition);
@@ -338,15 +340,16 @@ export async function affecterColis(code: string, expeditionCode: string): Promi
 }
 
 /** Étapes d'une expédition, de la plus ancienne à la plus récente. */
-export interface EtapeExpedition { id: string; type: EtapeType; au: string; visibleClient: boolean; noteInterne: string | null; par: string | null }
+export interface EtapeExpedition { id: string; type: EtapeType; au: string; visibleClient: boolean; noteInterne: string | null; par: string | null; source: 'equipe' | 'shipsgo' }
 export async function fetchEtapesExpedition(expeditionCode: string): Promise<EtapeExpedition[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from('expedition_etapes')
-    .select('id, type, au, visible_client, note_interne, par').eq('expedition_code', expeditionCode).order('au', { ascending: true });
+    .select('id, type, au, visible_client, note_interne, par, source').eq('expedition_code', expeditionCode).order('au', { ascending: true });
   if (error) { warn('chargement des étapes de l’expédition', error); return []; }
   return (data as Row[]).map((r) => ({
     id: String(r.id), type: r.type as EtapeType, au: String(r.au),
     visibleClient: Boolean(r.visible_client), noteInterne: str(r.note_interne), par: str(r.par),
+    source: r.source === 'shipsgo' ? 'shipsgo' : 'equipe',
   }));
 }
 
@@ -367,6 +370,34 @@ export async function addEtapeExpedition(expeditionCode: string, type: EtapeType
   });
   return { error: error ? humanize(error.message) : undefined };
 }
+
+export interface ShipsGoActionResult {
+  httpStatus?: number; error?: string; ok?: boolean; type?: 'ocean' | 'air'; id?: number;
+  reused?: boolean; eventsAdded?: number; status?: string | null;
+}
+
+async function shipsGoRequest(path: '/api/shipsgo-track' | '/api/shipsgo-sync', code: string): Promise<ShipsGoActionResult> {
+  if (!supabase) return { httpStatus: 503 };
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (error || !token) return { httpStatus: 401 };
+    const response = await fetch(path, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ code }),
+    });
+    const body = await response.json().catch(() => null) as ShipsGoActionResult | null;
+    return response.ok ? (body ?? {}) : { httpStatus: response.status, error: body?.error };
+  } catch {
+    return { httpStatus: 503 };
+  }
+}
+
+/** Création explicitement déclenchée par un membre de l'équipe, après confirmation UI. */
+export const creerSuiviShipsGo = (code: string) => shipsGoRequest('/api/shipsgo-track', code);
+/** Synchronisation d'un suivi déjà enregistré, sans création provider. */
+export const synchroniserShipsGo = (code: string) => shipsGoRequest('/api/shipsgo-sync', code);
 
 /* ---------- Côté client (voyageur) ---------- */
 
@@ -591,6 +622,10 @@ function toExpedition(r: Row): Expedition {
   return {
     code: String(r.code), mode: r.mode as FretMode, warehouseId: str(r.warehouse_id), destination: String(r.destination ?? 'Dakar'),
     containerNo: str(r.container_no), blNo: str(r.bl_no), awbNo: str(r.awb_no),
+    shipsgoId: num(r.shipsgo_id), shipsgoType: r.shipsgo_type === 'ocean' || r.shipsgo_type === 'air' ? r.shipsgo_type : null,
+    shipsgoStatus: str(r.shipsgo_status),
+    shipsgoTrackingState: r.shipsgo_tracking_state === 'creating' || r.shipsgo_tracking_state === 'active' || r.shipsgo_tracking_state === 'error' ? r.shipsgo_tracking_state : 'inactive',
+    shipsgoSyncedAt: str(r.shipsgo_synced_at),
     seuilKg: num(r.seuil_kg), seuilM3: num(r.seuil_m3), arriveePrevue: str(r.arrivee_prevue), noteInterne: str(r.note_interne), photo: str(r.photo), statut: r.statut as ExpeditionStatut, createdAt: String(r.created_at),
   };
 }
