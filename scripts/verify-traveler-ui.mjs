@@ -5,6 +5,7 @@ const files = {
   home: await readFile(new URL('../src/pages/Home.tsx', import.meta.url), 'utf8'),
   search: await readFile(new URL('../src/pages/Search.tsx', import.meta.url), 'utf8'),
   fiche: await readFile(new URL('../src/pages/Fiche.tsx', import.meta.url), 'utf8'),
+  suivi: await readFile(new URL('../src/pages/Suivi.tsx', import.meta.url), 'utf8'),
   shopping: await readFile(new URL('../src/pages/Shopping.tsx', import.meta.url), 'utf8'),
   styles: await readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
   app: await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
@@ -28,6 +29,7 @@ const checks = [
   ['contact accessible depuis les résultats', () => files.search.includes('className="rcard-contact"') && files.search.includes('/contact')],
   ['actions principales visibles avant les avis sur une fiche', () => files.fiche.includes('className="stack" style={{ order: 2 }}') && files.fiche.includes('title={tr("Avis des voyageurs")}') && files.styles.includes('.fiche-side { display: contents;')],
   ['progression des achats visible dans une liste', () => files.shopping.includes('className="shopping-progress"') && files.shopping.includes('aria-label={tr("Progression des achats")}') && files.styles.includes('.shopping-progress')],
+  ['partage du suivi public accessible', () => files.suivi.includes('className="tracking-share card') && files.suivi.includes('navigator.share') && files.suivi.includes('Copier le lien')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];
