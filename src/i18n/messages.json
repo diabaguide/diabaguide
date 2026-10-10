@@ -4251,5 +4251,20 @@
   "Expédier cette liste": {"en": "Ship this list", "zh": "运送此清单", "ar": "شحن هذه القائمة"},
   "Liste d’achats liée": {"en": "Linked shopping list", "zh": "已关联采购清单", "ar": "قائمة المشتريات المرتبطة"},
   "Ajoutez au moins un produit avant de préparer l’envoi.": {"en": "Add at least one product before preparing the shipment.", "zh": "准备发货前，请至少添加一种商品。", "ar": "أضيفوا منتجًا واحدًا على الأقل قبل تجهيز الشحنة."},
-  "Attendez le chargement de la liste d’achats.": {"en": "Wait for the shopping list to finish loading.", "zh": "请等待采购清单加载完成。", "ar": "انتظروا حتى يكتمل تحميل قائمة المشتريات."}
+  "Attendez le chargement de la liste d’achats.": {"en": "Wait for the shopping list to finish loading.", "zh": "请等待采购清单加载完成。", "ar": "انتظروا حتى يكتمل تحميل قائمة المشتريات."},
+  "Importer des lots en cours": {"en": "Import active shipments", "zh": "导入进行中的货运批次", "ar": "استيراد الشحنات الجارية"},
+  "Chargez un fichier CSV, TSV ou collez son contenu. Les codes déjà présents seront ignorés sans modifier les lots existants.": {"en": "Upload a CSV or TSV file, or paste its contents. Existing shipment codes will be skipped without changing existing lots.", "zh": "上传 CSV 或 TSV 文件，或粘贴其内容。已存在的货运批次代码将被跳过，不会修改现有批次。", "ar": "ارفعوا ملف CSV أو TSV أو الصقوا محتواه. سيتم تخطي رموز الشحنات الموجودة دون تعديلها."},
+  "Télécharger le modèle CSV": {"en": "Download CSV template", "zh": "下载 CSV 模板", "ar": "تنزيل قالب CSV"},
+  "Fichier CSV ou TSV": {"en": "CSV or TSV file", "zh": "CSV 或 TSV 文件", "ar": "ملف CSV أو TSV"},
+  "Contenu à importer": {"en": "Content to import", "zh": "待导入内容", "ar": "المحتوى المراد استيراده"},
+  "Erreurs à corriger": {"en": "Errors to fix", "zh": "需要修正的错误", "ar": "أخطاء يجب تصحيحها"},
+  "Ligne": {"en": "Line", "zh": "行", "ar": "السطر"},
+  "autre(s) erreur(s)": {"en": "more error(s)", "zh": "个其他错误", "ar": "أخطاء أخرى"},
+  "expédition(s) prête(s) à importer": {"en": "shipment(s) ready to import", "zh": "个货运批次可导入", "ar": "شحنة جاهزة للاستيراد"},
+  "autre(s) expédition(s)": {"en": "more shipment(s)", "zh": "个其他货运批次", "ar": "شحنات أخرى"},
+  "Importer les expéditions": {"en": "Import shipments", "zh": "导入货运批次", "ar": "استيراد الشحنات"},
+  "Import…": {"en": "Importing…", "zh": "正在导入…", "ar": "جارٍ الاستيراد…"},
+  "Corrigez le fichier avant de lancer l’import.": {"en": "Fix the file before starting the import.", "zh": "请先修正文件中的错误再开始导入。", "ar": "صححوا الملف قبل بدء الاستيراد."},
+  "Un import est limité à 200 expéditions.": {"en": "Each import is limited to 200 shipments.", "zh": "每次导入最多 200 个货运批次。", "ar": "يقتصر كل استيراد على 200 شحنة."},
+  "Le fichier dépasse la limite de 2 Mo.": {"en": "The file exceeds the 2 MB limit.", "zh": "文件超过 2 MB 限制。", "ar": "يتجاوز الملف حد 2 ميغابايت."}
 }
