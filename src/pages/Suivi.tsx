@@ -90,6 +90,10 @@ export function SuiviPublic() {
             placeholder="Ex. EXP-2026-AB12"
             req
           />
+          <div className="tracking-code-help small muted">
+            <div>{tr("Le code figure sur l’étiquette du lot et dans le message de l’équipe Diaba.")}</div>
+            <div>{tr("Le code a la forme DIA-2026-0001.")}</div>
+          </div>
           <Button type="submit" disabled={loading || !code.trim()}>
             {loading ? tr('Recherche…') : tr('Rechercher')}
           </Button>
