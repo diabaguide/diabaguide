@@ -219,6 +219,11 @@ details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 
 .list-clean li { display: flex; gap: 10px; align-items: flex-start; }
 .listrow { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 8px 16px; color: var(--ink); text-decoration: none; }
 .listrow + .listrow { border-top: 1px solid var(--line); }
+.shopping-progress { display: grid; gap: 7px; padding: 2px 2px 4px; }
+.shopping-progress-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 13px; }
+.shopping-progress-head strong { color: var(--ink); font-size: 14px; }
+.shopping-progress-track { height: 8px; overflow: hidden; border-radius: 999px; background: var(--info-bg); }
+.shopping-progress-track span { display: block; height: 100%; min-width: 0; border-radius: inherit; background: var(--primary); transition: width 180ms ease; }
 
 /* Espace équipe (ordinateur) */
 .admin { display: flex; min-height: 100vh; background: var(--bg); }

@@ -2902,6 +2902,7 @@
 "Ce compte n'a pas d'adresse e-mail : aucun lien ne peut vous être envoyé. Écrivez à l'équipe Diaba Guide depuis le numéro utilisé pour vous inscrire, et elle vous redonnera l'accès.": {"en": "This account has no email address: no link can be sent to you. Write to the Diaba Guide team from the number you used to sign up and they will restore your access.", "zh": "该账户没有电子邮箱：无法向您发送链接。请用注册时使用的号码联系 Diaba Guide 团队，他们会为您恢复访问权限。", "ar": "لا يحتوي هذا الحساب على بريد إلكتروني: لا يمكن إرسال أي رابط إليكم. راسلوا فريق Diaba Guide من الرقم الذي سجّلتم به وسيعيدون لكم الوصول."},
 "Ma liste d'achats": {"en": "My shopping list", "zh": "我的采购清单", "ar": "قائمة مشترياتي"},
 "Produits à acheter, à partager ou à imprimer": {"en": "Items to buy, share or print", "zh": "需要购买、分享或打印的商品", "ar": "منتجات للشراء أو المشاركة أو الطباعة"},
+"Progression des achats": {"en": "Shopping progress", "zh": "采购进度", "ar": "تقدم المشتريات"},
 "Prendre une photo": {"en": "Take a photo", "zh": "拍摄照片", "ar": "التقاط صورة"},
 "Choisir dans la galerie": {"en": "Choose from gallery", "zh": "从相册选择", "ar": "اختيار من المعرض"},
 "Facultatif. Des photos du lieu aident l'équipe à vérifier l'adresse.": {"en": "Optional. Photos of the place help the team verify the address.", "zh": "可选。现场照片有助于团队核实地址。", "ar": "اختياري. صور المكان تساعد الفريق على التحقق من العنوان."},
