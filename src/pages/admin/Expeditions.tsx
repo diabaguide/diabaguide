@@ -7,9 +7,11 @@ import { photoUrl, removePhoto, uploadPhoto } from '../../lib/photos';
 import { Button, Field, Icon, Select, TextArea, useWide } from '../../ui';
 import { AdminCard, AdminSheet } from './mobile';
 import { SortTh, compare, useSort } from './tableSort';
+import { EXPEDITION_IMPORT_HEADERS, parseExpeditionImport } from '../../lib/expeditionImport';
+import type { ExpeditionImportRow } from '../../lib/expeditionImport';
 import {
   fetchExpeditions, fetchExpeditionTotaux, fetchExpeditionArticleCounts, fetchColis, fetchWarehouses,
-  createExpedition, updateExpedition, updateExpeditionPhoto, deleteExpedition, createExpeditionArticle, updateExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapesExpeditions, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
+  createExpedition, importExpeditions, updateExpedition, updateExpeditionPhoto, deleteExpedition, createExpeditionArticle, updateExpeditionArticle, deleteExpeditionArticle, fetchExpeditionArticles, createColis, affecterColis, addEtapesExpeditions, addEtapeExpedition, fetchEtapesExpedition, creerVoyageurFret,
   suggestExpeditionCode, suggestColisCode,
   fetchFactures, emettreFacture, marquerFacturePayee, rechercherClients,
   MODE_LABEL, MODE_UNITE, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, ETAPE_LABEL, FACTURE_STATUT_LABEL, caracLabel,
@@ -31,6 +33,7 @@ const useBase = () => (useLocation().pathname.startsWith('/fret') ? '/fret' : '/
 const toNum = (s: string): number | null => { const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? null : n; };
 const dateLocale = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const estEnRetard = (e: Expedition) => Boolean(e.arriveePrevue && e.arriveePrevue < dateLocale(new Date()) && !['livree', 'cloturee', 'annulee'].includes(e.statut));
+const IMPORT_TEMPLATE = `${EXPEDITION_IMPORT_HEADERS.join(';')}\nLOT-2026-001;maritime_groupage;en_transit;Dakar;2026-12-15;MSCU1234567;BL-001;`;
 
 /* ============================================================
    Liste des expéditions : uniquement la liste. Un clic ouvre l'expédition
@@ -54,6 +57,11 @@ export function ExpeditionsList() {
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [bulkEtape, setBulkEtape] = useState<EtapeType | ''>('');
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importBusy, setImportBusy] = useState(false);
+  const [importErr, setImportErr] = useState<string | null>(null);
+  const importPreview = parseExpeditionImport(importText);
 
   const reload = useCallback(async () => {
     const [e, t, a, w] = await Promise.all([fetchExpeditions(), fetchExpeditionTotaux(), fetchExpeditionArticleCounts(), fetchWarehouses()]);
@@ -104,6 +112,38 @@ export function ExpeditionsList() {
     setOk(res.count === selectedCodes.length ? `${res.count} expédition(s) mise(s) à jour.` : `${res.count} expédition(s) mise(s) à jour ; les autres étaient déjà à cette étape ou plus avancées.`);
     await reload();
   };
+  const lireImport = async (ev: ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    setImportErr(null);
+    if (file.size > 2_000_000) {
+      setImportText('');
+      setImportErr('Le fichier dépasse la limite de 2 Mo.');
+      ev.target.value = '';
+      return;
+    }
+    setImportText(await file.text());
+  };
+  const telechargerModele = () => {
+    const url = URL.createObjectURL(new Blob([IMPORT_TEMPLATE], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url; link.download = 'modele-import-expeditions.csv'; link.click();
+    URL.revokeObjectURL(url);
+  };
+  const lancerImport = async () => {
+    setImportErr(null); setOk(null);
+    if (importPreview.errors.length > 0 || importPreview.rows.length === 0) {
+      setImportErr('Corrigez le fichier avant de lancer l’import.');
+      return;
+    }
+    setImportBusy(true);
+    const result = await importExpeditions(importPreview.rows);
+    setImportBusy(false);
+    if (result.error) { setImportErr(result.error); return; }
+    setOk(`${result.imported} expédition(s) importée(s) ; ${result.skipped} déjà existante(s) ignorée(s).`);
+    setImportText(''); setShowImport(false);
+    await reload();
+  };
 
   return (
     <>
@@ -112,6 +152,7 @@ export function ExpeditionsList() {
           <h1>{tr("Expéditions")}</h1>
           <div className="muted" style={{ marginTop: 4 }}>{tr("Ouvrez une expédition pour voir ses colis et suivre ses étapes.")}</div>
         </div>
+        <Button kind="s" full={false} icon="inbox" onClick={() => { setImportErr(null); setShowImport(true); }}>{tr("Importer des lots en cours")}</Button>
       </header>
 
       <div className="admin-body" style={{ gap: 18 }}>
@@ -202,6 +243,20 @@ export function ExpeditionsList() {
             </div>
             <Button type="submit" icon="ship" disabled={busy}>{tr(busy ? 'Création…' : 'Créer l’expédition')}</Button>
           </form>
+        </AdminSheet>
+      )}
+      {showImport && (
+        <AdminSheet title={tr("Importer des lots en cours")} onClose={() => setShowImport(false)}>
+          <div className="stack" style={{ gap: 12 }}>
+            <p className="small muted" style={{ margin: 0 }}>{tr("Chargez un fichier CSV, TSV ou collez son contenu. Les codes déjà présents seront ignorés sans modifier les lots existants.")}</p>
+            <Button kind="s" full={false} icon="download" onClick={telechargerModele}>{tr("Télécharger le modèle CSV")}</Button>
+            <div className="field"><label htmlFor="expedition-import-file">{tr("Fichier CSV ou TSV")}</label><input id="expedition-import-file" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" onChange={(ev) => void lireImport(ev)} /></div>
+            <TextArea id="expedition-import-text" label={tr("Contenu à importer")} value={importText} onChange={(value) => { setImportErr(null); setImportText(value); }} rows={8} placeholder={IMPORT_TEMPLATE} />
+            {importErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(importErr)}</span></div>}
+            {importText && importPreview.errors.length > 0 && <div role="alert" className="notice err stack" style={{ gap: 4 }}><strong>{tr("Erreurs à corriger")}</strong>{importPreview.errors.slice(0, 8).map((error, index) => <span className="small" key={`${error.line}-${index}`}>{tr("Ligne")} {error.line} : {tr(error.message)}</span>)}{importPreview.errors.length > 8 && <span className="small">+ {importPreview.errors.length - 8} {tr("autre(s) erreur(s)")}</span>}</div>}
+            {importPreview.errors.length === 0 && importPreview.rows.length > 0 && <div className="stack" style={{ gap: 8 }}><strong>{importPreview.rows.length} {tr("expédition(s) prête(s) à importer")}</strong><div className="table dense"><table><thead><tr><th>{tr("Code")}</th><th>{tr("Mode")}</th><th>{tr("Étape")}</th><th>{tr("Destination")}</th></tr></thead><tbody>{importPreview.rows.slice(0, 10).map((row) => <tr key={`${row.line}-${row.code}`}><td><strong>{row.code}</strong></td><td>{tr(MODE_LABEL[row.mode])}</td><td>{row.etape ? tr(ETAPE_LABEL[row.etape]) : '—'}</td><td>{row.destination}</td></tr>)}</tbody></table></div>{importPreview.rows.length > 10 && <span className="small muted">+ {importPreview.rows.length - 10} {tr("autre(s) expédition(s)")}</span>}</div>}
+            <Button icon="inbox" disabled={importBusy || importPreview.rows.length === 0 || importPreview.errors.length > 0} onClick={() => void lancerImport()}>{tr(importBusy ? 'Import…' : 'Importer les expéditions')}</Button>
+          </div>
         </AdminSheet>
       )}
     </>

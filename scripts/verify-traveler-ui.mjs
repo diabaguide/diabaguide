@@ -12,12 +12,14 @@ const files = {
   app: await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
   main: await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
   vite: await readFile(new URL('../vite.config.ts', import.meta.url), 'utf8'),
+  adminExpeditions: await readFile(new URL('../src/pages/admin/Expeditions.tsx', import.meta.url), 'utf8'),
+  importMigration: await readFile(new URL('../supabase/fret_import_expeditions.sql', import.meta.url), 'utf8').catch(() => ''),
 };
 
 const [catalog] = await Promise.all([
   readFile(new URL('../src/i18n/messages.json', import.meta.url), 'utf8').then(JSON.parse),
 ]);
-const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.', 'Progression des achats', 'Progression du lot', 'Suivre une expédition', 'Suivez votre lot', 'Entrez le code communiqué par Diaba pour consulter les dernières étapes visibles.', 'Code de l’expédition', 'Rechercher', 'Recherche…', 'Aucun lot public ne correspond à ce code. Vérifiez les caractères saisis.', 'Résumé', 'Étapes visibles', 'Dates clés', 'Aucune étape publique n’a encore été enregistrée.', 'Expédier cette liste', 'Liste d’achats liée', 'Ajoutez au moins un produit avant de préparer l’envoi.', 'Attendez le chargement de la liste d’achats.'];
+const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.', 'Progression des achats', 'Progression du lot', 'Suivre une expédition', 'Suivez votre lot', 'Entrez le code communiqué par Diaba pour consulter les dernières étapes visibles.', 'Code de l’expédition', 'Rechercher', 'Recherche…', 'Aucun lot public ne correspond à ce code. Vérifiez les caractères saisis.', 'Résumé', 'Étapes visibles', 'Dates clés', 'Aucune étape publique n’a encore été enregistrée.', 'Expédier cette liste', 'Liste d’achats liée', 'Ajoutez au moins un produit avant de préparer l’envoi.', 'Attendez le chargement de la liste d’achats.', 'Importer des lots en cours', 'Chargez un fichier CSV, TSV ou collez son contenu. Les codes déjà présents seront ignorés sans modifier les lots existants.', 'Télécharger le modèle CSV', 'Fichier CSV ou TSV', 'Contenu à importer', 'Erreurs à corriger', 'Ligne', 'autre(s) erreur(s)', 'expédition(s) prête(s) à importer', 'autre(s) expédition(s)', 'Importer les expéditions', 'Import…', 'Corrigez le fichier avant de lancer l’import.', 'Un import est limité à 200 expéditions.', 'Le fichier dépasse la limite de 2 Mo.'];
 const navBlock = files.ui.slice(files.ui.indexOf('const NAV:'), files.ui.indexOf('export function BottomNav'));
 
 const checks = [
@@ -50,6 +52,8 @@ const checks = [
   ['liste d’achats transférée vers l’annonce fret', () => files.shopping.includes('Expédier cette liste') && files.shopping.includes('/mes-envois?liste=') && files.fret.includes('useSearchParams') && files.fret.includes('fetchList') && files.fret.includes('shoppingListId')],
   ['annonce bloquée pendant le chargement de la liste', () => files.fret.includes('linkLoading') && files.fret.includes('setLinkedList(null)') && files.fret.includes('shoppingListId && !linkedList')],
   ['erreur de liaison isolée des erreurs d’annonce', () => files.fret.includes('linkErr') && files.fret.includes('setLinkErr(null)')],
+  ['import des expéditions en cours sécurisé et prévisualisé', () => files.adminExpeditions.includes('parseExpeditionImport') && files.adminExpeditions.includes('Importer des lots en cours') && files.adminExpeditions.includes('importExpeditions') && files.importMigration.includes('security definer') && files.importMigration.includes('is_fret()') && files.importMigration.includes("revoke all on function public.importer_expeditions(jsonb) from public")],
+  ['fichiers d’import surdimensionnés rejetés avant lecture', () => files.adminExpeditions.includes('file.size > 2_000_000') && files.adminExpeditions.indexOf('file.size > 2_000_000') < files.adminExpeditions.indexOf('file.text()')],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];
 

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { ExpeditionImportRow } from './expeditionImport';
 
 /**
  * Accès aux données du module Fret (expéditions, colis, suivi).
@@ -250,6 +251,15 @@ export async function createExpedition(e: {
     destination: e.destination?.trim() || 'Dakar', seuil_kg: e.seuilKg ?? null, seuil_m3: e.seuilM3 ?? null, arrivee_prevue: e.arriveePrevue || null,
   });
   return { error: error ? humanize(error.message) : undefined };
+}
+
+export async function importExpeditions(rows: ExpeditionImportRow[]): Promise<{ imported: number; skipped: number; error?: string }> {
+  if (!supabase) return { imported: 0, skipped: 0, error: 'Supabase non configuré.' };
+  const payload: Array<Omit<ExpeditionImportRow, 'line'>> = rows.map(({ line: _line, ...row }) => row);
+  const { data, error } = await supabase.rpc('importer_expeditions', { p_rows: payload });
+  if (error) return { imported: 0, skipped: 0, error: humanize(error.message) };
+  const result = Array.isArray(data) ? data[0] as { imported?: number; skipped?: number } | undefined : undefined;
+  return { imported: Number(result?.imported ?? 0), skipped: Number(result?.skipped ?? 0) };
 }
 
 export async function updateExpedition(e: {
