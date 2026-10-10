@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/verify-bundle.mjs",
+    "verify:bundle": "node scripts/verify-bundle.mjs",
     "verify:traveler-ui": "node scripts/verify-traveler-ui.mjs",
     "preview": "vite preview"
   },

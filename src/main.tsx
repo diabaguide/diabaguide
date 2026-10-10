@@ -12,6 +12,31 @@ import './sceau.css';
 
 import { registerSW } from 'virtual:pwa-register';
 
+// Une ancienne page peut encore référencer un chunk supprimé après une mise à
+// jour PWA. Vite émet cet événement avant l’échec : un unique rechargement
+// récupère le nouvel index et ses nouveaux noms de fichiers, sans boucle.
+const PRELOAD_RECOVERY_KEY = 'diabaPreloadRecoveryAt';
+window.addEventListener('vite:preloadError', (event) => {
+  let lastRecovery = Number(history.state?.[PRELOAD_RECOVERY_KEY] ?? 0);
+  try { lastRecovery = Math.max(lastRecovery, Number(sessionStorage.getItem(PRELOAD_RECOVERY_KEY) ?? 0)); } catch { /* stockage indisponible */ }
+  if (Date.now() - lastRecovery < 10_000) return;
+
+  const recoveryAt = Date.now();
+  let guardPersisted = false;
+  try {
+    history.replaceState({ ...(history.state ?? {}), [PRELOAD_RECOVERY_KEY]: recoveryAt }, '');
+    guardPersisted = true;
+  } catch { /* historique indisponible */ }
+  try {
+    sessionStorage.setItem(PRELOAD_RECOVERY_KEY, String(recoveryAt));
+    guardPersisted = true;
+  } catch { /* stockage indisponible */ }
+  if (!guardPersisted) return;
+
+  event.preventDefault();
+  location.reload();
+});
+
 const updateSW = registerSW({
   onNeedRefresh() {
     // Demander à l'utilisateur s'il veut recharger pour la nouvelle version

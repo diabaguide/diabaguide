@@ -23,6 +23,15 @@ export default defineConfig(({ mode }) => {
     build: {
       // Conserver la compatibilité mobile historique malgré la montée vers Vite 7.
       target: ['chrome87', 'edge88', 'firefox78', 'safari14'],
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            const moduleId = id.replace(/\\/g, '/');
+            if (moduleId.includes('/node_modules/@supabase/')) return 'vendor-supabase';
+            if (moduleId.includes('/node_modules/react') || moduleId.includes('/node_modules/scheduler/')) return 'vendor-react';
+          },
+        },
+      },
     },
     plugins: [
       react(),

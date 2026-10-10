@@ -4,16 +4,36 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useStore } from './store';
 import { homeFor, isFretRole, isTeamRole } from './lib/auth';
 import { lazy, Suspense } from 'react';
-import { Welcome, Signup, SignupDone, Login, Forgot, ResetPassword } from './pages/Access';
-import { Home, Locate } from './pages/Home';
-import { Search, Filters } from './pages/Search';
-import { Fiche, Driver, Card, Contact, Report } from './pages/Fiche';
-import { Favorites, Profile, Downloads, EditProfile } from './pages/Account';
-import { Wizard, Sent, Contributions, ContributionDetail } from './pages/Contribute';
-import { ShoppingLists, ShoppingListPage } from './pages/Shopping';
-import { ReviewsAdminPage } from './pages/Reviews';
-import { MesEnvois, FactureView } from './pages/Fret';
-import { SuiviPublic } from './pages/Suivi';
+
+const Welcome = lazy(() => import('./pages/Access').then(m => ({ default: m.Welcome })));
+const Signup = lazy(() => import('./pages/Access').then(m => ({ default: m.Signup })));
+const SignupDone = lazy(() => import('./pages/Access').then(m => ({ default: m.SignupDone })));
+const Login = lazy(() => import('./pages/Access').then(m => ({ default: m.Login })));
+const Forgot = lazy(() => import('./pages/Access').then(m => ({ default: m.Forgot })));
+const ResetPassword = lazy(() => import('./pages/Access').then(m => ({ default: m.ResetPassword })));
+const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
+const Locate = lazy(() => import('./pages/Home').then(m => ({ default: m.Locate })));
+const Search = lazy(() => import('./pages/Search').then(m => ({ default: m.Search })));
+const Filters = lazy(() => import('./pages/Search').then(m => ({ default: m.Filters })));
+const Fiche = lazy(() => import('./pages/Fiche').then(m => ({ default: m.Fiche })));
+const Driver = lazy(() => import('./pages/Fiche').then(m => ({ default: m.Driver })));
+const Card = lazy(() => import('./pages/Fiche').then(m => ({ default: m.Card })));
+const Contact = lazy(() => import('./pages/Fiche').then(m => ({ default: m.Contact })));
+const Report = lazy(() => import('./pages/Fiche').then(m => ({ default: m.Report })));
+const Favorites = lazy(() => import('./pages/Account').then(m => ({ default: m.Favorites })));
+const Profile = lazy(() => import('./pages/Account').then(m => ({ default: m.Profile })));
+const Downloads = lazy(() => import('./pages/Account').then(m => ({ default: m.Downloads })));
+const EditProfile = lazy(() => import('./pages/Account').then(m => ({ default: m.EditProfile })));
+const Wizard = lazy(() => import('./pages/Contribute').then(m => ({ default: m.Wizard })));
+const Sent = lazy(() => import('./pages/Contribute').then(m => ({ default: m.Sent })));
+const Contributions = lazy(() => import('./pages/Contribute').then(m => ({ default: m.Contributions })));
+const ContributionDetail = lazy(() => import('./pages/Contribute').then(m => ({ default: m.ContributionDetail })));
+const ShoppingLists = lazy(() => import('./pages/Shopping').then(m => ({ default: m.ShoppingLists })));
+const ShoppingListPage = lazy(() => import('./pages/Shopping').then(m => ({ default: m.ShoppingListPage })));
+const ReviewsAdminPage = lazy(() => import('./pages/Reviews').then(m => ({ default: m.ReviewsAdminPage })));
+const MesEnvois = lazy(() => import('./pages/Fret').then(m => ({ default: m.MesEnvois })));
+const FactureView = lazy(() => import('./pages/Fret').then(m => ({ default: m.FactureView })));
+const SuiviPublic = lazy(() => import('./pages/Suivi').then(m => ({ default: m.SuiviPublic })));
 
 const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminDashboard })));
@@ -81,9 +101,14 @@ function GuestOnly() {
   return <Outlet />;
 }
 
+function AppLoading() {
+  const { tr } = useI18n();
+  return <div className="center-screen" style={{ minHeight: '60vh' }} role="status" aria-live="polite">{tr("Chargement…")}</div>;
+}
+
 export default function App() {
   return (
-    <Suspense fallback={<div className="center-screen" style={{ minHeight: '60vh' }} role="status">Chargement…</div>}>
+    <Suspense fallback={<AppLoading />}>
       <Routes>
         <Route element={<GuestOnly />}>
           <Route path="/" element={<Welcome />} />
