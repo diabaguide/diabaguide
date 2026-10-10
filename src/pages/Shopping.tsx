@@ -122,6 +122,8 @@ export function ShoppingListPage() {
 
   const already = (pid: string) => items.some((i) => i.providerId === pid && !i.done);
   const reste = items.filter((i) => !i.done).length;
+  const achetes = items.length - reste;
+  const progression = items.length === 0 ? 0 : Math.round((achetes / items.length) * 100);
 
   const add = async () => {
     if (!label.trim()) { setErr('Indiquez le produit à acheter.'); return; }
@@ -201,6 +203,10 @@ export function ShoppingListPage() {
             <button type="button" className="linklike" onClick={() => setEditTitle(!editTitle)}>
               <strong>{tr(editTitle ? 'Annuler' : 'Renommer')}</strong>
             </button>
+          </div>
+          <div className="shopping-progress" role="progressbar" aria-label={tr("Progression des achats")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progression}>
+            <div className="shopping-progress-head"><span>{tr("Progression des achats")}</span><strong>{progression}%</strong></div>
+            <div className="shopping-progress-track"><span style={{ width: `${progression}%` }} /></div>
           </div>
 
           {editTitle && (

@@ -5,6 +5,7 @@ const files = {
   home: await readFile(new URL('../src/pages/Home.tsx', import.meta.url), 'utf8'),
   search: await readFile(new URL('../src/pages/Search.tsx', import.meta.url), 'utf8'),
   fiche: await readFile(new URL('../src/pages/Fiche.tsx', import.meta.url), 'utf8'),
+  shopping: await readFile(new URL('../src/pages/Shopping.tsx', import.meta.url), 'utf8'),
   styles: await readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
   app: await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
 };
@@ -12,7 +13,7 @@ const files = {
 const [catalog] = await Promise.all([
   readFile(new URL('../src/i18n/messages.json', import.meta.url), 'utf8').then(JSON.parse),
 ]);
-const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.'];
+const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.', 'Progression des achats'];
 const navBlock = files.ui.slice(files.ui.indexOf('const NAV:'), files.ui.indexOf('export function BottomNav'));
 
 const checks = [
@@ -26,6 +27,7 @@ const checks = [
   ['application des filtres accessible sur mobile', () => files.search.includes('className="filter-apply"') && files.styles.includes('.filter-apply { position: sticky;')],
   ['contact accessible depuis les résultats', () => files.search.includes('className="rcard-contact"') && files.search.includes('/contact')],
   ['actions principales visibles avant les avis sur une fiche', () => files.fiche.includes('className="stack" style={{ order: 2 }}') && files.fiche.includes('title={tr("Avis des voyageurs")}') && files.styles.includes('.fiche-side { display: contents;')],
+  ['progression des achats visible dans une liste', () => files.shopping.includes('className="shopping-progress"') && files.shopping.includes('aria-label={tr("Progression des achats")}') && files.styles.includes('.shopping-progress')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];
