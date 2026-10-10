@@ -35,6 +35,11 @@ const checks = [
     const seal = mobile.match(/\.sceau\s+\.hero\s*>\s*\.seal-lg\s*\{([^}]*)\}/)?.[1] ?? '';
     return /position:\s*relative/.test(seal) && /inset:\s*auto/.test(seal) && /align-self:\s*flex-end/.test(seal);
   }],
+  ['cachet du hero replacé hors du texte descriptif sur desktop', () => {
+    const desktop = files.seal.match(/@media\s*\(min-width:\s*601px\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+    const seal = desktop.match(/\.sceau\s+\.hero\s*>\s*\.seal-lg\s*\{([^}]*)\}/)?.[1] ?? '';
+    return /position:\s*relative/.test(seal) && /inset:\s*auto/.test(seal) && /align-self:\s*flex-end/.test(seal);
+  }],
   ['recherche persistante sur mobile', () => files.styles.includes('.search-head { position: sticky;')],
   ['application des filtres accessible sur mobile', () => files.search.includes('className="filter-apply"') && files.styles.includes('.filter-apply { position: sticky;')],
   ['libellé ville unique dans les filtres mobiles', () => files.search.includes('wide && <h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>')],
