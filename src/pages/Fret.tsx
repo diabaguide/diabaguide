@@ -71,12 +71,12 @@ export function MesEnvois() {
   return (
     <Screen>
       <TopBar title={tr("Mes envois")} />
-      <div className="main" style={{ gap: 16 }}>
+      <div className="main mes-envois-main" style={{ gap: 16 }}>
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
         {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
 
         {/* ---- Devis rapide ---- */}
-        <section className="card stack" style={{ gap: 12 }}>
+        <section className="card stack freight-section freight-estimate" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Estimer le prix")}</h2>
           <p className="small muted" style={{ margin: 0 }}>{tr("Une estimation indicative. Le prix définitif est confirmé par Diaba après pesée et mesure.")}</p>
           <form onSubmit={calcDevis} className="stack" style={{ gap: 10 }} noValidate>
@@ -98,7 +98,7 @@ export function MesEnvois() {
         </section>
 
         {/* ---- Annoncer un colis ---- */}
-        <section className="card stack" style={{ gap: 12 }}>
+        <section className="card stack freight-section freight-announce" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Annoncer un colis")}</h2>
           <p className="small muted" style={{ margin: 0 }}>{tr("Prévenez Diaba d’un colis en route vers l’entrepôt en Chine. Vous pourrez ensuite suivre son avancement ici.")}</p>
           <form onSubmit={annoncer} className="stack" style={{ gap: 10 }} noValidate>
@@ -130,14 +130,14 @@ export function MesEnvois() {
         </section>
 
         {lots.length > 0 && (
-          <section className="card stack" style={{ gap: 12 }}>
+          <section className="card stack freight-section freight-tracking" style={{ gap: 12 }}>
             <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Suivi de lot")}</h2>
             {lots.map((code) => <LotTrackingCard key={code} code={code} />)}
           </section>
         )}
 
         {/* ---- Mes colis ---- */}
-        <section className="card stack" style={{ gap: 12 }}>
+        <section className="card stack freight-section freight-packages" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr(`Mes colis (${colis.length})`)}</h2>
           {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
             : colis.length === 0 ? <p className="muted">{tr("Aucun colis pour l’instant. Annoncez votre premier colis ci-dessus.")}</p>
