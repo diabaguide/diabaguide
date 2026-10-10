@@ -176,6 +176,7 @@ function LotTrackingCard({ code }: { code: string }) {
   const derniereEtape = suivi.etapes[suivi.etapes.length - 1];
   const indexEtape = derniereEtape ? ETAPES_SUIVI.indexOf(derniereEtape.type as typeof ETAPES_SUIVI[number]) : -1;
   const progression = indexEtape < 0 ? 0 : Math.round(((indexEtape + 1) / ETAPES_SUIVI.length) * 100);
+  const prochaineEtapeType = ETAPES_SUIVI[indexEtape + 1];
 
   return (
     <div className="card stack" style={{ padding: 12, gap: 8 }}>
@@ -194,6 +195,11 @@ function LotTrackingCard({ code }: { code: string }) {
         <div className="lot-progress-head"><span>{tr("Progression du lot")}</span><strong>{progression}%</strong></div>
         <div className="lot-progress-track"><span style={{ width: `${progression}%` }} /></div>
       </div>
+      {prochaineEtapeType && (
+        <div className="lot-next-step notice info">
+          <strong>{tr("Prochaine étape")} :</strong> {tr(ETAPE_LABEL[prochaineEtapeType])}
+        </div>
+      )}
       <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
         <Button kind="s" icon="route" full={false} to={`/suivi/${encodeURIComponent(code)}`}>{tr("Suivre ce lot")}</Button>
         <Button kind="g" icon="chat" full={false} href={whatsappUrl}>{tr("WhatsApp")}</Button>
