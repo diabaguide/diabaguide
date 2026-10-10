@@ -38,6 +38,7 @@ const checks = [
   ['suivi détaillé des colis accessible', () => files.fret.includes('aria-expanded={open}') && files.fret.includes('aria-controls={detailId}') && files.fret.includes('id={detailId}')],
   ['suivi public multilingue', () => files.suivi.includes('title={tr("Suivre une expédition")}') && files.suivi.includes('{tr("Suivez votre lot")}') && files.suivi.includes('label={tr("Code de l’expédition")}')],
   ['aide de saisie du code de suivi', () => files.suivi.includes('tracking-code-help') && files.suivi.includes('Le code figure sur l’étiquette du lot') && files.suivi.includes('Le code a la forme DIA-2026-0001.')],
+  ['dates des étapes protégées du décalage horaire', () => files.fret.includes('formatEtapeDate') && !files.fret.includes('new Date(derniereEtape.au).toLocaleDateString') && !files.fret.includes('new Date(e.au).toLocaleDateString')],
   ['accès public au suivi depuis Mes envois', () => files.fret.includes('freight-public-tracking') && files.fret.includes('to="/suivi"') && files.fret.includes('Suivre un envoi')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
