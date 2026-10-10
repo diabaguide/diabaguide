@@ -231,6 +231,11 @@ details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 
 .mes-envois-main .freight-packages { order: 2; }
 .mes-envois-main .freight-estimate { order: 3; }
 .mes-envois-main .freight-announce { order: 4; }
+.lot-progress { display: grid; gap: 7px; margin-top: 2px; }
+.lot-progress-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 13px; }
+.lot-progress-head strong { color: var(--ink); font-size: 14px; }
+.lot-progress-track { height: 7px; overflow: hidden; border-radius: 999px; background: var(--info-bg); }
+.lot-progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width 180ms ease; }
 
 /* Espace équipe (ordinateur) */
 .admin { display: flex; min-height: 100vh; background: var(--bg); }
