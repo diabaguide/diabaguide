@@ -23,6 +23,7 @@ const checks = [
   ['mise en page des petits écrans', () => files.styles.includes('@media (max-width: 390px)')],
   ['recherche persistante sur mobile', () => files.styles.includes('.search-head { position: sticky;')],
   ['application des filtres accessible sur mobile', () => files.search.includes('className="filter-apply"') && files.styles.includes('.filter-apply { position: sticky;')],
+  ['contact accessible depuis les résultats', () => files.search.includes('className="rcard-contact"') && files.search.includes('/contact')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];
