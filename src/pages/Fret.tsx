@@ -212,6 +212,7 @@ function ColisCard({ c, facture }: { c: Colis; facture?: Facture }) {
   const { tr } = useI18n();
   const [open, setOpen] = useState(false);
   const [etapes, setEtapes] = useState<EtapeVue[] | null>(null);
+  const detailId = `suivi-colis-${c.code.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   const voir = async () => {
     setOpen((v) => !v);
     if (etapes === null) setEtapes(await fetchEtapesColis(c.code));
@@ -251,18 +252,20 @@ function ColisCard({ c, facture }: { c: Colis; facture?: Facture }) {
         </div>
       )}
       {c.expeditionCode && <Button kind="s" icon="route" full={false} to={`/suivi/${encodeURIComponent(c.expeditionCode)}`}>{tr("Suivre ce lot")}</Button>}
-      <Button kind="s" icon="route" full={false} onClick={voir}>{tr(open ? 'Masquer le suivi' : 'Voir le suivi')}</Button>
+      <Button kind="s" icon="route" full={false} onClick={voir} aria-expanded={open} aria-controls={detailId}>{tr(open ? 'Masquer le suivi' : 'Voir le suivi')}</Button>
       {open && (
-        etapes === null ? <p className="small muted" role="status">{tr("Chargement…")}</p>
-          : etapes.length === 0 ? <p className="small muted">{tr("Pas encore d’étape visible. Vous serez informé dès que le colis avance.")}</p>
-          : <ol className="stack" style={{ gap: 6, margin: 0, paddingLeft: 18 }}>
-              {etapes.map((e, i) => (
-                <li key={i}>
-                  <span style={{ fontWeight: 600 }}>{tr(ETAPE_LABEL[e.type])}</span>
-                  <span className="small muted"> · {new Date(e.au).toLocaleDateString('fr-FR')}</span>
-                </li>
-              ))}
-            </ol>
+        <div id={detailId}>
+          {etapes === null ? <p className="small muted" role="status">{tr("Chargement…")}</p>
+            : etapes.length === 0 ? <p className="small muted">{tr("Pas encore d’étape visible. Vous serez informé dès que le colis avance.")}</p>
+            : <ol className="stack" style={{ gap: 6, margin: 0, paddingLeft: 18 }}>
+                {etapes.map((e, i) => (
+                  <li key={i}>
+                    <span style={{ fontWeight: 600 }}>{tr(ETAPE_LABEL[e.type])}</span>
+                    <span className="small muted"> · {new Date(e.au).toLocaleDateString('fr-FR')}</span>
+                  </li>
+                ))}
+              </ol>}
+        </div>
       )}
     </div>
   );

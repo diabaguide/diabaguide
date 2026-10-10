@@ -165,13 +165,14 @@ type Kind = 'p' | 's' | 'g' | 't' | 'd';
 interface BtnProps {
   kind?: Kind; icon?: IconName; to?: string; href?: string; full?: boolean; children: ReactNode;
   onClick?: () => void; type?: ButtonHTMLAttributes<HTMLButtonElement>['type']; disabled?: boolean; className?: string;
+  'aria-expanded'?: boolean; 'aria-controls'?: string;
 }
-export function Button({ kind = 'p', icon, to, href, full = true, children, onClick, type = 'button', disabled, className = '' }: BtnProps) {
+export function Button({ kind = 'p', icon, to, href, full = true, children, onClick, type = 'button', disabled, className = '', 'aria-expanded': ariaExpanded, 'aria-controls': ariaControls }: BtnProps) {
   const cls = `btn btn-${kind} ${full ? 'btn-full' : ''} ${className}`;
   const inner = <>{icon && <Icon name={icon} size={20} />}<span>{children}</span></>;
   if (to) return <Link to={to} className={cls} onClick={onClick}>{inner}</Link>;
   if (href) return <a href={href} className={cls} target={href.startsWith('http') ? '_blank' : undefined} rel="noreferrer">{inner}</a>;
-  return <button type={type} className={cls} onClick={onClick} disabled={disabled}>{inner}</button>;
+  return <button type={type} className={cls} onClick={onClick} disabled={disabled} aria-expanded={ariaExpanded} aria-controls={ariaControls}>{inner}</button>;
 }
 
 export function Field(p: {
