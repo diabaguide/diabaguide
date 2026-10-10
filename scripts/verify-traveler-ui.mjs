@@ -35,6 +35,7 @@ const checks = [
   ['progression visible sur les lots suivis', () => files.fret.includes('className="lot-progress') && files.fret.includes('aria-valuenow={progression}') && files.styles.includes('.lot-progress')],
   ['prochaine étape visible sur les lots suivis', () => files.fret.includes('lot-next-step') && files.fret.includes('prochaineEtapeType') && files.fret.includes('Prochaine étape')],
   ['accès public direct depuis un colis', () => files.fret.includes('c.expeditionCode') && files.fret.includes('`/suivi/${encodeURIComponent(c.expeditionCode)}`')],
+  ['suivi détaillé des colis accessible', () => files.fret.includes('aria-expanded={open}') && files.fret.includes('aria-controls={detailId}') && files.fret.includes('id={detailId}')],
   ['accès public au suivi depuis Mes envois', () => files.fret.includes('freight-public-tracking') && files.fret.includes('to="/suivi"') && files.fret.includes('Suivre un envoi')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
