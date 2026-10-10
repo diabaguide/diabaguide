@@ -32,6 +32,7 @@ export function SuiviPublic() {
   const [loading, setLoading] = useState(Boolean(routeCode));
   const [searched, setSearched] = useState(Boolean(routeCode));
   const [message, setMessage] = useState('');
+  const publicUrl = suivi ? `${window.location.origin}/suivi/${encodeURIComponent(suivi.code)}` : '';
 
   const rechercher = async (value: string) => {
     const normalized = value.trim();
@@ -53,7 +54,7 @@ export function SuiviPublic() {
 
   const partager = async () => {
     if (!suivi) return;
-    const url = `${window.location.origin}/suivi/${encodeURIComponent(suivi.code)}`;
+    const url = publicUrl;
     const text = `Suivi du lot ${suivi.code} : ${url}`;
     if (navigator.share) {
       try { await navigator.share({ title: tr("Suivi de lot"), text, url }); return; } catch { /* annulation neutre */ }
@@ -73,8 +74,9 @@ export function SuiviPublic() {
 
   return (
     <Screen nav={false}>
-      <TopBar title={tr("Suivre une expédition")} back={-1} />
-      <main className="page stack">
+      <div className="no-print">
+        <TopBar title={tr("Suivre une expédition")} back={-1} />
+        <main className="page stack">
         <section className="hero compact">
           <span className="eyebrow">Diaba Guide · Fret</span>
           <h2>{tr("Suivez votre lot")}</h2>
@@ -106,7 +108,10 @@ export function SuiviPublic() {
                 <strong>{tr("Partager le suivi")}</strong>
                 <span className="small muted">{tr("Toute personne qui a ce lien voit l’avancement du lot, sans compte.")}</span>
               </div>
-              <Button kind="s" icon="share" full={false} onClick={partager}>{tr("Copier le lien")}</Button>
+              <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                <Button kind="s" icon="share" full={false} onClick={partager}>{tr("Copier le lien")}</Button>
+                <Button kind="g" icon="download" full={false} onClick={() => window.print()}>{tr("Imprimer la carte")}</Button>
+              </div>
             </div>
             {message && <div className="notice ok" role="status"><span>{message}</span></div>}
           </section>
@@ -182,7 +187,26 @@ export function SuiviPublic() {
             )}
           </div>
         )}
-      </main>
+        </main>
+      </div>
+      {suivi && !loading && (
+        <article className="print-only tracking-print-card">
+          <div className="tracking-print-brand">DIABA GUIDE · FRET</div>
+          <h1>{tr("Carte de suivi du lot")}</h1>
+          <div dir="ltr" className="tracking-print-code">{suivi.code}</div>
+          <dl>
+            <div><dt>{tr("Code du lot")}</dt><dd>{suivi.code}</dd></div>
+            <div><dt>{tr("Mode")}</dt><dd>{tr(MODE_LABEL[suivi.mode] ?? suivi.mode)}</dd></div>
+            <div><dt>{tr("Destination")}</dt><dd>{suivi.destination}</dd></div>
+            <div><dt>{tr("Statut")}</dt><dd>{tr(EXPEDITION_STATUT_LABEL[suivi.statut] ?? suivi.statut)}</dd></div>
+            {suivi.arriveePrevue && <div><dt>{tr("Arrivée prévue")}</dt><dd>{formatDate(suivi.arriveePrevue)}</dd></div>}
+          </dl>
+          <div className="tracking-print-link">
+            <strong>{tr("Suivre le lot en ligne")}</strong>
+            <span dir="ltr">{publicUrl}</span>
+          </div>
+        </article>
+      )}
     </Screen>
   );
 }
