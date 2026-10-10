@@ -334,7 +334,7 @@ export function Filters() {
             {tr(radios('fret', f.fret, [{ v: 'air', l: 'Aérien' }, { v: 'sea', l: 'Maritime' }, { v: 'both', l: 'Les deux' }], (v) => setF({ ...f, fret: v as Freight | 'both' })))}
           </section>
         )}
-        <Button onClick={apply}>{tr("Afficher les résultats")}</Button>
+        <Button className="filter-apply" onClick={apply}>{tr("Afficher les résultats")}</Button>
       </div>
     </Screen>
   );
