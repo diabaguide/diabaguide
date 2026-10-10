@@ -250,6 +250,7 @@ function ColisCard({ c, facture }: { c: Colis; facture?: Facture }) {
           </div>
         </div>
       )}
+      {c.expeditionCode && <Button kind="s" icon="route" full={false} to={`/suivi/${encodeURIComponent(c.expeditionCode)}`}>{tr("Suivre ce lot")}</Button>}
       <Button kind="s" icon="route" full={false} onClick={voir}>{tr(open ? 'Masquer le suivi' : 'Voir le suivi')}</Button>
       {open && (
         etapes === null ? <p className="small muted" role="status">{tr("Chargement…")}</p>
