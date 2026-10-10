@@ -40,3 +40,6 @@ jobs:
 
       - name: Vérifier TypeScript et construire
         run: npm run build
+
+      - name: Lancer les tests et contrôles
+        run: npm run verify

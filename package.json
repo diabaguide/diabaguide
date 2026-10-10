@@ -12,6 +12,8 @@
     "verify:bundle": "node scripts/verify-bundle.mjs",
     "verify:traveler-ui": "node scripts/verify-traveler-ui.mjs",
     "verify:shipsgo": "node --test scripts/shipsgo-core.test.mjs scripts/shipsgo-api.test.mjs scripts/shipsgo-integrity.test.mjs scripts/verify-shipsgo-ui.mjs",
+    "verify:import": "node --test scripts/expedition-import.test.mjs",
+    "verify": "npm run verify:traveler-ui && npm run verify:shipsgo && npm run verify:import",
     "preview": "vite preview"
   },
   "dependencies": {
