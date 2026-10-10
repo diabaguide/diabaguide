@@ -15,7 +15,7 @@ const files = {
 const [catalog] = await Promise.all([
   readFile(new URL('../src/i18n/messages.json', import.meta.url), 'utf8').then(JSON.parse),
 ]);
-const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.', 'Progression des achats'];
+const translatedTravelerCopy = ['Mes achats', 'Actions rapides', 'Que voulez-vous faire ?', 'Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi', 'Votre guide du voyageur', 'Trouvez les bonnes adresses, simplement.', 'Progression des achats', 'Progression du lot'];
 const navBlock = files.ui.slice(files.ui.indexOf('const NAV:'), files.ui.indexOf('export function BottomNav'));
 
 const checks = [
@@ -32,6 +32,7 @@ const checks = [
   ['progression des achats visible dans une liste', () => files.shopping.includes('className="shopping-progress"') && files.shopping.includes('aria-label={tr("Progression des achats")}') && files.styles.includes('.shopping-progress')],
   ['partage du suivi public accessible', () => files.suivi.includes('className="tracking-share card') && files.suivi.includes('navigator.share') && files.suivi.includes('Copier le lien')],
   ['envois prioritaires avant les formulaires fret', () => files.fret.includes('mes-envois-main') && files.fret.includes('freight-tracking') && files.fret.includes('freight-estimate') && files.styles.includes('.mes-envois-main .freight-tracking { order: 1;')],
+  ['progression visible sur les lots suivis', () => files.fret.includes('className="lot-progress') && files.fret.includes('aria-valuenow={progression}') && files.styles.includes('.lot-progress')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];

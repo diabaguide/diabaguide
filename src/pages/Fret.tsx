@@ -17,6 +17,7 @@ const TYPES = [
   { v: 'cosmetique', l: 'Cosmétiques' }, { v: 'liquide', l: 'Liquides' }, { v: 'alimentaire', l: 'Produits alimentaires' },
 ];
 const isMaritime = (m: FretMode) => m.startsWith('maritime');
+const ETAPES_SUIVI = ['annonce', 'en_transit', 'arrive_dakar', 'dispo_retrait', 'en_livraison', 'remis'] as const;
 const toNum = (s: string): number | null => { const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? null : n; };
 const formatDateCourte = (value: string) => {
   const [year, month, day] = value.split('-').map(Number);
@@ -167,6 +168,8 @@ function LotTrackingCard({ code }: { code: string }) {
   const publicUrl = `${window.location.origin}/suivi/${encodeURIComponent(code)}`;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`Suivi du lot ${code} : ${publicUrl}`)}`;
   const derniereEtape = suivi.etapes[suivi.etapes.length - 1];
+  const indexEtape = derniereEtape ? ETAPES_SUIVI.indexOf(derniereEtape.type as typeof ETAPES_SUIVI[number]) : -1;
+  const progression = indexEtape < 0 ? 0 : Math.round(((indexEtape + 1) / ETAPES_SUIVI.length) * 100);
 
   return (
     <div className="card stack" style={{ padding: 12, gap: 8 }}>
@@ -181,6 +184,10 @@ function LotTrackingCard({ code }: { code: string }) {
       {derniereEtape ? (
         <div className="small muted"><strong>{tr("Étape franchie")} :</strong> {tr(ETAPE_LABEL[derniereEtape.type])} · {new Date(derniereEtape.au).toLocaleDateString('fr-FR')}</div>
       ) : <div className="small muted">{tr("Pas encore d’étape visible. Vous serez informé dès que le colis avance.")}</div>}
+      <div className="lot-progress" role="progressbar" aria-label={tr("Progression du lot")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progression}>
+        <div className="lot-progress-head"><span>{tr("Progression du lot")}</span><strong>{progression}%</strong></div>
+        <div className="lot-progress-track"><span style={{ width: `${progression}%` }} /></div>
+      </div>
       <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
         <Button kind="s" icon="route" full={false} to={`/suivi/${encodeURIComponent(code)}`}>{tr("Suivre ce lot")}</Button>
         <Button kind="g" icon="chat" full={false} href={whatsappUrl}>{tr("WhatsApp")}</Button>
