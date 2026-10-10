@@ -101,7 +101,7 @@ export function Fiche() {
           <DemoNote />
         </div>
         </div>
-        <div style={{ order: 2 }}>
+        <div style={{ order: 5 }}>
         <Section title={tr("Avis des voyageurs")} icon="star">
           <ReviewsSection providerId={p.id} />
         </Section>
@@ -141,7 +141,7 @@ export function Fiche() {
         </div>
         </div>
         {msg && <div style={{ order: 4 }}><div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(msg)}</span></div></div>}
-        <div style={{ order: 5 }}>
+        <div className="stack" style={{ order: 2 }}>
         <div className="stack">
           <Button to={`/adresses/${p.id}/contact`} icon={p.cat === 'hotel' || p.cat === 'resto' ? 'phone' : 'chat'}>{tr(ctaLabel(p))}</Button>
           {/* Coordonnées réelles, pas l'adresse (fictive en démonstration, donc non géolocalisable). */}
