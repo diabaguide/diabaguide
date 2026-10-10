@@ -56,6 +56,14 @@
 .seal-sm { width: 44px; height: 44px; font-size: 17px; border-radius: 4px; box-shadow: inset 0 0 0 2px var(--seal), inset 0 0 0 3.5px rgba(251,243,226,.85); }
 @keyframes stamp { 0% { opacity: 0; transform: rotate(-16deg) scale(2.1); } 60% { opacity: 1; transform: rotate(-6deg) scale(.93); } 100% { opacity: 1; transform: rotate(-8deg) scale(1); } }
 
+/* Sur petit écran, le cachet suit le texte au lieu de le recouvrir. */
+@media (max-width: 600px) {
+  .sceau .hero > .seal-lg {
+    position: relative; inset: auto; align-self: flex-end;
+    width: 58px; height: 58px; margin-block: -8px -20px; font-size: 24px;
+  }
+}
+
 /* Entrée orchestrée du bandeau (le cachet garde sa propre animation) */
 .sceau .hero > :not(.seal) { animation: rise .6s cubic-bezier(.2,.7,.2,1) both; }
 .sceau .hero > :nth-child(2) { animation-delay: .06s; } .sceau .hero > :nth-child(3) { animation-delay: .12s; }

@@ -11,6 +11,7 @@ const files = {
   styles: await readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
   app: await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
   main: await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
+  seal: await readFile(new URL('../src/sceau.css', import.meta.url), 'utf8'),
   vite: await readFile(new URL('../vite.config.ts', import.meta.url), 'utf8'),
   adminExpeditions: await readFile(new URL('../src/pages/admin/Expeditions.tsx', import.meta.url), 'utf8'),
   importMigration: await readFile(new URL('../supabase/fret_import_expeditions.sql', import.meta.url), 'utf8').catch(() => ''),
@@ -29,6 +30,11 @@ const checks = [
   ['accueil contient les actions prioritaires', () => ['Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi'].every((v) => files.home.includes(v))],
   ['navigation accessible au clavier', () => files.styles.includes('.bottomnav a:focus-visible')],
   ['mise en page des petits écrans', () => files.styles.includes('@media (max-width: 390px)')],
+  ['cachet du hero replacé hors du texte descriptif sur mobile', () => {
+    const mobile = files.seal.match(/@media\s*\(max-width:\s*600px\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+    const seal = mobile.match(/\.sceau\s+\.hero\s*>\s*\.seal-lg\s*\{([^}]*)\}/)?.[1] ?? '';
+    return /position:\s*relative/.test(seal) && /inset:\s*auto/.test(seal) && /align-self:\s*flex-end/.test(seal);
+  }],
   ['recherche persistante sur mobile', () => files.styles.includes('.search-head { position: sticky;')],
   ['application des filtres accessible sur mobile', () => files.search.includes('className="filter-apply"') && files.styles.includes('.filter-apply { position: sticky;')],
   ['libellé ville unique dans les filtres mobiles', () => files.search.includes('wide && <h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>')],
