@@ -31,6 +31,7 @@ export function SuiviPublic() {
   const [suivi, setSuivi] = useState<SuiviPublic | null>(null);
   const [loading, setLoading] = useState(Boolean(routeCode));
   const [searched, setSearched] = useState(Boolean(routeCode));
+  const [message, setMessage] = useState('');
 
   const rechercher = async (value: string) => {
     const normalized = value.trim();
@@ -48,6 +49,21 @@ export function SuiviPublic() {
   const submit = (event: FormEvent) => {
     event.preventDefault();
     void rechercher(code);
+  };
+
+  const partager = async () => {
+    if (!suivi) return;
+    const url = `${window.location.origin}/suivi/${encodeURIComponent(suivi.code)}`;
+    const text = `Suivi du lot ${suivi.code} : ${url}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: tr("Suivi de lot"), text, url }); return; } catch { /* annulation neutre */ }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setMessage(tr("Lien copié"));
+    } catch {
+      setMessage(tr("Copie impossible."));
+    }
   };
 
   const prochaineEtape = suivi
@@ -78,6 +94,19 @@ export function SuiviPublic() {
             {loading ? 'Recherche…' : 'Rechercher'}
           </Button>
         </form>
+
+        {suivi && (
+          <section className="tracking-share card stack">
+            <div className="row" style={{ justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+              <div className="stack" style={{ gap: 2 }}>
+                <strong>{tr("Partager le suivi")}</strong>
+                <span className="small muted">{tr("Toute personne qui a ce lien voit l’avancement du lot, sans compte.")}</span>
+              </div>
+              <Button kind="s" icon="share" full={false} onClick={partager}>{tr("Copier le lien")}</Button>
+            </div>
+            {message && <div className="notice ok" role="status"><span>{message}</span></div>}
+          </section>
+        )}
 
         {searched && !loading && !suivi && (
           <div className="notice warn" role="alert">
