@@ -28,10 +28,12 @@ npm run build                 # TypeScript, build Vite et limite de taille des c
 npm run verify:bundle         # vérifie que chaque chunk JS reste sous 500 KiB
 npm run verify:traveler-ui    # contrôles structurels de l’interface voyageur
 npm run verify:shipsgo        # tests Node.js du cœur, de l’API, de l’intégrité et de l’interface ShipsGo
+npm run verify:import         # tests Node.js de l’import d’expéditions (CSV)
+npm run verify                # lance les trois contrôles ci-dessus
 npm audit --audit-level=moderate
 ```
 
-`verify:traveler-ui` est un contrôle structurel, pas une recette navigateur. `verify:shipsgo` utilise les tests du dépôt ; ne créez pas de suivi réel et ne consommez pas de crédit pour valider le code. La CI GitHub exécute actuellement l’installation propre et `npm run build`.
+`verify:traveler-ui` est un contrôle structurel, pas une recette navigateur. `verify:shipsgo` utilise les tests du dépôt ; ne créez pas de suivi réel et ne consommez pas de crédit pour valider le code. La CI GitHub exécute l’installation propre, `npm run build` puis `npm run verify`. Les tests importent directement des fichiers `.ts` : ils demandent Node.js 22.18 ou plus récent (la CI utilise Node.js 24).
 
 ## Fonctionnalités principales
 

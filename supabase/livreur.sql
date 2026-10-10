@@ -12,7 +12,10 @@
 --   - modifier les tarifs ou les entrepôts.
 --
 -- Dépend de : admin_roles.sql (is_team, is_admin), fret_module.sql,
--- fret_tarifs.sql, fret_factures.sql, fret_clients.sql, fret_lot2b.sql.
+-- fret_tarifs.sql, fret_factures.sql, fret_clients.sql, et du bucket privé
+-- `fret-photos` avec ses politiques (section 7), déjà présents en production.
+-- Ne PAS rejouer fret_lot2b.sql pour les obtenir : ce script historique
+-- décrit un modèle fret incompatible avec l'actuel (voir README.md).
 -- Idempotent.
 -- ============================================================
 
