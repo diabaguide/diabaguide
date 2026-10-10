@@ -23,6 +23,11 @@ const formatDateCourte = (value: string) => {
   const [year, month, day] = value.split('-').map(Number);
   return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(year, month - 1, day));
 };
+const formatEtapeDate = (value: string) => {
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return formatDateCourte(value.slice(0, 10));
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(date);
+};
 const money = (n: number, d = 'XOF') => `${n.toLocaleString('fr-FR')} ${d === 'XOF' ? 'FCFA' : d}`;
 
 export function MesEnvois() {
@@ -189,7 +194,7 @@ function LotTrackingCard({ code }: { code: string }) {
       </div>
       {suivi.arriveePrevue && <div className="small muted"><strong>{tr("Arrivée prévue")} :</strong> {formatDateCourte(suivi.arriveePrevue)}</div>}
       {derniereEtape ? (
-        <div className="small muted"><strong>{tr("Étape franchie")} :</strong> {tr(ETAPE_LABEL[derniereEtape.type])} · {new Date(derniereEtape.au).toLocaleDateString('fr-FR')}</div>
+        <div className="small muted"><strong>{tr("Étape franchie")} :</strong> {tr(ETAPE_LABEL[derniereEtape.type])} · {formatEtapeDate(derniereEtape.au)}</div>
       ) : <div className="small muted">{tr("Pas encore d’étape visible. Vous serez informé dès que le colis avance.")}</div>}
       <div className="lot-progress" role="progressbar" aria-label={tr("Progression du lot")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progression}>
         <div className="lot-progress-head"><span>{tr("Progression du lot")}</span><strong>{progression}%</strong></div>
@@ -261,7 +266,7 @@ function ColisCard({ c, facture }: { c: Colis; facture?: Facture }) {
                 {etapes.map((e, i) => (
                   <li key={i}>
                     <span style={{ fontWeight: 600 }}>{tr(ETAPE_LABEL[e.type])}</span>
-                    <span className="small muted"> · {new Date(e.au).toLocaleDateString('fr-FR')}</span>
+                    <span className="small muted"> · {formatEtapeDate(e.au)}</span>
                   </li>
                 ))}
               </ol>}
