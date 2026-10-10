@@ -4266,5 +4266,9 @@
   "Import…": {"en": "Importing…", "zh": "正在导入…", "ar": "جارٍ الاستيراد…"},
   "Corrigez le fichier avant de lancer l’import.": {"en": "Fix the file before starting the import.", "zh": "请先修正文件中的错误再开始导入。", "ar": "صححوا الملف قبل بدء الاستيراد."},
   "Un import est limité à 200 expéditions.": {"en": "Each import is limited to 200 shipments.", "zh": "每次导入最多 200 个货运批次。", "ar": "يقتصر كل استيراد على 200 شحنة."},
-  "Le fichier dépasse la limite de 2 Mo.": {"en": "The file exceeds the 2 MB limit.", "zh": "文件超过 2 MB 限制。", "ar": "يتجاوز الملف حد 2 ميغابايت."}
+  "Le fichier dépasse la limite de 2 Mo.": {"en": "The file exceeds the 2 MB limit.", "zh": "文件超过 2 MB 限制。", "ar": "يتجاوز الملف حد 2 ميغابايت."},
+  "Carte de suivi du lot": {"en": "Shipment tracking card", "zh": "货运跟踪卡", "ar": "بطاقة تتبّع الشحنة"},
+  "Suivre le lot en ligne": {"en": "Track this shipment online", "zh": "在线追踪此货运批次", "ar": "تتبّع هذه الشحنة عبر الإنترنت"},
+  "Imprimer la carte": {"en": "Print the card", "zh": "打印卡片", "ar": "طباعة البطاقة"},
+  "Destination": {"en": "Destination", "zh": "目的地", "ar": "الوجهة"}
 }
