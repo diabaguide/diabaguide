@@ -453,6 +453,7 @@ body { -webkit-font-smoothing: antialiased; }
 .search-layout { display: contents; }
 .search-filters, .search-map { display: none; }
 .fiche-col { display: contents; }
+.fiche-side { display: contents; }
 @media (min-width: 1024px) {
   .m-only { display: none !important; }
   .phone.has-nav .screen.wide .main { padding-inline: 40px; }
@@ -478,7 +479,7 @@ body { -webkit-font-smoothing: antialiased; }
   .phone.has-nav .hero-photo .photo { height: 360px !important; border-radius: 20px !important; }
   .fiche-main { display: grid !important; grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr); gap: 32px !important; align-items: start; }
   .fiche-col { display: flex; flex-direction: column; gap: 18px; }
-  .fiche-side { position: sticky; top: 84px; }
+  .fiche-side { display: flex; flex-direction: column; gap: 18px; position: sticky; top: 84px; }
 }
 
 /* ===== Listes d'administration : cartes cliquables sur mobile, fiche plein écran ===== */

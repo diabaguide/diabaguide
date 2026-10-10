@@ -4,6 +4,7 @@ const files = {
   ui: await readFile(new URL('../src/ui.tsx', import.meta.url), 'utf8'),
   home: await readFile(new URL('../src/pages/Home.tsx', import.meta.url), 'utf8'),
   search: await readFile(new URL('../src/pages/Search.tsx', import.meta.url), 'utf8'),
+  fiche: await readFile(new URL('../src/pages/Fiche.tsx', import.meta.url), 'utf8'),
   styles: await readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
   app: await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
 };
@@ -24,6 +25,7 @@ const checks = [
   ['recherche persistante sur mobile', () => files.styles.includes('.search-head { position: sticky;')],
   ['application des filtres accessible sur mobile', () => files.search.includes('className="filter-apply"') && files.styles.includes('.filter-apply { position: sticky;')],
   ['contact accessible depuis les résultats', () => files.search.includes('className="rcard-contact"') && files.search.includes('/contact')],
+  ['actions principales visibles avant les avis sur une fiche', () => files.fiche.includes('className="stack" style={{ order: 2 }}') && files.fiche.includes('title={tr("Avis des voyageurs")}') && files.styles.includes('.fiche-side { display: contents;')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];
