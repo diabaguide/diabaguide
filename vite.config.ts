@@ -20,6 +20,10 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    build: {
+      // Conserver la compatibilité mobile historique malgré la montée vers Vite 7.
+      target: ['chrome87', 'edge88', 'firefox78', 'safari14'],
+    },
     plugins: [
       react(),
       VitePWA({
