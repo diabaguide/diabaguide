@@ -31,8 +31,9 @@ const checks = [
   ['actions principales visibles avant les avis sur une fiche', () => files.fiche.includes('className="stack" style={{ order: 2 }}') && files.fiche.includes('title={tr("Avis des voyageurs")}') && files.styles.includes('.fiche-side { display: contents;')],
   ['progression des achats visible dans une liste', () => files.shopping.includes('className="shopping-progress"') && files.shopping.includes('aria-label={tr("Progression des achats")}') && files.styles.includes('.shopping-progress')],
   ['partage du suivi public accessible', () => files.suivi.includes('className="tracking-share card') && files.suivi.includes('navigator.share') && files.suivi.includes('Copier le lien')],
-  ['envois prioritaires avant les formulaires fret', () => files.fret.includes('mes-envois-main') && files.fret.includes('freight-tracking') && files.fret.includes('freight-estimate') && files.styles.includes('.mes-envois-main .freight-tracking { order: 1;')],
+  ['envois prioritaires avant les formulaires fret', () => files.fret.includes('mes-envois-main') && files.fret.includes('freight-tracking') && files.fret.includes('freight-estimate') && files.styles.includes('.mes-envois-main .freight-public-tracking { order: 1;')],
   ['progression visible sur les lots suivis', () => files.fret.includes('className="lot-progress') && files.fret.includes('aria-valuenow={progression}') && files.styles.includes('.lot-progress')],
+  ['accès public au suivi depuis Mes envois', () => files.fret.includes('freight-public-tracking') && files.fret.includes('to="/suivi"') && files.fret.includes('Suivre un envoi')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];

@@ -76,6 +76,12 @@ export function MesEnvois() {
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
         {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
 
+        <section className="card stack freight-section freight-public-tracking" style={{ gap: 12 }}>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Suivre un envoi")}</h2>
+          <p className="small muted" style={{ margin: 0 }}>{tr("Saisissez le code du lot pour voir où en est votre marchandise entre la Chine et Dakar.")}</p>
+          <Button to="/suivi" icon="route">{tr("Suivre un envoi")}</Button>
+        </section>
+
         {/* ---- Devis rapide ---- */}
         <section className="card stack freight-section freight-estimate" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Estimer le prix")}</h2>

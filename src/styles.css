@@ -226,11 +226,12 @@ details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 
 .shopping-progress-track span { display: block; height: 100%; min-width: 0; border-radius: inherit; background: var(--primary); transition: width 180ms ease; }
 .tracking-share { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); }
 .tracking-share .notice { margin: 0; }
-.mes-envois-main .freight-section { order: 3; }
-.mes-envois-main .freight-tracking { order: 1; }
-.mes-envois-main .freight-packages { order: 2; }
-.mes-envois-main .freight-estimate { order: 3; }
-.mes-envois-main .freight-announce { order: 4; }
+.mes-envois-main .freight-section { order: 4; }
+.mes-envois-main .freight-public-tracking { order: 1; border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); }
+.mes-envois-main .freight-tracking { order: 2; }
+.mes-envois-main .freight-packages { order: 3; }
+.mes-envois-main .freight-estimate { order: 4; }
+.mes-envois-main .freight-announce { order: 5; }
 .lot-progress { display: grid; gap: 7px; margin-top: 2px; }
 .lot-progress-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 13px; }
 .lot-progress-head strong { color: var(--ink); font-size: 14px; }
