@@ -20,6 +20,7 @@ const checks = [
   ['accueil contient les actions prioritaires', () => ['Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi'].every((v) => files.home.includes(v))],
   ['navigation accessible au clavier', () => files.styles.includes('.bottomnav a:focus-visible')],
   ['mise en page des petits écrans', () => files.styles.includes('@media (max-width: 390px)')],
+  ['recherche persistante sur mobile', () => files.styles.includes('.search-head { position: sticky;')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];

@@ -442,6 +442,10 @@ body { -webkit-font-smoothing: antialiased; }
 
 /* Accueil, recherche et fiche en pleine largeur (>= 1024 px) */
 .search-head { padding: 16px 16px 8px; }
+@media (max-width: 1023px) {
+  .search-head { position: sticky; top: 0; z-index: 4; padding-top: max(12px, env(safe-area-inset-top)); background: var(--bg); border-bottom: 1px solid var(--line); }
+  .search-head input#q { min-width: 0; }
+}
 .search-layout { display: contents; }
 .search-filters, .search-map { display: none; }
 .fiche-col { display: contents; }
