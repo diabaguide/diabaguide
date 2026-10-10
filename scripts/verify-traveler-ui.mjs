@@ -10,6 +10,8 @@ const files = {
   shopping: await readFile(new URL('../src/pages/Shopping.tsx', import.meta.url), 'utf8'),
   styles: await readFile(new URL('../src/styles.css', import.meta.url), 'utf8'),
   app: await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
+  main: await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
+  vite: await readFile(new URL('../vite.config.ts', import.meta.url), 'utf8'),
 };
 
 const [catalog] = await Promise.all([
@@ -42,6 +44,9 @@ const checks = [
   ['dates des étapes protégées du décalage horaire', () => files.fret.includes('formatEtapeDate') && !files.fret.includes('new Date(derniereEtape.au).toLocaleDateString') && !files.fret.includes('new Date(e.au).toLocaleDateString')],
   ['accès public au suivi depuis Mes envois', () => files.fret.includes('freight-public-tracking') && files.fret.includes('to="/suivi"') && files.fret.includes('Suivre un envoi')],
   ['routes métier conservées', () => ['/accueil', '/recherche', '/mes-envois', '/liste-achats', '/profil'].every((v) => files.app.includes(`path="${v}"`))],
+  ['pages voyageur chargées par route', () => ['pages/Home', 'pages/Search', 'pages/Fiche', 'pages/Shopping', 'pages/Fret', 'pages/Suivi'].every((v) => files.app.includes(`import('./${v}')`))],
+  ['chunks fournisseurs configurés explicitement', () => files.vite.includes('manualChunks') && files.vite.includes("vendor-react") && files.vite.includes("vendor-supabase")],
+  ['récupération PWA gardée même sans sessionStorage', () => files.main.includes("vite:preloadError") && files.main.includes('history.replaceState') && files.main.includes('guardPersisted') && files.main.indexOf('event.preventDefault()') > files.main.indexOf('if (!guardPersisted) return') && files.main.includes('location.reload()')],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];
 
