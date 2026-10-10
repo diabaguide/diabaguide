@@ -375,7 +375,7 @@ export async function devisFret(
 /** Le voyageur annonce un colis à venir (statut 'annonce', rattaché à son compte). */
 export async function annoncerColis(c: {
   mode: FretMode; villeDepart: string; caracteristiques?: Caracteristique[]; typeMarchandise?: string; description?: string; marqueColis?: string;
-  poidsKg?: number | null; volumeM3?: number | null;
+  poidsKg?: number | null; volumeM3?: number | null; shoppingListId?: string | null;
 }): Promise<{ code?: string; error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
   const { data: u } = await supabase.auth.getUser();
@@ -386,6 +386,7 @@ export async function annoncerColis(c: {
     code, mode: c.mode, profile_id: uid, expedition_code: null, statut: 'annonce',
     type_marchandise: c.typeMarchandise || 'general', description: c.description?.trim() || null,
     marque_colis: c.marqueColis?.trim() || null, ville_depart: c.villeDepart, caracteristiques: c.caracteristiques ?? [], poids_kg: c.poidsKg ?? null, volume_m3: c.volumeM3 ?? null,
+    shopping_list_id: c.shoppingListId || null,
   });
   if (error) return { error: humanize(error.message) };
   return { code };

@@ -4247,5 +4247,9 @@
   "Votre guide du voyageur": {"en": "Your traveler guide", "zh": "您的旅行指南", "ar": "دليلكم للمسافرين"},
   "Trouvez les bonnes adresses, simplement.": {"en": "Find the right places, simply.", "zh": "轻松找到合适的地点。", "ar": "اعثروا على العناوين المناسبة بسهولة."},
   "Explorez votre ville, préparez vos achats et gardez vos envois sous la main.": {"en": "Explore your city, prepare your purchases and keep your shipments close at hand.", "zh": "探索您的城市，准备采购，并随时掌握货运信息。", "ar": "استكشفوا مدينتكم، حضّروا مشترياتكم وتابعوا شحناتكم بسهولة."},
-  "Adresses enregistrées pour les retrouver rapidement": {"en": "Saved addresses to find them quickly", "zh": "保存地址，方便快速查找", "ar": "عناوين محفوظة للعثور عليها بسرعة"}
+  "Adresses enregistrées pour les retrouver rapidement": {"en": "Saved addresses to find them quickly", "zh": "保存地址，方便快速查找", "ar": "عناوين محفوظة للعثور عليها بسرعة"},
+  "Expédier cette liste": {"en": "Ship this list", "zh": "运送此清单", "ar": "شحن هذه القائمة"},
+  "Liste d’achats liée": {"en": "Linked shopping list", "zh": "已关联采购清单", "ar": "قائمة المشتريات المرتبطة"},
+  "Ajoutez au moins un produit avant de préparer l’envoi.": {"en": "Add at least one product before preparing the shipment.", "zh": "准备发货前，请至少添加一种商品。", "ar": "أضيفوا منتجًا واحدًا على الأقل قبل تجهيز الشحنة."},
+  "Attendez le chargement de la liste d’achats.": {"en": "Wait for the shopping list to finish loading.", "zh": "请等待采购清单加载完成。", "ar": "انتظروا حتى يكتمل تحميل قائمة المشتريات."}
 }
