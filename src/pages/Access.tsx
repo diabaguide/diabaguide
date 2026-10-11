@@ -40,7 +40,7 @@ export function Welcome() {
         <p className="small muted center">{tr("Un compte est nécessaire pour consulter les adresses. Version de démonstration.")}</p>
       </div>
       <div className="main" style={{ paddingTop: 10 }}>
-        <Photo label={tr("Marché de gros, Guangzhou")} h={120} round={16} src="/guangzhou.jpg" />
+        <Photo label={tr("Marché de gros, Guangzhou")} h={120} round={16} src="/guangzhou.jpg" eager />
         {[['shield', 'Des adresses relues et vérifiées par l’équipe Diaba'], ['pin', 'L’adresse en chinois, prête à montrer au chauffeur'], ['download', 'Vos fiches favorites, même sans connexion']].map(([i, t]) => (
           <div className="benefit" key={t}><span className="ico"><Icon name={i as 'shield'} /></span><span>{tr(t)}</span></div>
         ))}

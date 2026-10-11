@@ -1,5 +1,5 @@
 import { useI18n } from './i18n';
-import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
 
 /* Vrai à partir de 1024 px : la mise en page « site web » est active. */
 export function useWide() {
@@ -77,16 +77,30 @@ export function Logo({ height = 40, tail }: { height?: number; tail?: string }) 
 
 /* Photo privée du bucket Supabase : URL temporaire ; emplacement rayé si absente ou illisible.
    Un chemin déjà en http(s) (données de démonstration) est utilisé tel quel, sans passer par Supabase. */
-export function StoredPhoto({ path, label, h, w, round, bucket }: { path?: string; label: string; h?: number; w?: number | string; round?: number; bucket?: PhotoBucket }) {
+export function StoredPhoto({ path, label, h, w, round, bucket, eager }: { path?: string; label: string; h?: number; w?: number | string; round?: number; bucket?: PhotoBucket; eager?: boolean }) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const [url, setUrl] = useState<string | undefined>(path?.startsWith('http') ? path : undefined);
+  // Chargement différé : on ne demande l'URL signée (ni ne télécharge l'image)
+  // qu'à l'approche de l'écran. `eager` (ex. photo d'en-tête) charge tout de suite.
+  const [near, setNear] = useState(!!eager);
+  useEffect(() => {
+    if (near) return;
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') { setNear(true); return; }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { setNear(true); io.disconnect(); }
+    }, { rootMargin: '500px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [near]);
   useEffect(() => {
     let live = true;
     if (path?.startsWith('http')) { setUrl(path); return; }
     setUrl(undefined);
-    if (path) photoUrl(path, 3600, bucket).then((u) => { if (live && u) setUrl(u); });
+    if (near && path) photoUrl(path, undefined, bucket).then((u) => { if (live && u) setUrl(u); });
     return () => { live = false; };
-  }, [path, bucket]);
-  return <Photo label={label} h={h} w={w} round={round} src={url} />;
+  }, [path, bucket, near]);
+  return <Photo label={label} h={h} w={w} round={round} src={url} eager={eager} rootRef={rootRef} />;
 }
 
 /** Photo de profil : l'image si elle existe, sinon les initiales. */
@@ -95,12 +109,12 @@ export function Avatar({ path, name, size = 40 }: { path?: string | null; name: 
   useEffect(() => {
     let live = true;
     setUrl(null);
-    if (path) void photoUrl(path, 3600, 'avatars').then((u) => { if (live) setUrl(u); });
+    if (path) void photoUrl(path, undefined, 'avatars').then((u) => { if (live) setUrl(u); });
     return () => { live = false; };
   }, [path]);
   const ini = name.split(/[\s.@]+/).filter(Boolean).map((x) => x[0]?.toUpperCase()).slice(0, 2).join('') || '?';
   return url
-    ? <img src={url} alt="" width={size} height={size} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />
+    ? <img src={url} alt="" width={size} height={size} loading="lazy" decoding="async" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />
     : <span aria-hidden="true" style={{ width: size, height: size, borderRadius: '50%', flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--gold-fill, #E6EAF3)', color: '#153E9F', fontWeight: 700, fontSize: Math.round(size * 0.4) }}>{ini}</span>;
 }
 
@@ -144,19 +158,22 @@ export function AvatarPicker({ path, name, onChange, onError }: {
   );
 }
 
-/* Emplacement photo :remplacer par <img> quand les visuels sont disponibles. */
-export function Photo({ label, h = 120, w, round = 14, src }: { label: string; h?: number; w?: number | string; round?: number; src?: string }) {
+/* Emplacement photo. Avec une source : vrai <img> (chargement différé par le
+   navigateur + décodage asynchrone) ; `eager` charge en priorité (en-tête). */
+export function Photo({ label, h = 120, w, round = 14, src, eager, rootRef }: { label: string; h?: number; w?: number | string; round?: number; src?: string; eager?: boolean; rootRef?: Ref<HTMLDivElement> }) {
   const { tr } = useI18n();
   const small = h < 110;
   if (src) {
     return (
-      <div role="img" aria-label={label} className="photo" style={{ height: h, width: w ?? '100%', borderRadius: round, backgroundImage: `url(${src})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        {!small && <span className="photo-cap"><Icon name="image" size={14} />{tr(label)}</span>}
+      <div ref={rootRef} role="img" aria-label={label} className="photo photo-img" style={{ height: h, width: w ?? '100%', borderRadius: round }}>
+        <img src={src} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        {!small && <span className="photo-cap" style={{ position: 'relative' }}><Icon name="image" size={14} />{tr(label)}</span>}
       </div>
     );
   }
   return (
-    <div role="img" aria-label={tr(`Photo à fournir : ${label}`)} className="photo" style={{ height: h, width: w ?? '100%', borderRadius: round }}>
+    <div ref={rootRef} role="img" aria-label={tr(`Photo à fournir : ${label}`)} className="photo" style={{ height: h, width: w ?? '100%', borderRadius: round }}>
       {small ? <Icon name="image" size={26} /> : <span className="photo-cap"><Icon name="image" size={14} />{tr(label)}</span>}
     </div>
   );

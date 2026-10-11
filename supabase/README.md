@@ -7,7 +7,7 @@ Les scripts de ce dossier s'exécutent **à la main**, un par un, dans Supabase 
 - **La base de production a déjà reçu tous les scripts numérotés.** Le numéro indique l'ordre dans lequel ils ont été appliqués la première fois. Il ne veut pas dire « à rejouer ».
 - **Ne jamais utiliser `supabase db push` ni `supabase db reset` sur la production.** Le dossier `supabase/migrations/` n'existe pas, volontairement : ne pas le créer en y copiant ces scripts, sinon la CLI Supabase les appliquerait tous d'un coup.
 - **Avant de relancer un script, lire son en-tête.** La plupart se déclarent « idempotents » (on peut les relancer sans risque), mais pas tous.
-- **Nouveau script** : prendre le numéro suivant (`490_…`, `500_…`), garder les intervalles de 10 et écrire dans l'en-tête de quoi il dépend.
+- **Nouveau script** : prendre le numéro suivant (`500_…`, `510_…`), garder les intervalles de 10 et écrire dans l'en-tête de quoi il dépend.
 - Les dossiers `donnees/`, `controles/` et `historique/` sont hors de la séquence (voir plus bas).
 
 ## Séquence (numéros = ordre d'application)
@@ -69,6 +69,7 @@ Les scripts de ce dossier s'exécutent **à la main**, un par un, dans Supabase 
 | 460 | `460_fret_shipsgo_tracking.sql` | Suivi ShipsGo | 240, 330 |
 | 470 | `470_fret_shipsgo_integrity.sql` | Verrouillage des données ShipsGo | 460 |
 | 480 | `480_fret_photos_bucket.sql` | Bucket privé `fret-photos` et ses règles | 020, 310 |
+| 490 | `490_photos_avif.sql` | Autorise le format AVIF dans les buckets de photos | 070, 090, 170, 320, 480 |
 
 (*) **Le bucket `fret-photos`** a d’abord été créé par le script historique `historique/fret_lot2b.sql`. Il est maintenant créé par `480_fret_photos_bucket.sql`, sans effet sur la production où il existe déjà. Sur une base neuve, 310 et 410 peuvent s’exécuter avant 480 (une règle de stockage se crée même si le bucket manque) : il suffit de lancer 480 avant d’envoyer la première photo.
 
