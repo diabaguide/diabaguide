@@ -111,7 +111,9 @@ export function FicheEdit() {
   const isNew = id === 'nouvelle';
   const isAdmin = s.user?.role === 'admin';
   const existing = s.providers.find((x) => x.id === id);
-  const firstCity = s.cities.find((c) => c.active) ?? s.cities[0];
+  // Ville proposée pour une nouvelle fiche : celle de l'utilisateur, sinon la
+  // première active (les villes sont rangées par ordre alphabétique).
+  const firstCity = s.cities.find((c) => c.active && c.id === s.city) ?? s.cities.find((c) => c.active) ?? s.cities[0];
   const [p, setP] = useState<Provider | null>(() => existing ?? (isNew ? {
     id: '', name: '', cn: '', cat: (s.categories.find((c) => c.active) ?? s.categories[0]).id, city: firstCity.id, district: '',
     lat: firstCity.lat ?? 23.13, lng: firstCity.lng ?? 113.27, verified: today(), desc: '', addrCn: '', addrFr: '', productTags: [],
