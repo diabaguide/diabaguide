@@ -4292,5 +4292,12 @@
   "Vérifiez les références de transport ou réessayez plus tard.": {"en": "Check the transport references or try again later.", "zh": "请检查运输编号，或稍后重试。", "ar": "تحققوا من مراجع النقل أو حاولوا مرة أخرى لاحقًا."},
   "Un numéro valide de conteneur ou d’AWB est requis pour activer ShipsGo.": {"en": "A valid container or AWB number is required to enable ShipsGo.", "zh": "启用 ShipsGo 需要有效的集装箱号或 AWB 号。", "ar": "يلزم رقم حاوية أو AWB صالح لتفعيل ShipsGo."},
   "Synchronisé par ShipsGo": {"en": "Synced by ShipsGo", "zh": "由 ShipsGo 同步", "ar": "تمت المزامنة بواسطة ShipsGo"},
-  "Dernière synchronisation": {"en": "Last sync", "zh": "上次同步", "ar": "آخر مزامنة"}
+  "Dernière synchronisation": {"en": "Last sync", "zh": "上次同步", "ar": "آخر مزامنة"},
+  "Plus proches": {"en": "Nearest", "zh": "距离最近", "ar": "الأقرب"},
+  "Mieux notées": {"en": "Top rated", "zh": "评分最高", "ar": "الأعلى تقييمًا"},
+  "Vérifiées récemment": {"en": "Recently verified", "zh": "最近核实", "ar": "تم التحقق منها مؤخرًا"},
+  "Recommandées": {"en": "Recommended", "zh": "推荐", "ar": "المقترحة"},
+  "Trier par": {"en": "Sort by", "zh": "排序方式", "ar": "الترتيب حسب"},
+  "Tout": {"en": "All", "zh": "全部", "ar": "الكل"},
+  "Changer de ville": {"en": "Change city", "zh": "切换城市", "ar": "تغيير المدينة"}
 }

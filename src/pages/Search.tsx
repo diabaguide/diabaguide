@@ -19,38 +19,38 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
   const mention = meta ?? (p.verified ? `Vérifiée le ${p.verified}` : '');
   return (
     <article className="rcard">
-      {/* Seule la photo est cliquable : elle ouvre la fiche. Le reste de la carte
-          (titre, catégorie, étoiles) ne réagit plus au clic — le pied garde ses
-          deux liens, « Carte de visite » et « Fiche complète ». */}
+      {/* Toute la carte ouvre la fiche : le lien du nom s'étend sur la carte
+          (.rcard-link::after). Le cœur et les deux actions du pied restent
+          au-dessus et gardent leur propre clic. */}
       <div className="rcard-body">
-        <Link to={`/adresses/${p.id}`} className="rcard-photo" aria-label={p.name}>
-          <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={104} w={104} round={12} />
-        </Link>
-        <div className="stack grow" style={{ gap: 3 }}>
-          <span className="row" style={{ justifyContent: 'space-between', gap: 6 }}>
-            <span className="name">{p.name}</span>
+        <span className="rcard-photo" aria-hidden="true">
+          <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={76} w={76} round={12} />
+        </span>
+        <div className="stack grow rcard-info">
+          <span className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
+            <Link to={`/adresses/${p.id}`} className="name rcard-link">{p.name}</Link>
             <button type="button" className="rcard-fav" aria-pressed={fav} aria-label={tr(fav ? 'Retirer des favoris' : 'Ajouter aux favoris')}
               onClick={(e) => { e.preventDefault(); d({ t: 'fav', id: p.id }); }}>
               <Icon name="heart" size={18} sw={fav ? 0 : 2} fill={fav ? 'currentColor' : 'none'} />
             </button>
           </span>
-          <span className="small muted zh">{p.cn}</span>
-          <span className="small row" style={{ gap: 6 }}><Icon name={catIcon(p.cat)} size={16} sw={2} />{tr(catLabel(p.cat))} · {tr(p.district)}</span>
-          {/* Mention de vérification : sous la catégorie, au milieu de la carte.
-              Rien à afficher quand la fiche n'a pas encore de date de vérification
-              (mieux vaut rien qu'un « Vérifiée le » suivi d'un blanc). */}
-          {mention ? <span className="small rcard-verified"><Icon name="check" size={14} sw={2.4} />{tr(mention)}</span> : null}
-          <Stars avg={p.ratingAvg} count={p.ratingCount} size={14} />
+          <span className="small muted rcard-line"><span className="zh">{p.cn}</span>{p.district ? <> · {tr(p.district)}</> : null}</span>
+          <span className="small row rcard-cat"><Icon name={catIcon(p.cat)} size={15} sw={2} />{tr(catLabel(p.cat))}</span>
+          <span className="small rcard-meta">
+            <Stars avg={p.ratingAvg} count={p.ratingCount} size={13} />
+            {/* Distance et date de vérification ; rien quand la fiche n'a pas
+                encore de date (mieux vaut rien qu'un « Vérifiée le » vide). */}
+            {mention ? <span className="rcard-verified"><Icon name="check" size={14} sw={2.4} />{tr(mention)}</span> : null}
+          </span>
         </div>
       </div>
-      <div className="rcard-foot">
+      <div className="rcard-actions">
+        <Link className="rcard-driver" to={`/adresses/${p.id}/chauffeur`}>
+          <Icon name="route" size={16} sw={2} />{tr("Montrer au chauffeur")}
+        </Link>
         <Link className="rcard-contact" to={`/adresses/${p.id}/contact`}>
-          <Icon name="chat" size={14} sw={2} />{tr("Contacter")}
+          <Icon name="chat" size={16} sw={2} />{tr("Contacter")}
         </Link>
-        <Link className="rcard-visite" to={`/adresses/${p.id}/carte`}>
-          <Icon name="qr" size={14} sw={2} />{tr("Carte de visite")}
-        </Link>
-        <Link className="rcard-more" to={`/adresses/${p.id}`}>{tr("Fiche complète")} →</Link>
       </div>
     </article>
   );
@@ -68,9 +68,24 @@ export function useQuery() {
     prox: sp.get('prox') || null, // rayon en km, ou « 0 » = toute la ville
     view: sp.get('view') === 'carte' ? 'carte' : 'liste',
     geo: sp.get('geo'),
+    tri: (['note', 'verif'].includes(sp.get('tri') ?? '') ? sp.get('tri') : null) as Tri | null,
   };
   return { q, sp, setSp };
 }
+
+/* Tri des résultats. Sans tri choisi : les plus proches d'abord quand la
+   position est connue, sinon l'ordre d'origine (« Recommandées »). */
+type Tri = 'note' | 'verif';
+const MOIS: Record<string, number> = {
+  janv: 1, fevr: 2, mars: 3, avr: 4, mai: 5, juin: 6, juil: 7, aout: 8, sept: 9, oct: 10, nov: 11, dec: 12,
+};
+/** « 7 oct. 2026 » (ou « 7 octobre 2026 ») → 20261007, pour comparer les dates
+    de vérification, stockées en texte libre. Date illisible → 0 (en fin de liste). */
+const dateVerif = (v: string): number => {
+  const m = sansAccent(v).match(/(\d{1,2})\s+([a-z]+)\.?\s+(\d{4})/);
+  const mois = m ? MOIS[m[2].slice(0, 4)] ?? MOIS[m[2].slice(0, 3)] : undefined;
+  return m && mois ? Number(m[3]) * 10000 + mois * 100 + Number(m[1]) : 0;
+};
 
 function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provider[]) {
   const pos = getPos();
@@ -84,7 +99,9 @@ function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provide
   }
   if (q.fret && q.fret !== 'both') list = list.filter((x) => x.p.freight?.includes(q.fret as Freight));
   if (q.prox && Number(q.prox) > 0) list = list.filter((x) => x.km === null || x.km <= Number(q.prox));
-  if (pos) list.sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
+  if (q.tri === 'note') list.sort((a, b) => (b.p.ratingAvg ?? 0) - (a.p.ratingAvg ?? 0) || (b.p.ratingCount ?? 0) - (a.p.ratingCount ?? 0));
+  else if (q.tri === 'verif') list.sort((a, b) => dateVerif(b.p.verified) - dateVerif(a.p.verified));
+  else if (pos) list.sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
   return list;
 }
 
@@ -118,7 +135,12 @@ export function Search() {
     }, 700);
     return () => clearTimeout(t);
   }, [loading, q.q, q.city, q.cat, list.length]);
-  const nFilters = [q.cat, q.fret, q.prox].filter(Boolean).length;
+  /* La catégorie et la ville se règlent dans l'en-tête : le compteur du bouton
+     Filtres ne compte que ce qui ne s'y voit pas (proximité, mode de fret). */
+  const nFilters = [q.fret, q.prox].filter(Boolean).length;
+  const cityOptions = citiesWithPublicEntries(s.cities, s.providers);
+  const cityValue = cityOptions.some((c) => c.id === q.city) ? q.city : (cityOptions[0]?.id ?? q.city);
+  const cityLabel = s.cities.find((c) => c.id === q.city)?.name ?? q.city;
   const set = (k: string, v: string | null) => { const n = new URLSearchParams(sp); v ? n.set(k, v) : n.delete(k); setSp(n, { replace: true }); };
   const patch = (o: Record<string, string | null>) => { const n = new URLSearchParams(sp); for (const [k, v] of Object.entries(o)) { if (v) n.set(k, v); else n.delete(k); } setSp(n, { replace: true }); };
 
@@ -147,7 +169,16 @@ export function Search() {
         {q.geo === 'err' && (
           <div role="alert" className="notice warn"><Icon name="alert" size={22} /><div><strong>{tr("Position indisponible")}</strong><div className="small">{tr("Les distances ne sont pas affichées. ")}<Link className="link" to="/localisation">{tr("Choisir un quartier")}</Link></div></div></div>
         )}
-        <div role="status" className="small muted">{tr(list.length)} {tr(" adresse")}{tr(list.length > 1 ? 's' : '')}{tr(q.q ? ` pour « ${q.q} »` : '')} · {tr(q.city)}</div>
+        <div className="row search-status">
+          <div role="status" className="small muted grow">{tr(list.length)} {tr(" adresse")}{tr(list.length > 1 ? 's' : '')}{tr(q.q ? ` pour « ${q.q} »` : '')}<span className="d-only"> · {tr(cityLabel)}</span></div>
+          {list.length > 1 && (
+            <select className="sort-select" aria-label={tr("Trier par")} value={q.tri ?? ''} onChange={(e) => set('tri', e.target.value || null)}>
+              <option value="">{tr(getPos() ? 'Plus proches' : 'Recommandées')}</option>
+              <option value="note">{tr("Mieux notées")}</option>
+              <option value="verif">{tr("Vérifiées récemment")}</option>
+            </select>
+          )}
+        </div>
         {list.length === 0 ? (
           <div className="card center-screen" style={{ padding: 24 }}>
             <span className="bigcheck" style={{ width: 56, height: 56, background: 'var(--info-bg)', border: 0, color: 'var(--primary)' }}><Icon name="search" size={28} /></span>
@@ -164,8 +195,16 @@ export function Search() {
               meta={[km !== null ? fmtKm(km) : null, p.verified ? `Vérifiée le ${p.verified}` : null].filter(Boolean).join(' · ')} />
           ))
         )}
-        {q.view === 'carte' && !wide && list.length > 0 && <Button kind="t" icon="list" onClick={() => set('view', null)}>{tr("Afficher les résultats en liste")}</Button>}
         <DemoNote />
+        {/* Liste ⇄ carte (mobile) : un bouton flottant au-dessus de la barre de
+            navigation, à la place de l'ancienne bascule qui prenait une ligne. */}
+        {!wide && list.length > 0 && (
+          <div className="map-fab-wrap">
+            <button type="button" className="map-fab" onClick={() => set('view', q.view === 'carte' ? null : 'carte')}>
+              <Icon name={q.view === 'carte' ? 'list' : 'map'} size={18} sw={2} />{tr(q.view === 'carte' ? 'Liste' : 'Carte')}
+            </button>
+          </div>
+        )}
       </>
     );
   };
@@ -176,18 +215,33 @@ export function Search() {
         <div className="row">
           <button type="button" className="iconbtn m-only" aria-label={tr("Retour à l’accueil")} onClick={() => nav('/accueil')}><Icon name="chevL" size={24} sw={2.2} /></button>
           <label htmlFor="q" className="sr">{tr("Recherche")}</label>
-          <input id="q" type="search" className="grow" value={q.q} placeholder={tr("Quel produit ou service cherchez-vous ?")} onChange={(e) => set('q', e.target.value || null)}
-            style={{ minHeight: 48, padding: '0 14px', borderRadius: 12, border: '1.5px solid var(--primary)', font: 'inherit', fontSize: 16 }} />
+          <span className="search-box grow">
+            <Icon name="search" size={18} sw={2} />
+            <input id="q" type="search" value={q.q} placeholder={tr("Quel produit ou service cherchez-vous ?")} onChange={(e) => set('q', e.target.value || null)} />
+          </span>
         </div>
-        <div className="seg m-only" role="group" aria-label={tr("Affichage")}>
-          <button type="button" className={q.view === 'liste' ? 'on' : ''} onClick={() => set('view', null)}><Icon name="list" size={18} />{tr("Liste")}</button>
-          <button type="button" className={q.view === 'carte' ? 'on' : ''} onClick={() => set('view', 'carte')}><Icon name="map" size={18} />{tr("Carte")}</button>
+        <div className="row search-tools m-only">
+          {/* Ville : un sélecteur natif posé sur la puce, quand il y a le choix. */}
+          {cityOptions.length > 1 ? (
+            <label className="chip city-pick">
+              <Icon name="pin" size={16} sw={2} />{tr(cityLabel)}<span className="city-chev"><Icon name="chevR" size={14} sw={2.2} /></span>
+              <select aria-label={tr("Changer de ville")} value={cityValue} onChange={(e) => patch({ ville: e.target.value })}>
+                {cityOptions.map((c) => <option key={c.id} value={c.id}>{tr(c.name)}</option>)}
+              </select>
+            </label>
+          ) : <span className="chip city-pick"><Icon name="pin" size={16} sw={2} />{tr(cityLabel)}</span>}
+          <Chip on={nFilters > 0} icon="sliders" to={'/recherche/filtres?' + key}>{tr("Filtres")}{tr(nFilters ? ` · ${nFilters}` : '')}</Chip>
         </div>
-        <div className="chips m-only" style={{ flexWrap: 'nowrap', overflowX: 'auto' }}>
-          <Chip on icon="sliders" to={'/recherche/filtres?' + key}>{tr("Filtres")}{tr(nFilters ? ` · ${nFilters}` : '')}</Chip>
-          <Chip>{tr(q.city)}</Chip>
-          {q.cat && <Chip>{tr(catLabel(q.cat))}</Chip>}
-          {q.prox && <Chip icon="pin">{tr(Number(q.prox) > 0 ? `< ${q.prox} km` : 'Toute la ville')}</Chip>}
+        <div className="chips search-cats m-only" role="group" aria-label={tr("Catégorie")}>
+          <button type="button" className={`chip ${!q.cat ? 'on' : ''}`} aria-pressed={!q.cat} onClick={() => patch({ cat: null, fret: null })}>
+            <Icon name="grid" size={16} sw={2} />{tr("Tout")}
+          </button>
+          {s.categories.filter((c) => c.active).map((c) => (
+            <button key={c.id} type="button" className={`chip ${q.cat === c.id ? 'on' : ''}`} aria-pressed={q.cat === c.id}
+              onClick={() => patch({ cat: q.cat === c.id ? null : c.id, fret: null })}>
+              <Icon name={catIcon(c.id)} size={16} sw={2} />{tr(c.label)}
+            </button>
+          ))}
         </div>
       </header>
       <div className="search-layout">
