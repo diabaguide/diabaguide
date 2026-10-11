@@ -114,8 +114,11 @@ export function FicheEdit() {
   // Ville proposée pour une nouvelle fiche : celle de l'utilisateur, sinon la
   // première active (les villes sont rangées par ordre alphabétique).
   const firstCity = s.cities.find((c) => c.active && c.id === s.city) ?? s.cities.find((c) => c.active) ?? s.cities[0];
+  // Catégorie proposée : la première dans l'ordre défini en base (colonne sort),
+  // et non la première par ordre alphabétique, ordre d'affichage des listes.
+  const firstCat = [...s.categories].filter((c) => c.active).sort((a, b) => a.sort - b.sort)[0] ?? s.categories[0];
   const [p, setP] = useState<Provider | null>(() => existing ?? (isNew ? {
-    id: '', name: '', cn: '', cat: (s.categories.find((c) => c.active) ?? s.categories[0]).id, city: firstCity.id, district: '',
+    id: '', name: '', cn: '', cat: firstCat.id, city: firstCity.id, district: '',
     lat: firstCity.lat ?? 23.13, lng: firstCity.lng ?? 113.27, verified: today(), desc: '', addrCn: '', addrFr: '', productTags: [],
   } : null));
   const [tried, setTried] = useState(false);
