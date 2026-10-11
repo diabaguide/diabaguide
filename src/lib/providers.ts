@@ -149,7 +149,7 @@ export function validateProvider(p: Provider): string | null {
  *
  * `cn` (nom chinois) et `district` sont obligatoires en base : ils sont
  * laissés VIDES plutôt qu'inventés — c'est la règle du projet pour les noms
- * chinois non confirmés (voir supabase/insert_gz_sz_providers.sql). Les
+ * chinois non confirmés (voir supabase/donnees/insert_gz_sz_providers.sql). Les
  * coordonnées sont celles de la ville choisie : la fiche n'apparaît donc pas
  * sur une carte au large du golfe de Guinée. La RLS `providers_insert_team`
  * autorise l'équipe à écrire.

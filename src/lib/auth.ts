@@ -2,7 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { identifiantEstUnNumero, isInternalEmail, phoneLoginId, phoneOf } from './phone';
 
-/** « livreur » : membre de l'équipe limité au module fret (voir supabase/livreur.sql). */
+/** « livreur » : membre de l'équipe limité au module fret (voir supabase/310_livreur.sql). */
 export type Role = 'traveler' | 'livreur' | 'team' | 'admin';
 /** État du compte : un compte désactivé par un administrateur ne peut plus se connecter. */
 export type AccountStatus = 'active' | 'suspended';
@@ -99,7 +99,7 @@ export async function signUp(
   return { user: await profileFor(data.user!.id, identifiant, name, phone) };
 }
 
-/** Identifiant de connexion associé à un numéro (voir supabase/phone_login.sql). */
+/** Identifiant de connexion associé à un numéro (voir supabase/210_phone_login.sql). */
 export async function loginForPhone(phone: string): Promise<string | null> {
   if (!supabase) return null;
   const { data, error } = await supabase.rpc('login_for_phone', { p_phone: phone });
@@ -125,7 +125,7 @@ export async function signIn(
   const meta = data.user.user_metadata as { name?: string; phone?: string } | null;
   const user = await profileFor(data.user.id, email, meta?.name, meta?.phone);
   // Compte désactivé par un administrateur : on ferme la session immédiatement.
-  // (La base refuse de toute façon la connexion : voir supabase/admin_travelers.sql.)
+  // (La base refuse de toute façon la connexion : voir supabase/150_admin_travelers.sql.)
   if (user.status === 'suspended') {
     await supabase.auth.signOut();
     return { error: 'Ce compte a été désactivé. Contactez l’équipe Diaba Guide.' };
@@ -149,7 +149,7 @@ export async function sendPasswordReset(identifiant: string): Promise<{ error?: 
   return { error: error ? translate(error.message) : undefined };
 }
 
-/** Modifie le nom et le téléphone du compte connecté (supabase/update_my_profile.sql). */
+/** Modifie le nom et le téléphone du compte connecté (supabase/300_update_my_profile.sql). */
 export async function updateMyProfile(
   name: string, phone: string, avatar: { path?: string; remove?: boolean } = {},
 ): Promise<{ error?: string }> {

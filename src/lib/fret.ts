@@ -3,9 +3,9 @@ import type { ExpeditionImportRow } from './expeditionImport';
 
 /**
  * Accès aux données du module Fret (expéditions, colis, suivi).
- * Tables : voir supabase/fret_module.sql et supabase/fret_tarifs.sql.
+ * Tables : voir supabase/240_fret_module.sql et supabase/250_fret_tarifs.sql.
  * RLS : réservé à l'équipe fret (is_fret : livreur, équipe, admin) ; le
- * client lit ses propres colis. Voir supabase/livreur.sql.
+ * client lit ses propres colis. Voir supabase/310_livreur.sql.
  */
 
 export type FretMode = 'maritime_groupage' | 'maritime_complet' | 'aerien_fret' | 'aerien_express';
@@ -198,7 +198,7 @@ export interface VoyageurFret {
   id: string; name: string | null; phone: string | null;
   nbColis: number; colisEnCours: number; dernierColis: string | null;
 }
-/** Voyageurs ayant au moins un colis (supabase/livreur.sql : fret_voyageurs). */
+/** Voyageurs ayant au moins un colis (supabase/310_livreur.sql : fret_voyageurs). */
 export async function fetchVoyageursFret(q = ''): Promise<VoyageurFret[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.rpc('fret_voyageurs', { p_q: q });
@@ -355,7 +355,7 @@ export async function fetchEtapesExpedition(expeditionCode: string): Promise<Eta
 
 /**
  * Ajoute une étape à une expédition : tous ses colis avancent avec elle
- * (supabase/expedition_etapes.sql). Visibilité voyageur : défaut selon l'étape.
+ * (supabase/330_expedition_etapes.sql). Visibilité voyageur : défaut selon l'étape.
  */
 export async function addEtapesExpeditions(codes: string[], type: EtapeType): Promise<{ count: number; error?: string }> {
   if (!supabase) return { count: 0 };

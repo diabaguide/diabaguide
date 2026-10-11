@@ -23,7 +23,7 @@ import { randomInt } from 'node:crypto';
  *
  * Le compte est créé sans adresse e-mail si aucune n'est fournie : il reçoit
  * alors l'adresse interne déduite du numéro (`p782254040@diabaguide.local`),
- * exactement comme à l'inscription (supabase/phone_signup.sql).
+ * exactement comme à l'inscription (supabase/200_phone_signup.sql).
  */
 
 /** Alphabet sans caractères ambigus (pas de O/0, I/1/l) : lisible au téléphone. */
@@ -39,7 +39,7 @@ function motDePasseTemporaire() {
 
 /**
  * Chiffres utiles d'un numéro, sans indicatif sénégalais.
- * Miroir exact de `public.phone_key()` (supabase/phone_signup.sql) et de
+ * Miroir exact de `public.phone_key()` (supabase/200_phone_signup.sql) et de
  * `phoneKey()` (src/lib/phone.ts) : les trois doivent rester identiques, sinon
  * un même numéro désignerait deux comptes.
  */

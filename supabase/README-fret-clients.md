@@ -13,7 +13,7 @@ La route `/equipe/expeditions` affiche le nouveau formulaire et `/mes-envois`
 affiche les colis du voyageur connecté. Les anciens liens publics `/suivi` et
 `/suivi/:code` renvoient vers ce parcours avec connexion. La migration de la
 base de production vers le nouveau schéma a déjà eu lieu : ne pas rejouer les
-scripts historiques `fret_tracking.sql` et `fret_lot2b.sql`.
+scripts historiques `historique/fret_tracking.sql` et `historique/fret_lot2b.sql`.
 
 ## État de la base de production au 25 septembre 2026
 
@@ -23,7 +23,7 @@ scripts historiques `fret_tracking.sql` et `fret_lot2b.sql`.
   sont conservés.
 - La vue `v_expedition_totaux` utilise déjà `security_invoker=true`, l'accès
   anonyme est refusé et les notes internes ne sont pas lisibles par l'API.
-  `fret_security.sql` n'a donc pas été appliqué à cette base.
+  `280_fret_security.sql` n'a donc pas été appliqué à cette base.
 - Le SMTP personnalisé a été activé et enregistré dans Supabase le 25 septembre
   2026. La livraison d'une invitation n'a pas encore été testée.
 - La fonction `creer-voyageur-fret` a été déployée le 25 septembre 2026 avec
@@ -49,7 +49,7 @@ scripts historiques `fret_tracking.sql` et `fret_lot2b.sql`.
    adresse réelle de test. Vérifier que le compte apparaît dans la liste,
    qu'un colis lié est visible dans « Mes envois » après connexion, et qu'un
    voyageur ne peut pas appeler la fonction de création.
-3. Exécuter `fret_verification.sql` pour contrôler les droits et compter les
+3. Exécuter `controles/fret_verification.sql` pour contrôler les droits et compter les
    anciens colis sans compte. Toutes les colonnes `*_lisibles` et
    `vue_totaux_accessible_anonyme` doivent valoir `false`.
 

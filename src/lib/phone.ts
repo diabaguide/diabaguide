@@ -3,7 +3,7 @@
  *
  * Depuis que l'inscription ne demande plus d'adresse e-mail, le téléphone est
  * l'identifiant du compte. Cette règle est donc aussi appliquée en base par
- * `public.email_for_phone()` (supabase/phone_signup.sql) : les deux doivent
+ * `public.email_for_phone()` (supabase/200_phone_signup.sql) : les deux doivent
  * rester identiques, sinon une personne s'inscrirait avec « +221 78 225 40 40 »
  * et ne pourrait plus se connecter en tapant « 78 225 40 40 ».
  *

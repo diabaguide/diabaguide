@@ -18,7 +18,7 @@ import {
 /* ------------------------------------------------------------------ */
 /* Espace fret : réservé au livreur, ouvert aussi à l'équipe et aux    */
 /* administrateurs. On n'y voit que le fret. Les droits sont appliqués */
-/* en base (supabase/livreur.sql : is_fret).                           */
+/* en base (supabase/310_livreur.sql : is_fret).                           */
 /* ------------------------------------------------------------------ */
 
 const money = (n: number, d = 'XOF') => `${n.toLocaleString('fr-FR')} ${d === 'XOF' ? 'FCFA' : d}`;

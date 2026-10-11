@@ -6,11 +6,11 @@ export interface Member {
   id: string; name: string | null; phone: string | null; email: string; role: Role; createdAt: string;
   /** Photo de profil (bucket « avatars »). */
   avatarPath: string | null;
-  /** État du compte (gestion par les administrateurs, voir supabase/admin_travelers.sql). */
+  /** État du compte (gestion par les administrateurs, voir supabase/150_admin_travelers.sql). */
   status: AccountStatus;
   suspendedAt: string | null;
   suspendedReason: string | null;
-  /** Administrateur principal : aucun autre compte ne peut le modifier ni le supprimer (supabase/admin_principal.sql). */
+  /** Administrateur principal : aucun autre compte ne peut le modifier ni le supprimer (supabase/370_admin_principal.sql). */
   primary: boolean;
 }
 export interface Invitation { email: string; role: Exclude<Role, 'traveler'>; createdAt: string; name: string | null; phone: string | null; avatarPath: string | null }
@@ -48,7 +48,7 @@ export async function fetchMembers(): Promise<Member[]> {
 
 /* ------------------------------------------------------------------ */
 /* Gestion des comptes voyageurs (réservée aux administrateurs).       */
-/* Les garde-fous sont en base : supabase/admin_travelers.sql.         */
+/* Les garde-fous sont en base : supabase/150_admin_travelers.sql.         */
 /* ------------------------------------------------------------------ */
 
 /** Modifie le nom et le téléphone d'un compte voyageur. */
@@ -58,7 +58,7 @@ export async function updateTraveler(id: string, name: string, phone: string): P
   return { error: error ? humanize(error.message) : undefined };
 }
 
-/** Modifie le nom et le téléphone d'un compte, quel que soit son rôle (supabase/admin_update_member.sql). */
+/** Modifie le nom et le téléphone d'un compte, quel que soit son rôle (supabase/290_admin_update_member.sql). */
 export async function updateMember(
   id: string, name: string, phone: string, avatar: { path?: string; remove?: boolean } = {},
 ): Promise<{ error?: string }> {
@@ -157,7 +157,7 @@ export async function deleteTraveler(id: string): Promise<{ error?: string }> {
 }
 
 /* ------------------------------------------------------------------ */
-/* Photos du voyageur (supabase/storage_cleanup.sql)                   */
+/* Photos du voyageur (supabase/180_storage_cleanup.sql)                   */
 /*                                                                     */
 /* storage.objects ne peut pas être vidé en SQL (déclencheur           */
 /* storage.protect_delete) et retirer la seule fiche laisserait le     */
@@ -221,7 +221,7 @@ export async function fetchInvitations(): Promise<Invitation[]> {
  * Ajoute un membre : promeut le compte s'il existe déjà, sinon crée une
  * invitation appliquée automatiquement à sa première inscription.
  * Le nom, le téléphone et la photo accompagnent l'invitation : ils sont
- * appliqués au profil à la première inscription (supabase/member_profile.sql).
+ * appliqués au profil à la première inscription (supabase/320_member_profile.sql).
  */
 export async function inviteMember(
   email: string, role: Exclude<Role, 'traveler'>,

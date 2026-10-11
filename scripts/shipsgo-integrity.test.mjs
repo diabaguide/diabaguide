@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
-const migration = await readFile(new URL('../supabase/fret_shipsgo_integrity.sql', import.meta.url), 'utf8');
+const migration = await readFile(new URL('../supabase/470_fret_shipsgo_integrity.sql', import.meta.url), 'utf8');
 
 test('blocks forged ShipsGo fields on expedition inserts and updates', () => {
   assert.match(migration, /before insert or update on public\.expeditions/i);

@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 
 /**
- * Journal de session (supabase/session_events.sql).
+ * Journal de session (supabase/220_session_events.sql).
  *
  * Pourquoi : quand une connexion n'est pas conservée d'une visite à l'autre,
  * deux causes opposées se ressemblent — le stockage du navigateur a été vidé, ou

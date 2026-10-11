@@ -14,7 +14,7 @@ import {
 /* L'équipe consulte toutes les annonces, inactives comprises. Seule    */
 /* l'administration les rédige, les modifie, les active ou les          */
 /* supprime : les écritures passent par les fonctions SQL admin_*       */
-/* (voir supabase/annonces.sql), jamais directement par la table.       */
+/* (voir supabase/230_annonces.sql), jamais directement par la table.       */
 /* ==================================================================== */
 
 const VIDE: AnnonceSaisie = { titre: '', texte: '', lienUrl: '', lienLibelle: '', actif: true, debutLe: '', finLe: '' };

@@ -101,7 +101,7 @@ export function Search() {
   useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 350); return () => clearTimeout(t); }, [key]);
   const list = useMemo(() => filterProviders(q, s.providers), [key, s.providers]);
 
-  /* Journal des recherches (supabase/search_logs.sql) : on enregistre le terme
+  /* Journal des recherches (supabase/190_search_logs.sql) : on enregistre le terme
      et le nombre d'adresses trouvées, une fois qu'il s'est stabilisé — assez
      pour qu'une recherche tapée en entier soit comptée, sans compter chaque
      lettre. Le terme voyage avec sa ville et sa catégorie : c'est ce qui permet
