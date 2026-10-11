@@ -21,5 +21,6 @@ $$;
 revoke all on function public.admin_maj_expedition_photo(text, text) from public, anon;
 grant execute on function public.admin_maj_expedition_photo(text, text) to authenticated;
 
--- Le bucket fret-photos et ses politiques existent déjà en Production.
+-- Le bucket fret-photos et ses politiques existent déjà en Production
+-- (sur une base neuve : 480_fret_photos_bucket.sql).
 -- Ils restent privés : lecture authentifiée, écriture fret, suppression équipe.

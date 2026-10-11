@@ -13,9 +13,9 @@
 --
 -- Dépend de : 030_admin_roles.sql (is_team, is_admin), 240_fret_module.sql,
 -- 250_fret_tarifs.sql, 260_fret_factures.sql, 270_fret_clients.sql, et du bucket privé
--- `fret-photos` avec ses politiques (section 7), déjà présents en production.
--- Ne PAS rejouer historique/fret_lot2b.sql pour les obtenir : ce script historique
--- décrit un modèle fret incompatible avec l'actuel (voir README.md).
+-- `fret-photos` (480_fret_photos_bucket.sql ; la section 7 y ajoute une règle).
+-- Ne PAS rejouer historique/fret_lot2b.sql : ce script historique décrit un
+-- modèle fret incompatible avec l'actuel (voir supabase/README.md).
 -- Idempotent.
 -- ============================================================
 

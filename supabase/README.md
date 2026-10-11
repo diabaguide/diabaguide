@@ -7,7 +7,7 @@ Les scripts de ce dossier s'exécutent **à la main**, un par un, dans Supabase 
 - **La base de production a déjà reçu tous les scripts numérotés.** Le numéro indique l'ordre dans lequel ils ont été appliqués la première fois. Il ne veut pas dire « à rejouer ».
 - **Ne jamais utiliser `supabase db push` ni `supabase db reset` sur la production.** Le dossier `supabase/migrations/` n'existe pas, volontairement : ne pas le créer en y copiant ces scripts, sinon la CLI Supabase les appliquerait tous d'un coup.
 - **Avant de relancer un script, lire son en-tête.** La plupart se déclarent « idempotents » (on peut les relancer sans risque), mais pas tous.
-- **Nouveau script** : prendre le numéro suivant (`480_…`, `490_…`), garder les intervalles de 10 et écrire dans l'en-tête de quoi il dépend.
+- **Nouveau script** : prendre le numéro suivant (`490_…`, `500_…`), garder les intervalles de 10 et écrire dans l'en-tête de quoi il dépend.
 - Les dossiers `donnees/`, `controles/` et `historique/` sont hors de la séquence (voir plus bas).
 
 ## Séquence (numéros = ordre d'application)
@@ -51,7 +51,7 @@ Les scripts de ce dossier s'exécutent **à la main**, un par un, dans Supabase 
 | 280 | `280_fret_security.sql` | Protection des données internes | 240, 250 |
 | 290 | `290_admin_update_member.sql` | Modifier nom et téléphone d'un compte | 200 |
 | 300 | `300_update_my_profile.sql` | Modifier son propre profil | 200 |
-| 310 | `310_livreur.sql` | Rôle livreur, `is_fret()` | 030, 240 à 270, bucket `fret-photos` (*) |
+| 310 | `310_livreur.sql` | Rôle livreur, `is_fret()` | 030, 240 à 270, bucket `fret-photos` : 480 (*) |
 | 320 | `320_member_profile.sql` | Profil complet d'un membre | 030, 200, 310 |
 | 330 | `330_expedition_etapes.sql` | Étapes rattachées aux expéditions | 240, 310 |
 | 340 | `340_avatar_change.sql` | Changer sa photo de profil | 290, 300, 320 |
@@ -61,15 +61,16 @@ Les scripts de ce dossier s'exécutent **à la main**, un par un, dans Supabase 
 | 380 | `380_fret_arrivee_prevue.sql` | Date d'arrivée prévisionnelle | 240 |
 | 390 | `390_fret_suivi_public.sql` | Suivi public d'une expédition | 240, 330 |
 | 400 | `400_fret_articles.sql` | Articles détaillés d'une expédition | 030, 240 |
-| 410 | `410_fret_photo.sql` | Photo privée d'une expédition | 240, 310, bucket `fret-photos` (*) |
+| 410 | `410_fret_photo.sql` | Photo privée d'une expédition | 240, 310, bucket `fret-photos` : 480 (*) |
 | 420 | `420_fret_articles_modifier.sql` | Modifier un article | 400 |
 | 430 | `430_fret_etapes_masse.sql` | Mise à jour groupée des étapes | 330 |
 | 440 | `440_fret_shopping_list_link.sql` | Colis ↔ liste d'achats | 160, 240 |
 | 450 | `450_fret_import_expeditions.sql` | Import des expéditions en cours | 330, 380 |
 | 460 | `460_fret_shipsgo_tracking.sql` | Suivi ShipsGo | 240, 330 |
 | 470 | `470_fret_shipsgo_integrity.sql` | Verrouillage des données ShipsGo | 460 |
+| 480 | `480_fret_photos_bucket.sql` | Bucket privé `fret-photos` et ses règles | 020, 310 |
 
-(*) **Point d'attention : le bucket `fret-photos`.** Il existe en production, mais seul le script historique `historique/fret_lot2b.sql` le crée. Sur une base neuve, il faudra le créer à part (bucket privé, 2 Mo, `image/webp` et `image/jpeg`, comme dans la section 5 de ce script) sans rejouer le reste du fichier.
+(*) **Le bucket `fret-photos`** a d’abord été créé par le script historique `historique/fret_lot2b.sql`. Il est maintenant créé par `480_fret_photos_bucket.sql`, sans effet sur la production où il existe déjà. Sur une base neuve, 310 et 410 peuvent s’exécuter avant 480 (une règle de stockage se crée même si le bucket manque) : il suffit de lancer 480 avant d’envoyer la première photo.
 
 ## Hors séquence
 
