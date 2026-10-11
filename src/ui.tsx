@@ -21,6 +21,7 @@ import { ICONS, type IconName } from './icons';
 import { STATUS_STYLE, type Status } from './data';
 import { useStore, type Lang } from './store';
 import { isTeamRole } from './lib/auth';
+import { isSupabaseConfigured } from './lib/supabase';
 
 export function Icon({ name, size = 22, sw = 1.9, fill = 'none' }: { name: IconName; size?: number; sw?: number; fill?: string }) {
   return (
@@ -264,7 +265,9 @@ export function Section({ title, icon, children }: { title: string; icon?: IconN
   const { tr } = useI18n();
   return <section className="card sec"><h2>{icon && <Icon name={icon} size={20} />}{tr(title)}</h2>{children}</section>;
 }
-export const DemoNote = () => { const { tr } = useI18n(); return (<div className="demo"><Icon name="info" size={16} /><span>{tr("Données de démonstration : noms, adresses et numéros fictifs.")}</span></div>); };
+/* Mention « données fictives » : seulement en mode démo (sans Supabase). En
+   production, les fiches sont réelles et la mention serait fausse. */
+export const DemoNote = () => { const { tr } = useI18n(); if (isSupabaseConfigured) return null; return (<div className="demo"><Icon name="info" size={16} /><span>{tr("Données de démonstration : noms, adresses et numéros fictifs.")}</span></div>); };
 
 export function TopBar({ title, back, right }: { title: string; back?: string | -1; right?: ReactNode }) {
   const { tr } = useI18n();
