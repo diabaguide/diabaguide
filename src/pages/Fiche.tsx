@@ -75,7 +75,7 @@ export function Fiche() {
   return (
     <Screen wide>
       <div className="hero-photo">
-        <StoredPhoto bucket="fiche-photos" path={photos[photoIdx]} label={tr(`Photo : ${p.name}`)} h={250} round={0} />
+        <StoredPhoto bucket="fiche-photos" path={photos[photoIdx]} label={tr(`Photo : ${p.name}`)} h={250} round={0} eager />
         <div className="back"><button type="button" className="iconbtn" aria-label={tr("Retour aux résultats")} onClick={() => nav(-1)}><Icon name="chevL" size={24} sw={2.2} /></button></div>
         {photos.length > 0 && <div className="count">{photoIdx + 1} / {photos.length}</div>}
       </div>

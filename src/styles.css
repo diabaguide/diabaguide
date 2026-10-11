@@ -143,6 +143,9 @@ h1, h2, h3, p { margin: 0; }
 .status.big { padding: 6px 12px; font-size: 15px; }
 
 .photo { display: flex; align-items: flex-end; padding: 10px; flex-shrink: 0; color: var(--primary-light); background: repeating-linear-gradient(135deg, #D3DEF2 0 14px, #E3EAF8 14px 28px); }
+/* Variante avec image réelle : l'<img> remplit le cadre, coins arrondis respectés. */
+.photo-img { position: relative; overflow: hidden; }
+.photo-img > img { display: block; }
 .photo > .icon { margin: auto; }
 .photo-cap { display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, .94); border-radius: 8px; padding: 4px 8px; font-size: 12px; font-weight: 600; color: var(--accent); }
 .logo-pill { display: inline-flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 14px; padding: 8px 14px; align-self: flex-start; }
