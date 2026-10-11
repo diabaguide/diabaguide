@@ -4,12 +4,16 @@ import type { FretMode, Warehouse } from './model';
 import { humanize, num, str, warn, type Row } from './internal';
 
 
+/** Entrepôts par ordre alphabétique (français, sans tenir compte de la casse ni des
+    accents) : l'ordre de la base dépend de sa collation. */
+const parNom = <T extends { nom: string }>(list: T[]) => [...list].sort((a, b) => a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' }));
+
 export async function fetchWarehouses(): Promise<Warehouse[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from('warehouses')
     .select('id, nom, usage, actif').eq('actif', true).order('nom');
   if (error) { warn('chargement des entrepôts', error); return []; }
-  return (data as Warehouse[]) ?? [];
+  return parNom((data as Warehouse[]) ?? []);
 }
 
 /** Devis rapide : montant estimé d'un envoi via la fonction calc_fret. */
@@ -41,10 +45,10 @@ export async function fetchAllWarehouses(): Promise<WarehouseFull[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from('warehouses').select('id, nom, usage, addr_cn, addr_fr, ville, actif').order('nom');
   if (error) { warn('chargement des entrepôts', error); return []; }
-  return (data as Row[]).map((r) => ({
+  return parNom((data as Row[]).map((r) => ({
     id: String(r.id), nom: String(r.nom), usage: r.usage as 'fret_express' | 'cargo',
     addrCn: str(r.addr_cn), addrFr: str(r.addr_fr), ville: str(r.ville), actif: Boolean(r.actif),
-  }));
+  })));
 }
 
 export async function saveWarehouse(w: {
