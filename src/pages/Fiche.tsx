@@ -26,8 +26,10 @@ function Specific({ p }: { p: Provider }) {
   const { tr } = useI18n();
   const c = category(p.cat);
   const fields = c?.fields ?? [];
-  // Produits/services : ids du catalogue + éventuel texte libre historique.
-  const listed = [...(p.productTags ?? []).map(tagLabel), ...(p.products ?? []), ...(p.services ?? [])];
+  // Produits/services : ids du catalogue + éventuel texte libre historique,
+  // par ordre alphabétique.
+  const listed = [...(p.productTags ?? []).map(tagLabel), ...(p.products ?? []), ...(p.services ?? [])]
+    .sort((x, y) => x.localeCompare(y, 'fr', { sensitivity: 'base' }));
   const has = (f: string) => fields.includes(f as never);
 
   return (
