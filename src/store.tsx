@@ -46,9 +46,10 @@ interface State {
   installDismissed: boolean;
 }
 
-/** Villes, catégories et quartiers par ordre alphabétique : toutes les listes de l'app suivent cet ordre. */
+/** Villes, catégories, quartiers et produits par ordre alphabétique : toutes les listes de l'app suivent cet ordre. */
 const villesParNom = (cities: CityRef[]) => [...cities].sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
 const quartiersParNom = (districts: District[]) => [...districts].sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
+const produitsParNom = (tags: ProductTag[]) => [...tags].sort((a, b) => a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' }));
 const categoriesParNom = (categories: Category[]) => [...categories].sort((a, b) => a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' }));
 
 const KEY = 'diaba-guide-state-v1';
@@ -175,7 +176,7 @@ function reducer(s: State, a: Action): State {
     }
     case 'localLog': return { ...s, decisions: [a.dec, ...s.decisions] };
     case 'localDelete': return { ...s, providers: s.providers.filter((x) => x.id !== a.id), pendingDeletion: s.pendingDeletion.filter((x) => x.id !== a.id), favorites: s.favorites.filter((x) => x !== a.id) };
-    case 'setTaxonomies': return { ...s, categories: categoriesParNom(a.categories), cities: villesParNom(a.cities), districts: quartiersParNom(a.districts), productTags: a.productTags };
+    case 'setTaxonomies': return { ...s, categories: categoriesParNom(a.categories), cities: villesParNom(a.cities), districts: quartiersParNom(a.districts), productTags: produitsParNom(a.productTags) };
     case 'setProposals': return { ...s, proposals: a.v };
     case 'setDecisions': return { ...s, decisions: a.v };
     case 'dismissInstall': return { ...s, installDismissed: true };
@@ -194,6 +195,7 @@ function load(): State {
       parsed.categories = categoriesParNom(!stored.categories || stored.categories.length === 0 ? STATIC_CATEGORIES : parsed.categories);
       parsed.cities = villesParNom(!stored.cities || stored.cities.length === 0 ? STATIC_CITIES : parsed.cities);
       parsed.districts = quartiersParNom(!stored.districts || stored.districts.length === 0 ? STATIC_DISTRICTS : parsed.districts);
+      parsed.productTags = produitsParNom(parsed.productTags ?? []);
       
       // Les identifiants de ville sont passés en minuscules (« Guangzhou » -> « guangzhou »).
       if (parsed.city) parsed.city = String(parsed.city).toLowerCase();
