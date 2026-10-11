@@ -57,7 +57,7 @@ export function FichesList() {
           <tbody>
             {rows.map((p) => (
               <tr key={p.id}>
-                <td className="thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={48} w={48} round={8} /></td>
+                <td className="thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={48} w={48} round={8} thumb /></td>
                 <td><strong>{p.name}</strong>{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}<div className="small muted zh">{p.cn}</div></td>
                 <td>{tr(catLabel(p.cat))}</td><td>{tr(cityName(p.city))}</td><td>{p.verified || '—'}</td>
                 <td><Link className="link" to={`/equipe/fiches/${p.id}`}>{tr("Modifier")}<Icon name="chevR" size={18} sw={2.4} /></Link></td>
@@ -82,14 +82,14 @@ export function FichesList() {
               <AdminCard key={p.id} toneSeed={undefined}
                 title={<>{p.name}{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}</>}
                 sub={<>{tr(catLabel(p.cat))} · {tr(cityName(p.city))}{p.verified ? ` · ${tr("vérifiée le")} ${p.verified}` : ''}</>}
-                thumb={<span className="acard-thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={46} w={46} round={12} /></span>}
+                thumb={<span className="acard-thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={46} w={46} round={12} thumb /></span>}
                 onOpen={() => nav(`/equipe/fiches/${p.id}`)} />
             ))}
             {pending.map((p) => (
               <AdminCard key={p.id}
                 title={p.name}
                 sub={<>{tr(catLabel(p.cat))} · {tr(cityName(p.city))}</>}
-                thumb={<span className="acard-thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={46} w={46} round={12} /></span>}
+                thumb={<span className="acard-thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={46} w={46} round={12} thumb /></span>}
                 badge={<span className="tag tag-warn"><Icon name="clock" size={15} sw={2.2} />{tr(isAdmin ? 'À valider' : 'Suppression demandée')}</span>}
                 onOpen={() => nav(`/equipe/fiches/${p.id}`)} />
             ))}

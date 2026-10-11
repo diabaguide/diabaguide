@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * Réencodage des photos DÉJÀ enregistrées des fiches (bucket `fiche-photos`).
+ * Optimisation des photos DÉJÀ enregistrées des fiches (bucket `fiche-photos`) :
+ *   1. RÉENCODAGE de l'original : 1280 px au plus, en WebP (ou AVIF) ;
+ *   2. VIGNETTES pour les listes : `<nom>-sm.webp`, 320 px au plus (~10–20 Ko),
+ *      rangées à côté de l'original. L'application les utilise dans Explorer,
+ *      l'accueil, les favoris… et retombe sur l'original si elles manquent.
  *
  * Pourquoi : les photos téléversées avant l'optimisation pèsent ~200 Ko (parfois
- * 300 Ko en JPEG) pour une vignette de 76 px. Ce script les réduit (1280 px au
- * plus) et les réencode en WebP (ou AVIF) pour alléger les pages.
+ * 300 Ko en JPEG) alors que les listes n'en affichent que 76 px.
  *
  * ── Sécurité ────────────────────────────────────────────────────────────────
- *  • Par défaut c'est un ESSAI À BLANC : il télécharge, calcule le gain et
+ *  • Par défaut c'est un ESSAI À BLANC : il télécharge, calcule les gains et
  *    affiche un tableau, sans RIEN écrire. Il faut `--apply` pour agir.
  *  • Les photos d'origine sont CONSERVÉES (sauf `--delete-old`). On envoie de
  *    NOUVEAUX fichiers, puis on remplace les chemins dans `providers.photo_paths`.
@@ -16,10 +19,12 @@
  *    sont supprimés).
  *  • Un journal `outputs/reencode-fiche-photos-<date>.json` garde l'ancien et le
  *    nouveau chemin de chaque fiche : `--rollback=<journal>` remet les anciens.
+ *  • `--thumbs-only` ne crée QUE des vignettes : aucune fiche n'est modifiée,
+ *    aucun original n'est touché. C'est la façon la plus sûre de commencer.
  *  • Seules les photos du bucket `fiche-photos` sont traitées ; les URL http
  *    (photos de démonstration) et les photos déjà légères sont laissées.
  *
- * ── Utilisation ─────────────────────────────────────────────────────────────
+ * ── Utilisation (ordre conseillé) ───────────────────────────────────────────
  *  1. Installer sharp, sans toucher au package.json :
  *       npm install --no-save sharp
  *  2. Donner la clé de service (Supabase → Settings → API → service_role).
@@ -27,13 +32,19 @@
  *       PowerShell :  $env:SUPABASE_SERVICE_ROLE_KEY = "…"
  *       Git Bash   :  export SUPABASE_SERVICE_ROLE_KEY="…"
  *     L'URL du projet est lue dans SUPABASE_URL ou VITE_SUPABASE_URL (.env).
- *  3. Essai à blanc, puis application :
+ *  3. Essai à blanc (ne modifie rien) :
+ *       node scripts/reencode-fiche-photos.mjs --thumbs-only
+ *  4. Créer les vignettes (n'ajoute que des fichiers, ne modifie aucune fiche) :
+ *       node scripts/reencode-fiche-photos.mjs --thumbs-only --apply
+ *  5. Plus tard, si voulu : alléger aussi les originaux et les vignettes qui vont
+ *     avec (essai à blanc, puis un test sur une fiche, puis le reste) :
  *       node scripts/reencode-fiche-photos.mjs
+ *       node scripts/reencode-fiche-photos.mjs --apply --limit=1 --only=<id de fiche>
  *       node scripts/reencode-fiche-photos.mjs --apply
  *
- * Options : --format=webp|avif (AVIF : lancer d'abord supabase/490_photos_avif.sql)
- *           --max-side=1280  --quality=72 (webp) / 50 (avif)  --min-gain=0.2
- *           --limit=N  --only=<id de fiche>  --delete-old  --rollback=<journal>
+ * Options : --thumbs-only  --no-thumbs  --format=webp|avif (AVIF : lancer d'abord
+ *           supabase/490_photos_avif.sql)  --max-side=1280  --quality=72 (webp) / 50 (avif)
+ *           --min-gain=0.2  --limit=N  --only=<id de fiche>  --delete-old  --rollback=<journal>
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
@@ -41,13 +52,21 @@ import { randomUUID } from 'node:crypto';
 /* ───────────────────────── Réglages ───────────────────────── */
 
 const BUCKET = 'fiche-photos';
+const THUMB_MAX_SIDE = 320;
+const THUMB_QUALITY = 70;
+
+/** Même convention que src/lib/photoPaths.ts : `<nom>.<ext>` → `<nom>-sm.webp`. */
+const isThumbPath = (p) => /-sm\.webp$/i.test(p);
+const thumbPath = (p) => (isThumbPath(p) ? p : `${p.replace(/\.[A-Za-z0-9]+$/, '')}-sm.webp`);
 
 function parseArgs(argv) {
-  const o = { apply: false, format: 'webp', maxSide: 1280, quality: null, minGain: 0.2, limit: Infinity, only: null, deleteOld: false, rollback: null };
+  const o = { apply: false, format: 'webp', maxSide: 1280, quality: null, minGain: 0.2, limit: Infinity, only: null, deleteOld: false, rollback: null, thumbsOnly: false, noThumbs: false };
   for (const a of argv) {
     const [k, v] = a.replace(/^--/, '').split('=');
     if (k === 'apply') o.apply = true;
     else if (k === 'delete-old') o.deleteOld = true;
+    else if (k === 'thumbs-only') o.thumbsOnly = true;
+    else if (k === 'no-thumbs') o.noThumbs = true;
     else if (k === 'format') o.format = v;
     else if (k === 'max-side') o.maxSide = Number(v);
     else if (k === 'quality') o.quality = Number(v);
@@ -60,6 +79,8 @@ function parseArgs(argv) {
   if (!['webp', 'avif'].includes(o.format)) throw new Error('--format doit valoir webp ou avif.');
   if (!(o.maxSide >= 200)) throw new Error('--max-side doit être un nombre ≥ 200.');
   if (!(o.minGain >= 0 && o.minGain < 1)) throw new Error('--min-gain doit être entre 0 et 1.');
+  if (o.thumbsOnly && o.noThumbs) throw new Error('--thumbs-only et --no-thumbs s\'excluent.');
+  if (o.thumbsOnly && o.deleteOld) throw new Error('--delete-old n\'a pas de sens avec --thumbs-only (aucun original n\'est remplacé).');
   if (o.quality === null) o.quality = o.format === 'avif' ? 50 : 72;
   return o;
 }
@@ -104,9 +125,13 @@ function makeApi(base, key) {
       if (!r.ok) await fail(`Téléchargement de ${path}`, r);
       return Buffer.from(await r.arrayBuffer());
     },
+    /** Envoie un fichier. Renvoie 'created', ou 'exists' s'il y était déjà (jamais écrasé). */
     async upload(path, buf, contentType) {
       const r = await fetch(`${base}/storage/v1/object/${BUCKET}/${enc(path)}`, { method: 'POST', headers: { ...auth, 'Content-Type': contentType, 'x-upsert': 'false' }, body: buf });
-      if (!r.ok) await fail(`Envoi de ${path}`, r);
+      if (r.ok) return 'created';
+      const text = await r.text().catch(() => '');
+      if (r.status === 409 || /already exists|Duplicate/i.test(text)) return 'exists';
+      throw new Error(`Envoi de ${path} : HTTP ${r.status} ${text.slice(0, 300)}`);
     },
     async remove(paths) {
       if (!paths.length) return;
@@ -142,8 +167,13 @@ async function reencode(sharp, buf, { format, maxSide, quality }) {
   return format === 'avif' ? pipe.avif({ quality, effort: 4 }).toBuffer() : pipe.webp({ quality }).toBuffer();
 }
 
+/** Vignette : toujours en WebP (le nom `-sm.webp` l'exige), 320 px au plus. */
+function makeThumb(sharp, buf) {
+  return sharp(buf, { failOn: 'none' }).rotate().resize({ width: THUMB_MAX_SIDE, height: THUMB_MAX_SIDE, fit: 'inside', withoutEnlargement: true }).webp({ quality: THUMB_QUALITY }).toBuffer();
+}
+
 const ko = (n) => `${Math.round(n / 1024)} Ko`;
-const isStored = (p) => typeof p === 'string' && p !== '' && !/^https?:/i.test(p);
+const isStored = (p) => typeof p === 'string' && p !== '' && !/^https?:/i.test(p) && !isThumbPath(p);
 
 /* ───────────────────────── Retour arrière ───────────────────────── */
 
@@ -177,7 +207,8 @@ async function main() {
     console.log(`Mode : RETOUR ARRIÈRE depuis ${opt.rollback}`);
     return rollback(api, opt.rollback);
   }
-  console.log(`Mode : ${opt.apply ? 'APPLICATION' : 'essai à blanc (rien n\'est écrit)'} · format ${opt.format} · ${opt.maxSide} px · qualité ${opt.quality} · gain minimal ${Math.round(opt.minGain * 100)} %${opt.deleteOld ? ' · SUPPRESSION des anciens fichiers' : ''}`);
+  const quoi = opt.thumbsOnly ? 'vignettes seulement (aucune fiche modifiée)' : `${opt.noThumbs ? 'originaux seulement' : 'originaux + vignettes'} · format ${opt.format} · ${opt.maxSide} px · qualité ${opt.quality} · gain minimal ${Math.round(opt.minGain * 100)} %${opt.deleteOld ? ' · SUPPRESSION des anciens fichiers' : ''}`;
+  console.log(`Mode : ${opt.apply ? 'APPLICATION' : 'essai à blanc (rien n\'est écrit)'} · ${quoi}`);
   if (opt.apply && !local) {
     console.log('Application sur un projet distant : Ctrl+C dans les 5 secondes pour annuler…');
     await new Promise((r) => setTimeout(r, 5000));
@@ -189,14 +220,15 @@ async function main() {
   console.log(`${fiches.length} fiche(s) avec photos enregistrées.\n`);
 
   const journal = [];
-  const tot = { photos: 0, traitees: 0, avant: 0, apres: 0, ignorees: 0, erreurs: 0, conflits: 0 };
+  const tot = { photos: 0, traitees: 0, avant: 0, apres: 0, ignorees: 0, erreurs: 0, conflits: 0, vignettes: 0, vignettesExistantes: 0, vignettesKo: 0 };
   let restantes = opt.limit;
 
   for (const f of fiches) {
     if (restantes <= 0) break;
     const ancien = [...f.photo_paths];
     const nouveau = [...ancien];
-    const crees = [];
+    const crees = [];          // originaux envoyés pour cette fiche
+    const vignettesNeuves = []; // vignettes des NOUVEAUX originaux (à retirer en cas de conflit)
     const remplaces = [];
     for (let i = 0; i < ancien.length && restantes > 0; i++) {
       const p = ancien[i];
@@ -204,17 +236,37 @@ async function main() {
       tot.photos++;
       try {
         const src = await api.download(p);
-        const out = await reencode(sharp, src, opt);
-        if (out.length > src.length * (1 - opt.minGain)) { tot.ignorees++; console.log(`  = ${f.id} · ${p} : ${ko(src.length)} → ${ko(out.length)} (gain insuffisant, laissée)`); continue; }
-        const nouvPath = `${randomUUID()}.${opt.format}`;
-        console.log(`  ${opt.apply ? '→' : '~'} ${f.id} · ${p} : ${ko(src.length)} → ${ko(out.length)} (−${Math.round((1 - out.length / src.length) * 100)} %)`);
-        tot.avant += src.length; tot.apres += out.length; tot.traitees++; restantes--;
-        if (opt.apply) {
-          await api.upload(nouvPath, out, `image/${opt.format}`);
-          crees.push(nouvPath);
-          nouveau[i] = nouvPath;
-          remplaces.push(p);
+        // 1) Original réencodé (sauf --thumbs-only), seulement si le gain est suffisant.
+        let plein = null;
+        if (!opt.thumbsOnly) {
+          const out = await reencode(sharp, src, opt);
+          if (out.length > src.length * (1 - opt.minGain)) { tot.ignorees++; console.log(`  = ${f.id} · ${p} : original ${ko(src.length)} → ${ko(out.length)} (gain insuffisant, laissé)`); }
+          else plein = out;
         }
+        // 2) Vignette (sauf --no-thumbs), faite à partir de la meilleure source.
+        const mini = opt.noThumbs ? null : await makeThumb(sharp, plein ?? src);
+        if (!plein && !mini) continue;
+
+        const nouvPath = plein ? `${randomUUID()}.${opt.format}` : p;
+        const morceaux = [];
+        if (plein) { morceaux.push(`original ${ko(src.length)} → ${ko(plein.length)} (−${Math.round((1 - plein.length / src.length) * 100)} %)`); tot.avant += src.length; tot.apres += plein.length; tot.traitees++; }
+        if (mini) morceaux.push(`vignette ${ko(mini.length)}`);
+        console.log(`  ${opt.apply ? '→' : '~'} ${f.id} · ${p} : ${morceaux.join(' · ')}`);
+        restantes--;
+
+        if (opt.apply) {
+          if (plein) {
+            await api.upload(nouvPath, plein, `image/${opt.format}`);
+            crees.push(nouvPath);
+            nouveau[i] = nouvPath;
+            remplaces.push(p);
+          }
+          if (mini) {
+            const etat = await api.upload(thumbPath(nouvPath), mini, 'image/webp');
+            if (etat === 'created') { tot.vignettes++; tot.vignettesKo += mini.length; if (plein) vignettesNeuves.push(thumbPath(nouvPath)); }
+            else tot.vignettesExistantes++;
+          }
+        } else if (mini) { tot.vignettes++; tot.vignettesKo += mini.length; }
       } catch (e) {
         tot.erreurs++;
         console.log(`  ! ${f.id} · ${p} : ${e.message}`);
@@ -225,19 +277,20 @@ async function main() {
       try { appliquee = await api.swapPaths(f.id, ancien, nouveau); } catch (e) { console.log(`  ! ${f.id} : ${e.message}`); }
       if (appliquee) {
         journal.push({ id: f.id, nom: f.name, ancien, nouveau });
-        if (opt.deleteOld) { try { await api.remove(remplaces); } catch (e) { console.log(`  ! suppression des anciens (${f.id}) : ${e.message}`); } }
+        if (opt.deleteOld) { try { await api.remove(remplaces.flatMap((p) => [p, thumbPath(p)])); } catch (e) { console.log(`  ! suppression des anciens (${f.id}) : ${e.message}`); } }
       } else {
         // Fiche modifiée entre-temps (ou erreur) : on retire les fichiers qu'on vient d'envoyer.
         tot.conflits++;
         console.log(`  ✗ ${f.id} : fiche modifiée entre-temps ou mise à jour refusée, ignorée (nouveaux fichiers retirés).`);
-        try { await api.remove(crees); } catch { /* on ne peut rien de plus */ }
+        try { await api.remove([...crees, ...vignettesNeuves]); } catch { /* on ne peut rien de plus */ }
       }
     }
   }
 
   console.log('\n──────── Bilan ────────');
-  console.log(`Photos examinées : ${tot.photos} · réencodées : ${tot.traitees} · laissées (gain insuffisant) : ${tot.ignorees} · erreurs : ${tot.erreurs}${opt.apply ? ` · fiches en conflit : ${tot.conflits}` : ''}`);
-  if (tot.traitees) console.log(`Poids des photos réencodées : ${ko(tot.avant)} → ${ko(tot.apres)} (−${Math.round((1 - tot.apres / tot.avant) * 100)} %)`);
+  console.log(`Photos examinées : ${tot.photos} · originaux réencodés : ${tot.traitees} · laissés (gain insuffisant) : ${tot.ignorees} · erreurs : ${tot.erreurs}${opt.apply ? ` · fiches en conflit : ${tot.conflits}` : ''}`);
+  if (tot.traitees) console.log(`Poids des originaux réencodés : ${ko(tot.avant)} → ${ko(tot.apres)} (−${Math.round((1 - tot.apres / tot.avant) * 100)} %)`);
+  if (tot.vignettes || tot.vignettesExistantes) console.log(`Vignettes ${opt.apply ? 'créées' : 'à créer'} : ${tot.vignettes}${tot.vignettes ? ` (${ko(tot.vignettesKo)} au total, ~${ko(tot.vignettesKo / tot.vignettes)} chacune)` : ''}${tot.vignettesExistantes ? ` · déjà présentes : ${tot.vignettesExistantes}` : ''}`);
   if (opt.apply && journal.length) {
     await mkdir('outputs', { recursive: true });
     const file = `outputs/reencode-fiche-photos-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;

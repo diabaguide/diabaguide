@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
-import { toWebp } from './image';
+import { optimizeImage, toWebp } from './image';
+import { THUMB_MAX_SIDE, isThumbPath, thumbPath } from './photoPaths';
 
 export type PhotoBucket = 'proposal-photos' | 'fiche-photos' | 'review-photos' | 'fret-photos' | 'avatars';
 
@@ -34,7 +35,20 @@ export async function uploadPhoto(blob: Blob, bucket: PhotoBucket = 'proposal-ph
     }
     return { error: 'L’envoi de la photo a échoué. Réessayez.' };
   }
+  // Photos de fiches : on crée aussi la vignette des listes (au mieux : si elle
+  // échoue, les listes utilisent l’original).
+  if (bucket === 'fiche-photos') await uploadThumb(blob, path);
   return { path };
+}
+
+/** Crée la vignette (WebP, 320 px) d'une photo de fiche. Sans effet sur l'envoi si elle échoue. */
+async function uploadThumb(source: Blob, path: string): Promise<void> {
+  try {
+    const small = await optimizeImage(source, { maxSide: THUMB_MAX_SIDE, quality: 0.7, formats: ['image/webp'], force: true });
+    // Navigateur sans encodeur WebP : pas de vignette (le nom '-sm.webp' exige du WebP).
+    if (small.type !== 'image/webp') return;
+    await supabase!.storage.from('fiche-photos').upload(thumbPath(path), small, { contentType: 'image/webp' });
+  } catch { /* l'original sert de repli */ }
 }
 
 /**
@@ -44,7 +58,8 @@ export async function uploadPhoto(blob: Blob, bucket: PhotoBucket = 'proposal-ph
  */
 export async function removePhoto(path: string | null | undefined, bucket: PhotoBucket): Promise<void> {
   if (!supabase || !path) return;
-  try { await supabase.storage.from(bucket).remove([path]); } catch { /* sans conséquence */ }
+  const aSupprimer = bucket === 'fiche-photos' && !isThumbPath(path) ? [path, thumbPath(path)] : [path];
+  try { await supabase.storage.from(bucket).remove(aSupprimer); } catch { /* sans conséquence */ }
 }
 
 /**
@@ -63,6 +78,9 @@ export const ttlFor = (bucket: PhotoBucket) => (LONG_TTL.includes(bucket) ? 6048
    en arrière ou une nouvelle visite. */
 type UrlEntry = { url: string; exp: number };
 const MEM = new Map<string, UrlEntry>();
+/* Demandes de lien en cours : deux composants qui veulent la même photo au même
+   instant (carte de la liste et carte de la carte) partagent une seule demande. */
+const PENDING = new Map<string, Promise<string | null>>();
 const LS_KEY = 'diaba-photo-urls-v1';
 const MAX_ENTRIES = 400;
 let lsLoaded = false;
@@ -104,9 +122,65 @@ export async function photoUrl(path: string, seconds?: number, bucket: PhotoBuck
   const hit = MEM.get(key);
   // Réutiliser l'URL en cache tant qu'il lui reste plus d'une minute de validité.
   if (hit && hit.exp > Date.now() + 60_000) return hit.url;
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, ttl);
-  if (error || !data) return hit?.url ?? null;
-  MEM.set(key, { url: data.signedUrl, exp: Date.now() + ttl * 1000 - 120_000 });
-  if (persisted(key)) saveCacheSoon();
-  return data.signedUrl;
+  const enCours = PENDING.get(key);
+  if (enCours) return enCours;
+  const demande = (async () => {
+    const { data, error } = await supabase!.storage.from(bucket).createSignedUrl(path, ttl);
+    if (error || !data) return hit?.url ?? null;
+    MEM.set(key, { url: data.signedUrl, exp: Date.now() + ttl * 1000 - 120_000 });
+    if (persisted(key)) saveCacheSoon();
+    return data.signedUrl;
+  })();
+  PENDING.set(key, demande);
+  try { return await demande; } finally { PENDING.delete(key); }
+}
+
+/* ---------- Vignettes (listes) ---------- */
+
+/* Vignettes introuvables : on s'en souvient 1 h (mémoire + localStorage) pour ne pas
+   redemander, à chaque affichage d'une liste, un lien qui échouera. Tant que le
+   script de réencodage n'a pas créé les vignettes, cela évite de doubler les requêtes. */
+const MISS_TTL = 3600_000;
+const MISS_KEY = 'diaba-photo-miss-v1';
+const MISS = new Map<string, number>();
+let missLoaded = false;
+let missTimer: ReturnType<typeof setTimeout> | null = null;
+
+function loadMiss(): void {
+  if (missLoaded) return;
+  missLoaded = true;
+  try {
+    const obj = JSON.parse(localStorage.getItem(MISS_KEY) ?? '{}') as Record<string, number>;
+    const now = Date.now();
+    for (const [k, exp] of Object.entries(obj)) if (exp > now) MISS.set(k, exp);
+  } catch { /* stockage indisponible */ }
+}
+
+/** Note qu'une photo n'a pas (encore) de vignette. */
+export function markThumbMissing(path: string, bucket: PhotoBucket = 'fiche-photos'): void {
+  loadMiss();
+  MISS.set(`${bucket}|${path}`, Date.now() + MISS_TTL);
+  if (missTimer) return;
+  missTimer = setTimeout(() => {
+    missTimer = null;
+    try {
+      const now = Date.now();
+      localStorage.setItem(MISS_KEY, JSON.stringify(Object.fromEntries([...MISS].filter(([, exp]) => exp > now).slice(-500))));
+    } catch { /* quota ou stockage indisponible */ }
+  }, 1500);
+}
+
+/**
+ * Lien de la vignette d'une photo de fiche, ou null si elle n'existe pas (l'appelant
+ * utilise alors l'original). Sans Supabase, pour une URL http ou pour une vignette
+ * déjà : null.
+ */
+export async function photoThumbUrl(path: string, bucket: PhotoBucket = 'fiche-photos'): Promise<string | null> {
+  if (!supabase || /^https?:/i.test(path) || isThumbPath(path)) return null;
+  loadMiss();
+  const miss = MISS.get(`${bucket}|${path}`);
+  if (miss && miss > Date.now()) return null;
+  const url = await photoUrl(thumbPath(path), undefined, bucket);
+  if (!url) markThumbMissing(path, bucket);
+  return url;
 }

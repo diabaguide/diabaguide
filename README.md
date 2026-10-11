@@ -51,9 +51,11 @@ Supabase est la source des comptes et des données métier en production. Le nav
 
 Le schéma fret de référence en production utilise `expeditions` identifiées par `code`, `colis` et `expedition_etapes`. Les scripts SQL sont numérotés dans l’ordre où ils ont été appliqués (`supabase/010_schema.sql` à `supabase/470_fret_shipsgo_integrity.sql`) et s’exécutent à la main dans le SQL Editor : **`supabase/README.md` documente cet ordre, les dépendances et les règles à respecter**. Ce ne sont pas des migrations automatiques : ne jamais utiliser `supabase db push` sur la production. Avant toute intervention, vérifier le schéma réel et l’en-tête du fichier concerné. Ne jamais exécuter les scripts de `supabase/historique/` : ils décrivent un modèle historique incompatible avec le fret actuel. `supabase/README-fret-clients.md` précise d’autres précautions de production.
 
-### Maintenance : réencoder les photos de fiches existantes
+### Maintenance : alléger les photos de fiches existantes
 
-Les photos téléversées avant l’optimisation pèsent environ 200 Ko. `scripts/reencode-fiche-photos.mjs` les réduit (1280 px, WebP ou AVIF). Il fonctionne **par défaut en essai à blanc** (rien n’est écrit), garde les anciens fichiers, ne remplace que les fiches non modifiées entre-temps et écrit un journal permettant le retour arrière (`--rollback`). Il demande la clé `service_role` en variable d’environnement, jamais dans un fichier. Mode d’emploi complet en tête du script.
+Les photos téléversées avant l’optimisation pèsent environ 200 Ko alors que les listes n’en affichent que 76 px. Chaque nouvelle photo de fiche reçoit maintenant sa **vignette** (`<nom>-sm.webp`, 320 px, ~10–15 Ko) à l’envoi, et les listes (Explorer, accueil, favoris, console) l’utilisent ; elles retombent sur l’original si la vignette manque. `scripts/reencode-fiche-photos.mjs` crée les vignettes des photos existantes et peut aussi réencoder les originaux (1280 px, WebP ou AVIF).
+
+Le script fonctionne **par défaut en essai à blanc** (rien n’est écrit). `--thumbs-only --apply` ne fait qu’ajouter des fichiers : aucune fiche ni aucun original n’est modifié, c’est l’étape la plus sûre. Le réencodage des originaux garde les anciens fichiers, ne remplace que les fiches non modifiées entre-temps et écrit un journal permettant le retour arrière (`--rollback`). Il demande la clé `service_role` en variable d’environnement, jamais dans un fichier. Mode d’emploi complet, dans l’ordre conseillé, en tête du script.
 
 ## Déploiement
 
