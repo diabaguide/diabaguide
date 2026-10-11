@@ -9,7 +9,7 @@ import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import { ProfileForms } from '../Account';
 import {
   fetchExpeditions, fetchExpeditionTotaux, fetchTousColis, fetchFactures, fetchVoyageursFret,
-  fetchTarifs, fetchAnnexes, fetchAllWarehouses, fetchTypesMarchandise,
+  fetchTarifs, trierTarifs, fetchAnnexes, fetchAllWarehouses, fetchTypesMarchandise,
   MODE_LABEL, EXPEDITION_STATUT_LABEL, COLIS_STATUT_LABEL, FACTURE_STATUT_LABEL,
   type Expedition, type ExpeditionTotaux, type Colis, type Facture, type VoyageurFret,
   type TarifFret, type TarifAnnexe, type WarehouseFull, type TypeMarchandise,
@@ -332,7 +332,7 @@ export function FretTarifs() {
           <>
             <section className="card stack" style={{ gap: 10 }}>
               <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Fret")}</h2>
-              {tarifs.length === 0 ? <p className="muted">{tr("Aucun tarif en vigueur.")}</p> : tarifs.map((t) => (
+              {tarifs.length === 0 ? <p className="muted">{tr("Aucun tarif en vigueur.")}</p> : trierTarifs(tarifs, types).map((t) => (
                 <div key={t.id} className="row" style={{ justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                   <span>{tr(MODE_LABEL[t.mode])} · <span className="muted">{tr(typeLabel(t.typeMarchandise))}</span></span>
                   <strong>{money(t.prix, t.devise)} {tr(UNITE[t.unite])}</strong>

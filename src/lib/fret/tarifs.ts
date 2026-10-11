@@ -1,6 +1,6 @@
 /* Entrepôts, types de marchandise, tarifs, frais annexes et devis. */
 import { supabase } from '../supabase';
-import type { FretMode, Warehouse } from './model';
+import { MODE_LABEL, type FretMode, type Warehouse } from './model';
 import { humanize, num, str, warn, type Row } from './internal';
 
 
@@ -67,6 +67,14 @@ export async function setWarehouseActif(id: string, actif: boolean): Promise<{ e
   if (!supabase) return {};
   const { error } = await supabase.from('warehouses').update({ actif }).eq('id', id);
   return { error: error ? humanize(error.message) : undefined };
+}
+
+/** Tarifs dans l'ordre où on les lit : libellé du mode, puis libellé du type de
+    marchandise, par ordre alphabétique (français, sans casse ni accents). */
+export function trierTarifs(tarifs: TarifFret[], types: TypeMarchandise[]): TarifFret[] {
+  const fr = (a: string, b: string) => a.localeCompare(b, 'fr', { sensitivity: 'base' });
+  const typeLabel = (code: string) => types.find((t) => t.code === code)?.libelle ?? code;
+  return [...tarifs].sort((a, b) => fr(MODE_LABEL[a.mode], MODE_LABEL[b.mode]) || fr(typeLabel(a.typeMarchandise), typeLabel(b.typeMarchandise)));
 }
 
 export async function fetchTarifs(): Promise<TarifFret[]> {
