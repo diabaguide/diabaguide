@@ -28,7 +28,13 @@ export async function devisFret(
   return data === null || data === undefined ? null : Number(data);
 }
 
-export interface WarehouseFull extends Warehouse { addrCn: string | null; addrFr: string | null; ville: string | null }
+/** Entrepôt complet. `contactsInstalles` vaut false tant que supabase/500_carte_expedition.sql
+    n'a pas été lancé : les champs de contact sont alors vides et ne sont pas écrits. */
+export interface WarehouseFull extends Warehouse {
+  addrCn: string | null; addrFr: string | null; ville: string | null;
+  tel: string | null; bureauNom: string | null; bureauTel: string | null;
+  contactsInstalles: boolean;
+}
 export interface TypeMarchandise { code: string; libelle: string }
 export interface TarifFret { id: string; mode: FretMode; typeMarchandise: string; unite: 'kg' | 'm3' | 'colis' | 'conteneur'; prix: number; devise: string; actif: boolean }
 export interface TarifAnnexe { id: string; categorie: 'stockage' | 'livraison' | 'autre'; libelle: string; prix: number; devise: string; joursGratuits: number | null; zone: string | null; actif: boolean }
@@ -41,26 +47,55 @@ export async function fetchTypesMarchandise(): Promise<TypeMarchandise[]> {
   return ((data as TypeMarchandise[]) ?? []).sort((a, b) => a.libelle.localeCompare(b.libelle, 'fr', { sensitivity: 'base' }));
 }
 
-/** Tous les entrepôts, actifs ou non (pour l'administration). */
-export async function fetchAllWarehouses(): Promise<WarehouseFull[]> {
+const COLS_BASE = 'id, nom, usage, addr_cn, addr_fr, ville, actif';
+const COLS_CONTACTS = ', tel, bureau_nom, bureau_tel';
+const colonneAbsente = (e: { code?: string; message?: string }) => e.code === '42703' || /column .* does not exist/i.test(e.message ?? '');
+
+/** Lit les entrepôts avec leurs contacts ; sans les colonnes de contact (script 500 pas encore
+    lancé), retombe sur les colonnes d'origine pour que rien ne casse. */
+async function lireEntrepots(actifsSeulement: boolean): Promise<WarehouseFull[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase.from('warehouses').select('id, nom, usage, addr_cn, addr_fr, ville, actif').order('nom');
+  const lire = (cols: string) => {
+    const q = supabase!.from('warehouses').select(cols);
+    return (actifsSeulement ? q.eq('actif', true) : q).order('nom');
+  };
+  let contacts = true;
+  let { data, error } = await lire(COLS_BASE + COLS_CONTACTS);
+  if (error && colonneAbsente(error)) { contacts = false; ({ data, error } = await lire(COLS_BASE)); }
   if (error) { warn('chargement des entrepôts', error); return []; }
-  return parNom((data as Row[]).map((r) => ({
+  return parNom(((data ?? []) as unknown as Row[]).map((r) => ({
     id: String(r.id), nom: String(r.nom), usage: r.usage as 'fret_express' | 'cargo',
     addrCn: str(r.addr_cn), addrFr: str(r.addr_fr), ville: str(r.ville), actif: Boolean(r.actif),
+    tel: str(r.tel), bureauNom: str(r.bureau_nom), bureauTel: str(r.bureau_tel),
+    contactsInstalles: contacts,
   })));
 }
 
+/** Tous les entrepôts, actifs ou non (pour l'administration). */
+export const fetchAllWarehouses = (): Promise<WarehouseFull[]> => lireEntrepots(false);
+
+/** Entrepôts actifs, avec adresses et contacts (carte d'expédition). */
+export const fetchWarehousesCarte = (): Promise<WarehouseFull[]> => lireEntrepots(true);
+
 export async function saveWarehouse(w: {
   id: string; nom: string; usage: 'fret_express' | 'cargo'; addrCn?: string; addrFr?: string; ville?: string; actif?: boolean;
+  /** Contacts : écrits seulement si fournis (et si les colonnes existent, voir contactsInstalles). */
+  contacts?: { tel?: string; bureauNom?: string; bureauTel?: string };
 }): Promise<{ error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
-  const { error } = await supabase.from('warehouses').upsert({
+  const c = w.contacts;
+  const base = {
     id: w.id.trim(), nom: w.nom.trim(), usage: w.usage,
     addr_cn: w.addrCn?.trim() || null, addr_fr: w.addrFr?.trim() || null, ville: w.ville?.trim() || null,
     actif: w.actif ?? true,
-  }, { onConflict: 'id' });
+  };
+  const avecContacts = c ? { ...base, tel: c.tel?.trim() || null, bureau_nom: c.bureauNom?.trim() || null, bureau_tel: c.bureauTel?.trim() || null } : base;
+  let { error } = await supabase.from('warehouses').upsert(avecContacts, { onConflict: 'id' });
+  if (error && c && colonneAbsente(error)) {
+    // Script 500 pas encore lancé : l'entrepôt est enregistré sans ses contacts, et on le dit.
+    ({ error } = await supabase.from('warehouses').upsert(base, { onConflict: 'id' }));
+    if (!error) return { error: 'Entrepôt enregistré, mais pas ses contacts : lancez d’abord supabase/500_carte_expedition.sql dans Supabase.' };
+  }
   return { error: error ? humanize(error.message) : undefined };
 }
 export async function setWarehouseActif(id: string, actif: boolean): Promise<{ error?: string }> {

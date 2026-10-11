@@ -7,7 +7,7 @@ import { humanize, str, toColis, warn, type Row } from './internal';
 export async function fetchColis(expeditionCode?: string): Promise<Colis[]> {
   if (!supabase) return [];
   let q = supabase.from('colis')
-    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
+    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at, profile_id')
     .order('created_at', { ascending: false });
   q = expeditionCode ? q.eq('expedition_code', expeditionCode) : q.is('expedition_code', null);
   const { data, error } = await q;
@@ -19,7 +19,7 @@ export async function fetchColis(expeditionCode?: string): Promise<Colis[]> {
 export async function fetchTousColis(profileId?: string): Promise<Colis[]> {
   if (!supabase) return [];
   let q = supabase.from('colis')
-    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
+    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at, profile_id')
     .order('created_at', { ascending: false });
   if (profileId) q = q.eq('profile_id', profileId);
   const { data, error } = await q;
@@ -121,7 +121,7 @@ export async function annoncerColis(c: {
 export async function fetchMesColis(): Promise<Colis[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from('colis')
-    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
+    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at, profile_id')
     .order('created_at', { ascending: false });
   if (error) { warn('chargement de mes colis', error); return []; }
   return (data as Row[]).map(toColis);
@@ -131,7 +131,7 @@ export async function fetchMesColis(): Promise<Colis[]> {
 export async function fetchColisByCode(code: string): Promise<Colis | null> {
   if (!supabase) return null;
   const { data, error } = await supabase.from('colis')
-    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at')
+    .select('code, expedition_code, client_nom, client_tel, marque_colis, ville_depart, caracteristiques, mode, type_marchandise, description, poids_kg, volume_m3, statut, recu_chine_le, created_at, profile_id')
     .eq('code', code).maybeSingle();
   if (error) { warn('chargement du colis', error); return null; }
   return data ? toColis(data as Row) : null;

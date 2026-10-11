@@ -127,6 +127,12 @@ export function MesEnvois() {
           <Button to="/suivi" icon="route">{tr("Suivre un envoi")}</Button>
         </section>
 
+        <section className="card stack freight-section" style={{ gap: 12 }}>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Ma carte d’expédition")}</h2>
+          <p className="small muted" style={{ margin: 0 }}>{tr("La carte à coller sur vos colis pour l’entrepôt en Chine : votre nom, votre numéro de client et un code-barres.")}</p>
+          <Button to="/mes-envois/carte" icon="download" kind="s">{tr("Créer ma carte")}</Button>
+        </section>
+
         {/* ---- Devis rapide ---- */}
         <section className="card stack freight-section freight-estimate" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Estimer le prix")}</h2>

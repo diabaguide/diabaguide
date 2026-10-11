@@ -79,7 +79,7 @@ export interface SuiviPublic {
 }
 export interface Colis {
   code: string; expeditionCode: string | null; clientNom: string | null; clientTel: string | null;
-  codeClient: string | null; marqueColis: string | null; villeDepart: string | null; caracteristiques: Caracteristique[]; mode: FretMode; typeMarchandise: string | null;
+  profileId: string | null; codeClient: string | null; marqueColis: string | null; villeDepart: string | null; caracteristiques: Caracteristique[]; mode: FretMode; typeMarchandise: string | null;
   description: string | null; poidsKg: number | null; volumeM3: number | null;
   statut: ColisStatut; recuChineLe: string | null; createdAt: string;
 }

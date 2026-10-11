@@ -620,3 +620,13 @@ body { -webkit-font-smoothing: antialiased; }
 .fab:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 @media (max-width: 1023px) { .fab { bottom: 84px; } }
 tr.clickable:hover { background: var(--surface-2, rgba(0, 0, 0, .04)); }
+
+/* Carte d'expédition : aperçu de la carte à gauche, réglages à droite (une colonne sur mobile). */
+.carte-layout { display: grid; gap: 20px; grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 900px) { .carte-layout { grid-template-columns: minmax(280px, 420px) 1fr; } }
+.carte-preview { display: block; width: 100%; height: auto; max-width: 420px; margin: 0 auto; border-radius: 12px; border: 1px solid var(--border, #d9d9d9); background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .08); }
+.carte-preview-vide { aspect-ratio: 1040 / 1512; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: var(--muted); }
+.carte-liste { margin: 0; display: grid; gap: 8px; }
+.carte-liste > div { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.carte-liste dt { color: var(--muted); font-size: 14px; }
+.carte-liste dd { margin: 0; font-weight: 700; }
