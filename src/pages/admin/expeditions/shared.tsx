@@ -13,10 +13,12 @@ export interface Notifier {
 export const money = (n: number, d = 'FCFA') => `${n.toLocaleString('fr-FR')} ${d === 'XOF' ? 'FCFA' : d}`;
 
 export const MODE_OPTIONS = (Object.keys(MODE_LABEL) as FretMode[]).map((v) => ({ v, l: MODE_LABEL[v] }));
+/** Types de marchandise, par ordre alphabétique. */
 export const TYPES = [
-  { v: 'general', l: 'Marchandise générale' }, { v: 'textile', l: 'Textile et confection' },
-  { v: 'electronique', l: 'Électronique et téléphones' }, { v: 'batterie', l: 'Batteries et produits à risque' },
-  { v: 'cosmetique', l: 'Cosmétiques' }, { v: 'liquide', l: 'Liquides' }, { v: 'alimentaire', l: 'Produits alimentaires' },
+  { v: 'batterie', l: 'Batteries et produits à risque' }, { v: 'cosmetique', l: 'Cosmétiques' },
+  { v: 'electronique', l: 'Électronique et téléphones' }, { v: 'liquide', l: 'Liquides' },
+  { v: 'general', l: 'Marchandise générale' }, { v: 'alimentaire', l: 'Produits alimentaires' },
+  { v: 'textile', l: 'Textile et confection' },
 ];
 /** Les écrans servent dans deux espaces : la console équipe (/equipe) et
     l'espace fret (/fret). Les liens restent dans l'espace d'origine. */
