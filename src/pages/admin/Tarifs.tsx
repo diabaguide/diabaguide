@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Button, Field, Icon, Select } from '../../ui';
 import {
   fetchAllWarehouses, saveWarehouse, setWarehouseActif,
-  fetchTarifs, createTarif, deleteTarif,
+  fetchTarifs, trierTarifs, createTarif, deleteTarif,
   fetchAnnexes, createAnnexe, deleteAnnexe, fetchTypesMarchandise,
   MODE_LABEL, MODE_UNITE,
   type WarehouseFull, type TarifFret, type TarifAnnexe, type TypeMarchandise, type FretMode,
@@ -142,7 +142,7 @@ export function Tarifs() {
             <div className="table dense"><table>
               <thead><tr><th>{tr("Mode")}</th><th>{tr("Type")}</th><th>{tr("Prix")}</th><th /></tr></thead>
               <tbody>
-                {tarifs.map((t) => (
+                {trierTarifs(tarifs, types).map((t) => (
                   <tr key={t.id} style={{ opacity: t.actif ? 1 : 0.55 }}>
                     <td className="small">{tr(MODE_LABEL[t.mode])}</td>
                     <td className="small">{tr(typeLabel(t.typeMarchandise))}</td>
