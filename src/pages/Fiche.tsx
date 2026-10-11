@@ -80,9 +80,12 @@ export function Fiche() {
         {photos.length > 0 && <div className="count">{photoIdx + 1} / {photos.length}</div>}
       </div>
       <main className="main fiche-main" style={{ gap: 18, paddingTop: 14 }}>
+        {/* Colonne principale (ordinateur). Sur mobile, les deux colonnes sont
+            aplaties et l'ordre global (order 1→11) donne l'enchaînement voulu :
+            en-tête, actions, adresse, infos, accès, coordonnées, avis. */}
         <div className="fiche-col">
         {photos.length > 1 && (
-          <div style={{ order: 0 }}>
+          <div style={{ order: 1 }}>
             <div className="row photo-thumbs">
               {photos.map((path, i) => (
                 <button key={path} type="button" className={`photo-thumb ${i === photoIdx ? 'on' : ''}`} aria-pressed={i === photoIdx}
@@ -93,65 +96,69 @@ export function Fiche() {
             </div>
           </div>
         )}
-        <div className="stack" style={{ order: 1 }}>
-        <div className="stack" style={{ gap: 8 }}>
-          <div className="row wrap"><Tag icon={catIcon(p.cat)}>{tr(catLabel(p.cat))}</Tag><span className="small muted">{tr(p.district)}, {tr(cityName(p.city))}</span></div>
+        {/* En-tête compact : catégorie + lieu sur une ligne, pastille vérifiée à droite. */}
+        <div className="stack" style={{ order: 2, gap: 8 }}>
+          <div className="row wrap fiche-head" style={{ justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+            <span className="row wrap" style={{ gap: 8, alignItems: 'center' }}><Tag icon={catIcon(p.cat)}>{tr(catLabel(p.cat))}</Tag><span className="small muted">{tr(p.district)}, {tr(cityName(p.city))}</span></span>
+            <Verified date={p.verified} />
+          </div>
           <h1 className="display" style={{ fontSize: 31, lineHeight: 1.1 }}>{p.name}</h1>
           <div className="zh" style={{ fontSize: 19, fontWeight: 500 }}>{p.cn}</div>
-          <div className="row wrap"><Verified /><span className="small muted">{tr("Dernière vérification : ")}{p.verified}</span></div>
           <p>{p.desc}</p>
           <DemoNote />
         </div>
-        </div>
-        <div style={{ order: 5 }}>
-        <Section title={tr("Avis des voyageurs")} icon="star">
-          <ReviewsSection providerId={p.id} />
-        </Section>
-        </div>
-        <div className="stack" style={{ order: 6 }}>
-        <Specific p={p} />
-        </div>
-        <div style={{ order: 7 }}>
+        {/* Adresse en chinois : remontée juste après les actions (cœur du guide). */}
+        <div style={{ order: 6 }}>
         <Section title={tr("Adresse en chinois")} icon="pin">
           <div className="zhaddr" lang="zh-Hans">{p.addrCn}</div>
           <div className="small muted">{p.addrFr}</div>
           <div className="grid2">
             <Button kind="s" icon="copy" className="btn-tog" onClick={async () => setMsg((await copy(p.addrCn)) ? 'Adresse chinoise copiée.' : 'Copie impossible : sélectionnez le texte.')}>{tr("Copier l’adresse")}</Button>
-            <Button to={`/adresses/${p.id}/chauffeur`} icon="truck">{tr("Montrer au chauffeur")}</Button>
+            <Button to={`/adresses/${p.id}/carte`} kind="s" icon="share">{tr("Carte de visite à partager")}</Button>
           </div>
-          <Button to={`/adresses/${p.id}/carte`} kind="s" icon="share">{tr("Carte de visite à partager")}</Button>
         </Section>
         </div>
+        <div className="stack" style={{ order: 7 }}>
+        <Specific p={p} />
+        </div>
         <div style={{ order: 8 }}>
-        <Section title={tr("Accès")} icon="route">
+        <Section title={tr("Accès")} icon="route" collapsible>
           <KV k={tr("Entrée exacte")}>{p.entree}</KV>
           <KV k={tr("Repères utiles")}>{p.reperes}</KV>
           {p.metro ? <div className="notice"><Icon name="train" size={22} /><div><div className="small muted" style={{ fontWeight: 700 }}>{tr("Métro et gare")}</div>{p.metro}</div></div> : <KV k={tr("Métro et gare")} />}
         </Section>
         </div>
+        <div style={{ order: 10 }}>
+        <Section title={tr("Avis des voyageurs")} icon="star" collapsible>
+          <ReviewsSection providerId={p.id} />
+        </Section>
+        </div>
         </div>
         <div className="fiche-col fiche-side">
-        <div style={{ order: 3 }}>
-        <div className="grid2">
-          <button type="button" className={`btn btn-tog ${fav ? 'on' : ''}`} aria-pressed={fav}
-            onClick={() => { d({ t: 'fav', id: p.id }); setMsg(fav ? 'Retiré de vos favoris.' : 'Ajouté à vos favoris.'); }}><Icon name="heart" size={20} />{tr(fav ? 'Favori ajouté' : 'Ajouter aux favoris')}</button>
-          <button type="button" className={`btn btn-tog ${dl ? 'on' : ''}`} aria-pressed={dl}
-            onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Cette fiche est maintenant disponible hors connexion, sans qu’aucun fichier ne soit enregistré sur l’appareil.'); }}><Icon name="download" size={20} />{tr(dl ? 'Disponible hors connexion' : 'Rendre disponible hors connexion')}</button>
-          <button type="button" className="btn btn-tog" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
-          <AddToListButton providerId={p.id} providerName={p.name} />
-          <Link to={`/adresses/${p.id}/signaler`} className="btn btn-tog"><Icon name="edit" size={20} />{tr("Proposer une correction")}</Link>
-        </div>
-        </div>
-        {msg && <div style={{ order: 4 }}><div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(msg)}</span></div></div>}
-        <div className="stack" style={{ order: 2 }}>
-        <div className="stack">
-          <Button to={`/adresses/${p.id}/contact`} icon={p.cat === 'hotel' || p.cat === 'resto' ? 'phone' : 'chat'}>{tr(ctaLabel(p))}</Button>
-          {/* Coordonnées réelles, pas l'adresse (fictive en démonstration, donc non géolocalisable). */}
+        {/* Deux actions principales (appeler / montrer au chauffeur) + itinéraire. */}
+        <div className="stack" style={{ order: 3 }}>
+          <div className="fiche-primary">
+            {p.tel
+              ? <Button href={tel(p)} icon="phone">{tr("Appeler")}</Button>
+              : <Button to={`/adresses/${p.id}/contact`} icon="chat">{tr(ctaLabel(p))}</Button>}
+            <Button to={`/adresses/${p.id}/chauffeur`} kind="g" icon="truck">{tr("Montrer au chauffeur")}</Button>
+          </div>
+          {/* Itinéraire depuis les coordonnées réelles (l'adresse peut être fictive en démo). */}
           <Button kind="s" icon="route" href={`https://www.openstreetmap.org/directions?to=${p.lat}%2C${p.lng}`}>{tr("Ouvrir l’itinéraire")}</Button>
         </div>
+        {/* Actions secondaires : une rangée d'icônes compactes. */}
+        <div className="fiche-actions" style={{ order: 4 }}>
+          <button type="button" className={`fiche-ibtn ${fav ? 'on-fav' : ''}`} aria-pressed={fav} aria-label={tr(fav ? 'Retirer des favoris' : 'Ajouter aux favoris')}
+            onClick={() => { d({ t: 'fav', id: p.id }); setMsg(fav ? 'Retiré de vos favoris.' : 'Ajouté à vos favoris.'); }}><Icon name="heart" size={20} fill={fav ? 'currentColor' : 'none'} sw={fav ? 0 : 1.9} />{tr("Favori")}</button>
+          <button type="button" className={`fiche-ibtn ${dl ? 'on' : ''}`} aria-pressed={dl} aria-label={tr(dl ? 'Disponible hors connexion' : 'Rendre disponible hors connexion')}
+            onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Cette fiche est maintenant disponible hors connexion, sans qu’aucun fichier ne soit enregistré sur l’appareil.'); }}><Icon name={dl ? 'check' : 'download'} size={20} />{tr("Hors-ligne")}</button>
+          <button type="button" className="fiche-ibtn" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
+          <AddToListButton providerId={p.id} providerName={p.name} variant="icon" />
+          <Link to={`/adresses/${p.id}/signaler`} className="fiche-ibtn"><Icon name="edit" size={20} />{tr("Corriger")}</Link>
         </div>
+        {msg && <div style={{ order: 5 }}><div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(msg)}</span></div></div>}
         <div style={{ order: 9 }}>
-        <Section title={tr("Coordonnées")} icon="chat">
+        <Section title={tr("Coordonnées")} icon="chat" collapsible>
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <KV k={tr("Téléphone")}>{p.tel}</KV>
             {p.tel && <Button href={tel(p)} icon="phone" full={false}>{tr("Appeler")}</Button>}
@@ -168,9 +175,9 @@ export function Fiche() {
           )}
         </Section>
         </div>
-        <div style={{ order: 10 }}>
+        <div style={{ order: 11 }}>
         <div className="row" style={{ justifyContent: 'center' }}>
-          <Link className="link" style={{ color: 'var(--danger)' }} to={`/adresses/${p.id}/signaler`}><Icon name="flag" size={18} />{tr(" Signaler un problème")}</Link>
+          <Link className="link" style={{ color: 'var(--danger)' }} to={`/adresses/${p.id}/signaler`}><Icon name="flag" size={18} />{tr(" Signaler un problème")}</Link>
         </div>
         </div>
         </div>

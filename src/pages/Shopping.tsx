@@ -338,7 +338,7 @@ export function ShoppingListPage() {
 /* ==================================================================== */
 /* Depuis une fiche : ajouter le fournisseur à une liste                 */
 /* ==================================================================== */
-export function AddToListButton({ providerId, providerName }: { providerId: string; providerName: string }) {
+export function AddToListButton({ providerId, providerName, variant = 'button' }: { providerId: string; providerName: string; variant?: 'button' | 'icon' }) {
   const { tr } = useI18n();
   const { s } = useStore();
   const [open, setOpen] = useState(false);
@@ -375,7 +375,9 @@ export function AddToListButton({ providerId, providerName }: { providerId: stri
 
   return (
     <>
-      <Button kind="s" icon="list" onClick={ouvrir}>{tr("Ajouter à ma liste d'achats")}</Button>
+      {variant === 'icon'
+        ? <button type="button" className="fiche-ibtn" onClick={ouvrir}><Icon name="list" size={20} />{tr("Liste")}</button>
+        : <Button kind="s" icon="list" onClick={ouvrir}>{tr("Ajouter à ma liste d'achats")}</Button>}
       {open && (
         <div className="overlay" onClick={() => setOpen(false)}>
           <div className="dialog" role="dialog" aria-modal="true" aria-label={tr("Ajouter à ma liste d'achats")} onClick={(e) => e.stopPropagation()}>

@@ -51,7 +51,7 @@ const checks = [
   ['application des filtres accessible sur mobile', () => files.search.includes('className="filter-apply"') && files.styles.includes('.filter-apply { position: sticky;')],
   ['libellé ville unique dans les filtres mobiles', () => files.search.includes('wide && <h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>')],
   ['contact accessible depuis les résultats', () => files.search.includes('className="rcard-contact"') && files.search.includes('/contact')],
-  ['actions principales visibles avant les avis sur une fiche', () => files.fiche.includes('className="stack" style={{ order: 2 }}') && files.fiche.includes('title={tr("Avis des voyageurs")}') && files.styles.includes('.fiche-side { display: contents;')],
+  ['actions principales et avis repliables sur une fiche', () => files.fiche.includes('className="fiche-primary"') && files.fiche.includes('title={tr("Avis des voyageurs")} icon="star" collapsible') && files.styles.includes('.fiche-side { display: contents;')],
   ['progression des achats visible dans une liste', () => files.shopping.includes('className="shopping-progress"') && files.shopping.includes('aria-label={tr("Progression des achats")}') && files.styles.includes('.shopping-progress')],
   ['partage du suivi public accessible', () => files.suivi.includes('className="tracking-share card') && files.suivi.includes('navigator.share') && files.suivi.includes('Copier le lien')],
   ['envois prioritaires avant les formulaires fret', () => files.fret.includes('mes-envois-main') && files.fret.includes('freight-tracking') && files.fret.includes('freight-estimate') && files.styles.includes('.mes-envois-main .freight-public-tracking { order: 1;')],

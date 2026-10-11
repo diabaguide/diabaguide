@@ -210,6 +210,29 @@ h1, h2, h3, p { margin: 0; }
 }
 details.qr { border: 1.5px solid var(--chip-border); border-radius: 12px; padding: 0 14px; }
 details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 52px; font-weight: 600; cursor: pointer; }
+
+/* Fiche : actions principales (2 boutons côte à côte) + rangée d'icônes secondaires. */
+.fiche-primary { display: flex; gap: 10px; }
+.fiche-primary .btn { flex: 1; padding-inline: 12px; }
+.fiche-actions { display: flex; gap: 6px; }
+.fiche-ibtn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 60px; padding: 8px 2px; border: 1px solid var(--card-line); border-radius: 13px; background: var(--surface); color: var(--muted); font: inherit; font-size: 11px; font-weight: 600; white-space: nowrap; text-decoration: none; cursor: pointer; transition: all .15s; }
+.fiche-ibtn .icon { color: var(--accent); }
+.fiche-ibtn:hover, .fiche-ibtn:active { border-color: var(--primary-light); background: var(--info-bg); }
+.fiche-ibtn.on-fav, .fiche-ibtn.on-fav .icon { color: var(--danger); }
+.fiche-ibtn.on { color: var(--ok); background: var(--ok-bg); border-color: transparent; }
+.fiche-ibtn.on .icon { color: var(--ok); }
+
+/* Sections repliables (Accès, Coordonnées, Avis). */
+.sec-fold { padding: 0; overflow: hidden; }
+.sec-fold summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px; min-height: 56px; cursor: pointer; list-style: none; }
+.sec-fold summary::-webkit-details-marker { display: none; }
+.sec-fold summary .sec-sum { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; }
+.sec-fold summary .sec-note { font-weight: 500; }
+.sec-fold summary > .icon { color: var(--muted); transform: rotate(90deg); transition: transform .2s; flex-shrink: 0; }
+.sec-fold[open] summary > .icon { transform: rotate(-90deg); }
+.sec-fold summary:focus-visible { outline: 3px solid var(--gold-fill); outline-offset: -3px; border-radius: 18px; }
+.sec-fold .sec-body { display: flex; flex-direction: column; gap: 12px; padding: 0 16px 16px; }
+
 .driver { min-height: 100dvh; background: var(--primary); color: #fff; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 .driver .lbl { font-size: 13px; font-weight: 700; letter-spacing: 1px; color: var(--gold-fill); }
 .driver .iconbtn { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .6); }
