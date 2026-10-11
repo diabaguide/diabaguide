@@ -1,4 +1,11 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
+
+/** Contenu de tous les fichiers d'un dossier découpé en modules, mis bout à bout. */
+const readDir = async (dir) => {
+  const url = new URL(dir, import.meta.url);
+  const names = (await readdir(url)).filter((name) => /\.tsx?$/.test(name)).sort();
+  return (await Promise.all(names.map((name) => readFile(new URL(name, url), 'utf8')))).join('\n');
+};
 
 const files = {
   ui: await readFile(new URL('../src/ui.tsx', import.meta.url), 'utf8'),
@@ -13,7 +20,7 @@ const files = {
   main: await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
   seal: await readFile(new URL('../src/sceau.css', import.meta.url), 'utf8'),
   vite: await readFile(new URL('../vite.config.ts', import.meta.url), 'utf8'),
-  adminExpeditions: await readFile(new URL('../src/pages/admin/Expeditions.tsx', import.meta.url), 'utf8'),
+  adminExpeditions: await readDir('../src/pages/admin/expeditions/'),
   importMigration: await readFile(new URL('../supabase/450_fret_import_expeditions.sql', import.meta.url), 'utf8').catch(() => ''),
 };
 

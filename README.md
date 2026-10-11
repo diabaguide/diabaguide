@@ -43,7 +43,7 @@ npm audit --audit-level=moderate
 - Module fret : expéditions, colis associés aux voyageurs, étapes, factures, suivi public et intégration ShipsGo côté serveur.
 - Pages publiques de connexion, inscription, récupération de mot de passe et suivi d’expédition.
 
-Les routes et gardes d’accès sont définis dans `src/App.tsx`; la session et l’état partagé sont gérés dans `src/store.tsx`. Les composants du fret se trouvent dans `src/pages/Fret.tsx` et `src/pages/admin/Expeditions.tsx`.
+Les routes et gardes d’accès sont définis dans `src/App.tsx`; la session et l’état partagé sont gérés dans `src/store.tsx`. Les composants du fret se trouvent dans `src/pages/Fret.tsx` (espace voyageur et livreur) et `src/pages/admin/expeditions/` (liste et détail des expéditions) ; l’accès aux données du fret est dans `src/lib/fret/` (un fichier par domaine : expéditions, colis, tarifs, factures, ShipsGo).
 
 ## Données et sécurité
 

@@ -1,12 +1,18 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { test } from 'node:test';
 
 const root = new URL('../', import.meta.url);
+/** Contenu de tous les fichiers d'un dossier découpé en modules, mis bout à bout. */
+const readDir = async (dir) => {
+  const url = new URL(dir, root);
+  const names = (await readdir(url)).filter((name) => /\.tsx?$/.test(name)).sort();
+  return (await Promise.all(names.map((name) => readFile(new URL(name, url), 'utf8')))).join('\n');
+};
 const [catalog, fret, detail] = await Promise.all([
   readFile(new URL('src/i18n/messages.json', root), 'utf8').then(JSON.parse),
-  readFile(new URL('src/lib/fret.ts', root), 'utf8'),
-  readFile(new URL('src/pages/admin/Expeditions.tsx', root), 'utf8'),
+  readDir('src/lib/fret/'),
+  readDir('src/pages/admin/expeditions/'),
 ]);
 
 const keys = [

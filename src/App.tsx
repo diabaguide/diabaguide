@@ -41,8 +41,8 @@ const AdminList = lazy(() => import('./pages/admin/Admin').then(m => ({ default:
 const AdminVerify = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminVerify })));
 const AdminHistory = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminHistory })));
 const FichesList = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.FichesList })));
-const ExpeditionsList = lazy(() => import('./pages/admin/Expeditions').then(m => ({ default: m.ExpeditionsList })));
-const ExpeditionDetail = lazy(() => import('./pages/admin/Expeditions').then(m => ({ default: m.ExpeditionDetail })));
+const ExpeditionsList = lazy(() => import('./pages/admin/expeditions').then(m => ({ default: m.ExpeditionsList })));
+const ExpeditionDetail = lazy(() => import('./pages/admin/expeditions').then(m => ({ default: m.ExpeditionDetail })));
 const Tarifs = lazy(() => import('./pages/admin/Tarifs').then(m => ({ default: m.Tarifs })));
 const FicheEdit = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.FicheEdit })));
 const Deletions = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.Deletions })));
