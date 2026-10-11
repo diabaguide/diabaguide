@@ -90,7 +90,7 @@ export function Fiche() {
               {photos.map((path, i) => (
                 <button key={path} type="button" className={`photo-thumb ${i === photoIdx ? 'on' : ''}`} aria-pressed={i === photoIdx}
                   aria-label={tr(`Photo ${i + 1}`)} onClick={() => setPhotoIdx(i)}>
-                  <StoredPhoto bucket="fiche-photos" path={path} label={tr(`Photo ${i + 1}`)} h={72} w={72} round={10} />
+                  <StoredPhoto bucket="fiche-photos" path={path} label={tr(`Photo ${i + 1}`)} h={72} w={72} round={10} thumb />
                 </button>
               ))}
             </div>

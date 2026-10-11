@@ -14,7 +14,7 @@ export function useWide() {
   }, []);
   return wide;
 }
-import { photoUrl, uploadPhoto, removePhoto, type PhotoBucket } from './lib/photos';
+import { photoUrl, photoThumbUrl, markThumbMissing, uploadPhoto, removePhoto, type PhotoBucket } from './lib/photos';
 import { compressImage } from './lib/image';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ICONS, type IconName } from './icons';
@@ -77,9 +77,13 @@ export function Logo({ height = 40, tail }: { height?: number; tail?: string }) 
 
 /* Photo privée du bucket Supabase : URL temporaire ; emplacement rayé si absente ou illisible.
    Un chemin déjà en http(s) (données de démonstration) est utilisé tel quel, sans passer par Supabase. */
-export function StoredPhoto({ path, label, h, w, round, bucket, eager }: { path?: string; label: string; h?: number; w?: number | string; round?: number; bucket?: PhotoBucket; eager?: boolean }) {
+export function StoredPhoto({ path, label, h, w, round, bucket, eager, thumb }: { path?: string; label: string; h?: number; w?: number | string; round?: number; bucket?: PhotoBucket; eager?: boolean; thumb?: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [url, setUrl] = useState<string | undefined>(path?.startsWith('http') ? path : undefined);
+  // `thumb` : affichage en liste. On prend la vignette (légère) des photos de fiches si
+  // elle existe, sinon l'original. Sans effet pour les autres buckets.
+  const wantThumb = !!thumb && bucket === 'fiche-photos';
+  const [isThumb, setIsThumb] = useState(false);
   // Chargement différé : on ne demande l'URL signée (ni ne télécharge l'image)
   // qu'à l'approche de l'écran. `eager` (ex. photo d'en-tête) charge tout de suite.
   const [near, setNear] = useState(!!eager);
@@ -95,12 +99,29 @@ export function StoredPhoto({ path, label, h, w, round, bucket, eager }: { path?
   }, [near]);
   useEffect(() => {
     let live = true;
-    if (path?.startsWith('http')) { setUrl(path); return; }
+    if (path?.startsWith('http')) { setUrl(path); setIsThumb(false); return; }
     setUrl(undefined);
-    if (near && path) photoUrl(path, undefined, bucket).then((u) => { if (live && u) setUrl(u); });
+    setIsThumb(false);
+    if (near && path) {
+      void (async () => {
+        if (wantThumb) {
+          const t = await photoThumbUrl(path, bucket);
+          if (live && t) { setUrl(t); setIsThumb(true); return; }
+        }
+        const u = await photoUrl(path, undefined, bucket);
+        if (live && u) setUrl(u);
+      })();
+    }
     return () => { live = false; };
-  }, [path, bucket, near]);
-  return <Photo label={label} h={h} w={w} round={round} src={url} eager={eager} rootRef={rootRef} />;
+  }, [path, bucket, near, wantThumb]);
+  // Vignette annoncée mais introuvable (lien valide, fichier absent) : on retombe sur l'original.
+  const onError = () => {
+    if (!isThumb || !path) return;
+    markThumbMissing(path, bucket);
+    setIsThumb(false);
+    void photoUrl(path, undefined, bucket).then((u) => { if (u) setUrl(u); });
+  };
+  return <Photo label={label} h={h} w={w} round={round} src={url} eager={eager} rootRef={rootRef} onError={isThumb ? onError : undefined} />;
 }
 
 /** Photo de profil : l'image si elle existe, sinon les initiales. */
@@ -160,13 +181,13 @@ export function AvatarPicker({ path, name, onChange, onError }: {
 
 /* Emplacement photo. Avec une source : vrai <img> (chargement différé par le
    navigateur + décodage asynchrone) ; `eager` charge en priorité (en-tête). */
-export function Photo({ label, h = 120, w, round = 14, src, eager, rootRef }: { label: string; h?: number; w?: number | string; round?: number; src?: string; eager?: boolean; rootRef?: Ref<HTMLDivElement> }) {
+export function Photo({ label, h = 120, w, round = 14, src, eager, rootRef, onError }: { label: string; h?: number; w?: number | string; round?: number; src?: string; eager?: boolean; rootRef?: Ref<HTMLDivElement>; onError?: () => void }) {
   const { tr } = useI18n();
   const small = h < 110;
   if (src) {
     return (
       <div ref={rootRef} role="img" aria-label={label} className="photo photo-img" style={{ height: h, width: w ?? '100%', borderRadius: round }}>
-        <img src={src} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async"
+        <img src={src} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" onError={onError}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         {!small && <span className="photo-cap" style={{ position: 'relative' }}><Icon name="image" size={14} />{tr(label)}</span>}
       </div>

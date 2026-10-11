@@ -24,7 +24,7 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
           au-dessus et gardent leur propre clic. */}
       <div className="rcard-body">
         <span className="rcard-photo" aria-hidden="true">
-          <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={76} w={76} round={12} />
+          <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={76} w={76} round={12} thumb />
         </span>
         <div className="stack grow rcard-info">
           <span className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
@@ -317,7 +317,7 @@ function MapView({ list, sel, setSel }: { list: { p: Provider; km: number | null
         <text x="12" y={H - 10} fontSize="12" fill="#3A4760">{tr("Carte illustrative")}</text>
       </svg>
       <div className="row card" style={{ borderColor: 'var(--primary)', borderWidth: 1.5, padding: 12, alignItems: 'flex-start' }}>
-        <StoredPhoto bucket="fiche-photos" path={cur?.p.photoPaths?.[0]} label={tr("Photo")} h={84} w={84} round={12} />
+        <StoredPhoto bucket="fiche-photos" path={cur?.p.photoPaths?.[0]} label={tr("Photo")} h={84} w={84} round={12} thumb />
         <div className="stack grow" style={{ gap: 2 }}>
           <span className="small" style={{ fontWeight: 700, color: 'var(--gold-text)' }}>{tr("Adresse ")}{tr(Math.min(sel, list.length - 1) + 1)} {tr(" sur ")}{tr(list.length)}</span>
           <span style={{ fontWeight: 700, fontSize: 17 }}>{tr(cur.p.name)}</span>

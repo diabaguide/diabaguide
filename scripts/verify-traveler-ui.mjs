@@ -73,6 +73,7 @@ const checks = [
   ['import des expéditions en cours sécurisé et prévisualisé', () => files.adminExpeditions.includes('parseExpeditionImport') && files.adminExpeditions.includes('Importer des lots en cours') && files.adminExpeditions.includes('importExpeditions') && files.importMigration.includes('security definer') && files.importMigration.includes('is_fret()') && files.importMigration.includes("revoke all on function public.importer_expeditions(jsonb) from public")],
   ['fichiers d’import surdimensionnés rejetés avant lecture', () => files.adminExpeditions.includes('file.size > 2_000_000') && files.adminExpeditions.indexOf('file.size > 2_000_000') < files.adminExpeditions.indexOf('file.text()')],
   ['carte imprimable du lot limitée aux données publiques', () => files.suivi.includes('tracking-print-card') && files.suivi.includes('print-only') && files.suivi.includes('no-print') && files.suivi.includes('window.print()') && files.suivi.includes('suivi.code') && files.suivi.includes('publicUrl')],
+  ['vignettes utilisées dans les listes de fiches', () => files.search.includes('round={12} thumb />') && files.ui.includes('photoThumbUrl') && files.ui.includes('onError')],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];
 
