@@ -75,7 +75,7 @@ export function Fiche() {
   };
   const envoyerLaPosition = async () => {
     const r = await envoyerPosition({ name: p.name, cn: p.cn, addrCn: p.addrCn, lat: p.lat, lng: p.lng });
-    if (r === 'copie') setMsg('Position copiée : collez-la dans WhatsApp ou WeChat. Le lien s’ouvre dans l’application de cartes.');
+    if (r === 'copie') setMsg('Position copiée : collez-la dans WhatsApp ou WeChat. Le lien s’ouvre dans Amap.');
     else if (r === 'echec') setMsg('Envoi impossible sur cet appareil.');
   };
   return (
