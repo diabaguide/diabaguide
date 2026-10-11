@@ -37,7 +37,8 @@ export async function fetchTypesMarchandise(): Promise<TypeMarchandise[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from('types_marchandise').select('code, libelle').eq('actif', true).order('libelle');
   if (error) { warn('chargement des types', error); return []; }
-  return (data as TypeMarchandise[]) ?? [];
+  // Même tri que les autres listes : l'ordre de la base dépend de sa collation.
+  return ((data as TypeMarchandise[]) ?? []).sort((a, b) => a.libelle.localeCompare(b.libelle, 'fr', { sensitivity: 'base' }));
 }
 
 /** Tous les entrepôts, actifs ou non (pour l'administration). */

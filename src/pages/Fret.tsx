@@ -12,10 +12,12 @@ import {
 } from '../lib/fret';
 
 const MODE_OPTIONS = (Object.keys(MODE_LABEL) as FretMode[]).map((v) => ({ v, l: MODE_LABEL[v] }));
+/** Types de marchandise, par ordre alphabétique. */
 const TYPES = [
-  { v: 'general', l: 'Marchandise générale' }, { v: 'textile', l: 'Textile et confection' },
-  { v: 'electronique', l: 'Électronique et téléphones' }, { v: 'batterie', l: 'Batteries et produits à risque' },
-  { v: 'cosmetique', l: 'Cosmétiques' }, { v: 'liquide', l: 'Liquides' }, { v: 'alimentaire', l: 'Produits alimentaires' },
+  { v: 'batterie', l: 'Batteries et produits à risque' }, { v: 'cosmetique', l: 'Cosmétiques' },
+  { v: 'electronique', l: 'Électronique et téléphones' }, { v: 'liquide', l: 'Liquides' },
+  { v: 'general', l: 'Marchandise générale' }, { v: 'alimentaire', l: 'Produits alimentaires' },
+  { v: 'textile', l: 'Textile et confection' },
 ];
 const isMaritime = (m: FretMode) => m.startsWith('maritime');
 const ETAPES_SUIVI = ['annonce', 'en_transit', 'arrive_dakar', 'dispo_retrait', 'en_livraison', 'remis'] as const;
