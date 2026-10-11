@@ -27,10 +27,14 @@
  * ── Utilisation (ordre conseillé) ───────────────────────────────────────────
  *  1. Installer sharp, sans toucher au package.json :
  *       npm install --no-save sharp
- *  2. Donner la clé de service (Supabase → Settings → API → service_role).
- *     NE JAMAIS la mettre dans un fichier du dépôt ni dans le navigateur :
- *       PowerShell :  $env:SUPABASE_SERVICE_ROLE_KEY = "…"
- *       Git Bash   :  export SUPABASE_SERVICE_ROLE_KEY="…"
+ *  2. Donner la clé de service : clé « secret » (nouveau format, `sb_secret_…`) ou
+ *     « service_role » (ancien format, `eyJ…`), dans Supabase → Settings → API.
+ *     NE JAMAIS la mettre dans un fichier du dépôt ni dans le navigateur. La
+ *     variable ne doit contenir QUE la clé (pas de « $env: », de guillemets ni
+ *     d'espaces ; le script refuse tout ce qui n'est pas une clé, sans l'afficher).
+ *       PowerShell (saisie masquée, rien dans l'historique) :
+ *         $k = Read-Host "Cle" -AsSecureString; $env:SUPABASE_SERVICE_ROLE_KEY = [System.Net.NetworkCredential]::new("", $k).Password
+ *       Git Bash :  export SUPABASE_SERVICE_ROLE_KEY="…"
  *     L'URL du projet est lue dans SUPABASE_URL ou VITE_SUPABASE_URL (.env).
  *  3. Essai à blanc (ne modifie rien) :
  *       node scripts/reencode-fiche-photos.mjs --thumbs-only
@@ -100,8 +104,32 @@ async function projectUrl() {
 
 /* ───────────────────────── Accès Supabase ───────────────────────── */
 
-function makeApi(base, key) {
-  const auth = { apikey: key, Authorization: `Bearer ${key}` };
+/**
+ * Vérifie la clé de service AVANT tout appel, et ne l'affiche jamais en entier
+ * (au plus ses 6 premiers caractères, pour qu'on voie ce qui a été collé).
+ *  • ancien format : un JWT `eyJ…` dont le rôle est `service_role` ;
+ *  • nouveau format : `sb_secret_…` (ce n'est pas un JWT : on l'envoie seulement
+ *    dans l'en-tête `apikey`, jamais en `Authorization: Bearer`).
+ * Refuse les clés publiques (`anon`, `sb_publishable_`) et tout texte qui n'est
+ * pas une clé (par exemple une commande collée avec la clé).
+ */
+function checkKey(raw) {
+  const key = String(raw ?? '').trim();
+  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY manquante (voir l\'en-tête du script).');
+  if (/^sb_publishable_/.test(key)) throw new Error('Cette clé est la clé « publishable » (publique). Il faut la clé « secret » (nouveau format) ou « service_role » (ancien format).');
+  if (/^sb_secret_[A-Za-z0-9_-]+$/.test(key)) return { key, jwt: false };
+  if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(key)) {
+    let role = null;
+    try { role = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString('utf8')).role; } catch { /* charge illisible */ }
+    if (role === 'anon') throw new Error('Cette clé est la clé « anon » (publique). Il faut la clé « service_role » (ancien format) ou « secret » (nouveau format).');
+    if (role && role !== 'service_role') throw new Error(`Cette clé a le rôle « ${role} » ; il faut le rôle « service_role ».`);
+    return { key, jwt: true };
+  }
+  throw new Error(`La variable SUPABASE_SERVICE_ROLE_KEY ne contient pas une clé reconnaissable (elle commence par « ${key.slice(0, 6)} », ${key.length} caractères). Elle ne doit contenir QUE la clé : « sb_secret_… » ou « eyJ… », sans « $env: », ni guillemets, ni espaces.`);
+}
+
+function makeApi(base, key, jwt = true) {
+  const auth = jwt ? { apikey: key, Authorization: `Bearer ${key}` } : { apikey: key };
   const fail = async (what, r) => {
     let detail = '';
     try { detail = (await r.text()).slice(0, 300); } catch { /* corps illisible */ }
@@ -195,12 +223,11 @@ async function rollback(api, file) {
 
 async function main() {
   const opt = parseArgs(process.argv.slice(2));
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY manquante (voir l\'en-tête du script).');
+  const { key, jwt } = checkKey(process.env.SUPABASE_SERVICE_ROLE_KEY);
   const base = await projectUrl();
   const host = new URL(base).host;
   const local = /^(localhost|127\.0\.0\.1)(:|$)/.test(host);
-  const api = makeApi(base, key);
+  const api = makeApi(base, key, jwt);
 
   console.log(`Projet : ${host}`);
   if (opt.rollback) {
