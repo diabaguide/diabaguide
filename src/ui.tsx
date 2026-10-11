@@ -216,14 +216,14 @@ export function Button({ kind = 'p', icon, to, href, full = true, children, onCl
 
 export function Field(p: {
   id: string; label: string; value: string; onChange?: (v: string) => void; type?: string; req?: boolean;
-  hint?: string; error?: string | null; placeholder?: string;
+  hint?: string; error?: string | null; placeholder?: string; disabled?: boolean;
 }) {
   const { tr } = useI18n();
   const [visible, setVisible] = useState(false);
   return (
     <div className="field">
       <label htmlFor={p.id}>{tr(p.label)}{p.req && <span className="req" aria-hidden="true"> *</span>}</label>
-      <input id={p.id} type={p.type === 'password' ? (visible ? 'text' : 'password') : (p.type ?? 'text')} value={p.value} placeholder={tr(p.placeholder)} aria-invalid={!!p.error}
+      <input id={p.id} type={p.type === 'password' ? (visible ? 'text' : 'password') : (p.type ?? 'text')} value={p.value} placeholder={tr(p.placeholder)} disabled={p.disabled} aria-invalid={!!p.error}
         aria-describedby={p.error ? p.id + '-err' : undefined} className={p.error ? 'err' : ''} onChange={(e) => p.onChange?.(e.target.value)} />
       {p.type === 'password' && (
         <button type="button" className="linklike"

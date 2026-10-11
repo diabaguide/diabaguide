@@ -14,7 +14,8 @@
     "verify:shipsgo": "node --test scripts/shipsgo-core.test.mjs scripts/shipsgo-api.test.mjs scripts/shipsgo-integrity.test.mjs scripts/verify-shipsgo-ui.mjs",
     "verify:import": "node --test scripts/expedition-import.test.mjs",
     "verify:photos": "node --test scripts/photo-paths.test.mjs",
-    "verify": "npm run verify:traveler-ui && npm run verify:shipsgo && npm run verify:import && npm run verify:photos",
+    "verify:carte": "node --test scripts/barcode.test.mjs scripts/carte-data.test.mjs",
+    "verify": "npm run verify:traveler-ui && npm run verify:shipsgo && npm run verify:import && npm run verify:photos && npm run verify:carte",
     "preview": "vite preview"
   },
   "dependencies": {

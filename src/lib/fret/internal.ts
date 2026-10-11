@@ -20,7 +20,7 @@ export function toExpedition(r: Row): Expedition {
 export function toColis(r: Row): Colis {
   return {
     code: String(r.code), expeditionCode: str(r.expedition_code), clientNom: str(r.client_nom), clientTel: str(r.client_tel),
-    codeClient: str(r.code_client), marqueColis: str(r.marque_colis), villeDepart: str(r.ville_depart), caracteristiques: Array.isArray(r.caracteristiques) ? r.caracteristiques as Caracteristique[] : [], mode: r.mode as FretMode, typeMarchandise: str(r.type_marchandise),
+    profileId: str(r.profile_id), codeClient: str(r.code_client), marqueColis: str(r.marque_colis), villeDepart: str(r.ville_depart), caracteristiques: Array.isArray(r.caracteristiques) ? r.caracteristiques as Caracteristique[] : [], mode: r.mode as FretMode, typeMarchandise: str(r.type_marchandise),
     description: str(r.description), poidsKg: num(r.poids_kg), volumeM3: num(r.volume_m3),
     statut: r.statut as ColisStatut, recuChineLe: str(r.recu_chine_le), createdAt: String(r.created_at),
   };

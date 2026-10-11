@@ -33,6 +33,8 @@ const ShoppingListPage = lazy(() => import('./pages/Shopping').then(m => ({ defa
 const ReviewsAdminPage = lazy(() => import('./pages/Reviews').then(m => ({ default: m.ReviewsAdminPage })));
 const MesEnvois = lazy(() => import('./pages/Fret').then(m => ({ default: m.MesEnvois })));
 const FactureView = lazy(() => import('./pages/Fret').then(m => ({ default: m.FactureView })));
+const CarteVoyageur = lazy(() => import('./pages/Carte').then(m => ({ default: m.CarteVoyageur })));
+const CarteClient = lazy(() => import('./pages/Carte').then(m => ({ default: m.CarteClient })));
 const SuiviPublic = lazy(() => import('./pages/Suivi').then(m => ({ default: m.SuiviPublic })));
 
 const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
@@ -135,6 +137,7 @@ export default function App() {
           <Route path="/adresses/:id/signaler" element={<Report />} />
           <Route path="/favoris" element={<Favorites />} />
           <Route path="/mes-envois" element={<MesEnvois />} />
+          <Route path="/mes-envois/carte" element={<CarteVoyageur />} />
           <Route path="/facture/:code" element={<FactureView />} />
           <Route path="/liste-achats" element={<ShoppingLists />} />
           <Route path="/liste-achats/:id" element={<ShoppingListPage />} />
@@ -154,6 +157,7 @@ export default function App() {
             <Route path="/fret/expeditions" element={<ExpeditionsList />} />
             <Route path="/fret/expeditions/:code" element={<ExpeditionDetail />} />
             <Route path="/fret/voyageurs" element={<FretVoyageurs />} />
+            <Route path="/fret/clients/:id/carte" element={<CarteClient />} />
             <Route path="/fret/tarifs" element={<FretTarifs />} />
             <Route path="/fret/profil" element={<FretProfil />} />
           </Route>
@@ -168,6 +172,7 @@ export default function App() {
             <Route path="/equipe/fiches" element={<FichesList />} />
             <Route path="/equipe/expeditions" element={<ExpeditionsList />} />
             <Route path="/equipe/expeditions/:code" element={<ExpeditionDetail />} />
+            <Route path="/equipe/clients/:id/carte" element={<CarteClient />} />
             <Route path="/equipe/recherches" element={<SearchLogs />} />
             <Route path="/equipe/fiches/:id" element={<FicheEdit />} />
             {/* Annonces de services : l'équipe consulte, l'administration rédige. */}

@@ -35,18 +35,29 @@ export function Tarifs() {
   const typeOptions = types.length ? types.map((t) => ({ v: t.code, l: t.libelle })) : [{ v: 'general', l: 'Marchandise générale' }];
 
   // ---- Entrepôt ----
-  const [wf, setWf] = useState({ id: '', nom: '', usage: 'fret_express', ville: '', addrFr: '', addrCn: '' });
+  const WF_VIDE = { id: '', nom: '', usage: 'fret_express', ville: '', addrFr: '', addrCn: '', tel: '', bureauNom: '', bureauTel: '', actif: true, edition: false };
+  const [wf, setWf] = useState(WF_VIDE);
+  // Champs de contact : proposés tant que le script 500 n'a pas été signalé comme absent.
+  const contactsOk = warehouses.length === 0 || warehouses[0].contactsInstalles;
   const [busy, setBusy] = useState(false);
   const addWarehouse = async (e: FormEvent) => {
     e.preventDefault(); setErr(null); setOk(null);
     if (!wf.id.trim() || !wf.nom.trim()) { setErr('Donnez un identifiant et un nom à l’entrepôt.'); return; }
     setBusy(true);
-    const res = await saveWarehouse({ id: wf.id, nom: wf.nom, usage: wf.usage as 'fret_express' | 'cargo', ville: wf.ville, addrFr: wf.addrFr, addrCn: wf.addrCn });
+    const res = await saveWarehouse({
+      id: wf.id, nom: wf.nom, usage: wf.usage as 'fret_express' | 'cargo', ville: wf.ville, addrFr: wf.addrFr, addrCn: wf.addrCn,
+      actif: wf.actif, contacts: contactsOk ? { tel: wf.tel, bureauNom: wf.bureauNom, bureauTel: wf.bureauTel } : undefined,
+    });
     setBusy(false);
-    if (res.error) { setErr(res.error); return; }
+    if (res.error) { setErr(res.error); await reload(); return; }
     flash(setOk, `Entrepôt « ${wf.nom} » enregistré.`);
-    setWf({ id: '', nom: '', usage: 'fret_express', ville: '', addrFr: '', addrCn: '' });
+    setWf(WF_VIDE);
     await reload();
+  };
+  const modifierWh = (w: WarehouseFull) => {
+    setErr(null); setOk(null);
+    setWf({ id: w.id, nom: w.nom, usage: w.usage, ville: w.ville ?? '', addrFr: w.addrFr ?? '', addrCn: w.addrCn ?? '', tel: w.tel ?? '', bureauNom: w.bureauNom ?? '', bureauTel: w.bureauTel ?? '', actif: w.actif, edition: true });
+    document.getElementById('wf-nom')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   };
   const toggleWh = async (id: string, actif: boolean) => { setErr(null); setOk(null); const r = await setWarehouseActif(id, actif); if (r.error) setErr(r.error); else await reload(); };
 
@@ -96,7 +107,7 @@ export function Tarifs() {
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Entrepôts en Chine")}</h2>
           <form onSubmit={addWarehouse} className="stack" style={{ gap: 10 }} noValidate>
             <div className="filters" style={{ alignItems: 'flex-end' }}>
-              <div style={{ minWidth: 130 }}><Field id="wf-id" label={tr("Identifiant")} value={wf.id} onChange={(v) => setWf({ ...wf, id: v })} placeholder="gz_fret" /></div>
+              <div style={{ minWidth: 130 }}><Field id="wf-id" label={tr("Identifiant")} value={wf.id} onChange={(v) => setWf({ ...wf, id: v })} placeholder="gz_fret" disabled={wf.edition} /></div>
               <div className="grow"><Field id="wf-nom" label={tr("Nom")} value={wf.nom} onChange={(v) => setWf({ ...wf, nom: v })} placeholder={tr("Entrepôt Guangzhou — fret")} /></div>
               <Select id="wf-usage" label={tr("Usage")} value={wf.usage} onChange={(v) => setWf({ ...wf, usage: v })} options={USAGES} />
             </div>
@@ -104,21 +115,33 @@ export function Tarifs() {
               <div style={{ minWidth: 130 }}><Field id="wf-ville" label={tr("Ville")} value={wf.ville} onChange={(v) => setWf({ ...wf, ville: v })} placeholder="Guangzhou" /></div>
               <div className="grow"><Field id="wf-adr" label={tr("Adresse (français)")} value={wf.addrFr} onChange={(v) => setWf({ ...wf, addrFr: v })} /></div>
               <div className="grow"><Field id="wf-adrcn" label={tr("Adresse (chinois)")} value={wf.addrCn} onChange={(v) => setWf({ ...wf, addrCn: v })} /></div>
-              <Button type="submit" icon="plus" full={false} disabled={busy}>{tr("Enregistrer")}</Button>
+              <Button type="submit" icon={wf.edition ? "check" : "plus"} full={false} disabled={busy}>{tr("Enregistrer")}</Button>
+              {wf.edition && <Button type="button" kind="s" full={false} onClick={() => setWf(WF_VIDE)}>{tr("Annuler")}</Button>}
             </div>
+            {contactsOk ? (
+              <div className="filters" style={{ alignItems: 'flex-end' }}>
+                <div className="grow"><Field id="wf-tel" label={tr("Téléphone de l’entrepôt")} value={wf.tel} onChange={(v) => setWf({ ...wf, tel: v })} placeholder="18029362363" hint={tr("Imprimé sur la carte d’expédition, sous « Warehouse phone ».")} /></div>
+                <div className="grow"><Field id="wf-bnom" label={tr("Contact du bureau")} value={wf.bureauNom} onChange={(v) => setWf({ ...wf, bureauNom: v })} placeholder="Arkim" /></div>
+                <div className="grow"><Field id="wf-btel" label={tr("Téléphone du bureau")} value={wf.bureauTel} onChange={(v) => setWf({ ...wf, bureauTel: v })} placeholder="15711885660" /></div>
+              </div>
+            ) : (
+              <p className="small muted" style={{ margin: 0 }}>{tr("Pour saisir les téléphones de l’entrepôt (carte d’expédition), lancez d’abord supabase/500_carte_expedition.sql dans Supabase.")}</p>
+            )}
+            <p className="small muted" style={{ margin: 0 }}>{tr("La carte d’expédition utilise le premier entrepôt actif dont le téléphone est renseigné. Son adresse et ses horaires sont imprimés dans le modèle de la carte.")}</p>
           </form>
           {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
             : warehouses.length === 0 ? <p className="small muted">{tr("Aucun entrepôt. Ajoutez vos adresses (une pour le fret/express, une pour le cargo).")}</p> : (
             <div className="table dense"><table>
-              <thead><tr><th>{tr("Nom")}</th><th>{tr("Usage")}</th><th>{tr("Ville")}</th><th>{tr("État")}</th><th /></tr></thead>
+              <thead><tr><th>{tr("Nom")}</th><th>{tr("Usage")}</th><th>{tr("Ville")}</th><th>{tr("Téléphones")}</th><th>{tr("État")}</th><th /></tr></thead>
               <tbody>
                 {warehouses.map((w) => (
                   <tr key={w.id} style={{ opacity: w.actif ? 1 : 0.55 }}>
                     <td><strong>{w.nom}</strong><div className="small muted">{w.id}</div></td>
                     <td className="small">{tr(w.usage === 'cargo' ? 'Cargo' : 'Fret / express')}</td>
                     <td className="small">{w.ville ?? '—'}</td>
+                    <td className="small">{w.contactsInstalles ? <>{w.tel ?? '—'}{(w.bureauNom || w.bureauTel) && <div className="muted">{[w.bureauNom, w.bureauTel].filter(Boolean).join(' ')}</div>}</> : '—'}</td>
                     <td className="small">{tr(w.actif ? 'Actif' : 'Inactif')}</td>
-                    <td><Button kind="s" full={false} onClick={() => toggleWh(w.id, !w.actif)}>{tr(w.actif ? 'Désactiver' : 'Réactiver')}</Button></td>
+                    <td><span className="row" style={{ gap: 6, flexWrap: 'wrap' }}><Button kind="s" icon="edit" full={false} onClick={() => modifierWh(w)}>{tr("Modifier")}</Button><Button kind="s" full={false} onClick={() => toggleWh(w.id, !w.actif)}>{tr(w.actif ? 'Désactiver' : 'Réactiver')}</Button></span></td>
                   </tr>
                 ))}
               </tbody>

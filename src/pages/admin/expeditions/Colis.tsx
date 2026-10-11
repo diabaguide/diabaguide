@@ -7,13 +7,15 @@ import {
   MODE_LABEL, COLIS_STATUT_LABEL, FACTURE_STATUT_LABEL, caracLabel,
   type ClientLite, type Colis, type Expedition, type Facture,
 } from '../../../lib/fret';
-import { TYPES, money, toNum, type Notifier } from './shared';
+import { Link } from 'react-router-dom';
+import { TYPES, money, toNum, useBase, type Notifier } from './shared';
 
 /** Colis de l'expédition et leur facture. */
 export function ColisSection({ colis, factures, peutFacturer, setErr, setOk, reload }: {
   colis: Colis[]; factures: Record<string, Facture>; peutFacturer: boolean;
 } & Notifier) {
   const { tr } = useI18n();
+  const base = useBase();
   const facturer = async (colisCode: string) => {
     setErr(null); setOk(null);
     const res = await emettreFacture(colisCode);
@@ -37,7 +39,7 @@ export function ColisSection({ colis, factures, peutFacturer, setErr, setOk, rel
             {colis.map((c) => (
               <tr key={c.code}>
                 <td><strong>{c.code}</strong>{c.marqueColis && <div className="small muted">{c.marqueColis}</div>}{c.caracteristiques.length > 0 && <div className="small">{c.caracteristiques.map((v) => tr(caracLabel(v))).join(' · ')}</div>}</td>
-                <td>{c.clientNom ?? <span className="np">—</span>}{c.clientTel && <div className="small muted">{c.clientTel}</div>}</td>
+                <td>{c.clientNom ?? <span className="np">—</span>}{c.clientTel && <div className="small muted">{c.clientTel}</div>}{c.profileId && <div className="small"><Link className="link" to={`${base}/clients/${c.profileId}/carte`}>{tr("Carte d’expédition")}</Link></div>}</td>
                 <td className="small">{c.poidsKg != null ? `${c.poidsKg} kg` : '—'}{c.volumeM3 != null ? ` · ${c.volumeM3} m³` : ''}</td>
                 <td><span className="small">{tr(COLIS_STATUT_LABEL[c.statut])}</span></td>
                 <td>

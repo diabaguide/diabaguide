@@ -10,3 +10,4 @@ export * from './shipsgo';
 export * from './colis';
 export * from './tarifs';
 export * from './factures';
+export * from './carte';
