@@ -99,10 +99,11 @@ export async function fetchAnnexes(): Promise<TarifAnnexe[]> {
   const { data, error } = await supabase.from('tarifs_annexes')
     .select('id, categorie, libelle, prix, devise, jours_gratuits, zone, actif').order('categorie');
   if (error) { warn('chargement des frais annexes', error); return []; }
+  // Par libellé, en ordre alphabétique (français, sans casse ni accents).
   return (data as Row[]).map((r) => ({
     id: String(r.id), categorie: r.categorie as TarifAnnexe['categorie'], libelle: String(r.libelle),
     prix: Number(r.prix), devise: String(r.devise), joursGratuits: num(r.jours_gratuits), zone: str(r.zone), actif: Boolean(r.actif),
-  }));
+  })).sort((x, y) => x.libelle.localeCompare(y.libelle, 'fr', { sensitivity: 'base' }));
 }
 export async function createAnnexe(a: {
   categorie: TarifAnnexe['categorie']; libelle: string; prix: number; devise: string; joursGratuits?: number | null; zone?: string;
