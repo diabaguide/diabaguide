@@ -5,6 +5,7 @@ import { catIcon, catLabel, category, cityName, tagLabel, type Provider } from '
 import { useProviderById, useStore } from '../store';
 import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, StoredPhoto, Tag, TopBar, Verified } from '../ui';
 import { saveReport } from '../lib/reports';
+import { envoyerPosition, positionValide } from '../lib/position';
 import { downloadCard, renderCard, shareCard } from '../lib/card';
 import { AddToListButton } from './Shopping';
 import { ReviewsSection } from './Reviews';
@@ -71,6 +72,11 @@ export function Fiche() {
     if (navigator.share) { try { await navigator.share({ title: p.name, url }); return; } catch { /* annulé */ } }
     await copy(url);
     setMsg('Lien copié. La personne qui le reçoit devra se connecter pour consulter la fiche.');
+  };
+  const envoyerLaPosition = async () => {
+    const r = await envoyerPosition({ name: p.name, cn: p.cn, addrCn: p.addrCn, lat: p.lat, lng: p.lng });
+    if (r === 'copie') setMsg('Position copiée : collez-la dans WhatsApp ou WeChat. Le lien s’ouvre dans l’application de cartes.');
+    else if (r === 'echec') setMsg('Envoi impossible sur cet appareil.');
   };
   return (
     <Screen wide>
@@ -153,6 +159,7 @@ export function Fiche() {
           <button type="button" className={`fiche-ibtn ${dl ? 'on' : ''}`} aria-pressed={dl} aria-label={tr(dl ? 'Disponible hors connexion' : 'Rendre disponible hors connexion')}
             onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Cette fiche est maintenant disponible hors connexion, sans qu’aucun fichier ne soit enregistré sur l’appareil.'); }}><Icon name={dl ? 'check' : 'download'} size={20} />{tr("Hors-ligne")}</button>
           <button type="button" className="fiche-ibtn" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
+          {positionValide(p) && <button type="button" className="fiche-ibtn" onClick={() => void envoyerLaPosition()}><Icon name="pin" size={20} />{tr("Position")}</button>}
           <AddToListButton providerId={p.id} providerName={p.name} variant="icon" />
           <Link to={`/adresses/${p.id}/signaler`} className="fiche-ibtn"><Icon name="edit" size={20} />{tr("Corriger")}</Link>
         </div>
