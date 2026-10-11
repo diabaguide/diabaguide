@@ -4,7 +4,7 @@ import { supabase } from './supabase';
    console (/equipe/annonces), affichées sur le tableau de bord des voyageurs
    (l'accueil). Les écritures passent uniquement par les fonctions SQL admin_*
    (security definer) : aucune clé service_role dans le front, et un voyageur ne
-   peut pas publier (voir supabase/annonces.sql). Sans Supabase (mode
+   peut pas publier (voir supabase/230_annonces.sql). Sans Supabase (mode
    démonstration), les annonces sont conservées dans le navigateur : mêmes
    fonctions, mêmes types. */
 
@@ -181,7 +181,7 @@ export async function supprimerAnnonce(id: string): Promise<{ error?: string }> 
 function humanize(msg: string): string {
   if (/row-level security|permission denied/i.test(msg)) return 'Action réservée aux administrateurs.';
   if (/could not find the function|does not exist|schema cache/i.test(msg)) {
-    return 'Les annonces ne sont pas encore installées : exécutez supabase/annonces.sql dans Supabase.';
+    return 'Les annonces ne sont pas encore installées : exécutez supabase/230_annonces.sql dans Supabase.';
   }
   return msg;
 }

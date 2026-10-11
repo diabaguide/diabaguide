@@ -9,7 +9,7 @@ import { deleteReviewAsAdmin, fetchReviews, fetchReviewsForModeration, markHelpf
 
 /* Avis des voyageurs : note, commentaire, photos, « utile » (côté fiche) et
    modération (côté équipe). Les données vivent dans la table ratings, étendue
-   par supabase/reviews.sql. */
+   par supabase/170_reviews.sql. */
 
 /** Moyenne et nombre d'avis, calculés sur ce qui est affiché (donc à jour). */
 function moyenne(avis: Review[]) {

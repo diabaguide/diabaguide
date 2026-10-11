@@ -14,7 +14,7 @@ const files = {
   seal: await readFile(new URL('../src/sceau.css', import.meta.url), 'utf8'),
   vite: await readFile(new URL('../vite.config.ts', import.meta.url), 'utf8'),
   adminExpeditions: await readFile(new URL('../src/pages/admin/Expeditions.tsx', import.meta.url), 'utf8'),
-  importMigration: await readFile(new URL('../supabase/fret_import_expeditions.sql', import.meta.url), 'utf8').catch(() => ''),
+  importMigration: await readFile(new URL('../supabase/450_fret_import_expeditions.sql', import.meta.url), 'utf8').catch(() => ''),
 };
 
 const [catalog] = await Promise.all([

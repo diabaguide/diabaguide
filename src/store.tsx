@@ -296,7 +296,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
        le stockage du navigateur avant même d'interroger Supabase. Une clé
        absente = le téléphone a effacé le stockage ; une clé présente mais une
        session vide = le renouvellement du jeton a été refusé. Deux causes
-       opposées, que ce journal permet de distinguer (supabase/session_events.sql). */
+       opposées, que ce journal permet de distinguer (supabase/220_session_events.sql). */
     const cles = clesDeSessionEnMemoire();
     logSessionEvent('demarrage', `cles=${cles.length ? cles.join(' ') : 'aucune'}`);
 

@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-/* Journal des recherches (supabase/search_logs.sql).
+/* Journal des recherches (supabase/190_search_logs.sql).
    Le voyageur écrit ses recherches, l'équipe lit le tout : ce qui ne donne
    aucun résultat indique les fiches qui manquent au guide. */
 

@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 
 /* Liste d'achats du voyageur : un produit, une quantité, un prix visé et, si
    besoin, la fiche du fournisseur où l'acheter. Les listes sont privées (RLS :
-   voir supabase/shopping_lists.sql). Sans Supabase (mode démonstration), elles
+   voir supabase/160_shopping_lists.sql). Sans Supabase (mode démonstration), elles
    sont conservées dans le navigateur : mêmes fonctions, mêmes types. */
 
 export type ShoppingItem = {

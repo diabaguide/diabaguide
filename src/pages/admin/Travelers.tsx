@@ -143,7 +143,7 @@ function TravelerSheet({ m, onClose, onSaved }: { m: Member; onClose: () => void
 /** Liste des comptes voyageurs, réservée aux administrateurs (RLS sur `profiles`).
     Sur téléphone, chaque voyageur ouvre sa fiche d'édition ; sur ordinateur, le
     tableau reste affiché et le nom ouvre la même fiche. Garde-fous en base :
-    supabase/admin_travelers.sql. */
+    supabase/150_admin_travelers.sql. */
 export function Travelers() {
   const { tr, t } = useI18n();
   const wide = useWide();

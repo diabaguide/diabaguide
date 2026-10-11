@@ -7,7 +7,7 @@
  * `toLowerCase()` seul.
  *
  * La règle est aussi appliquée en base pour regrouper les recherches
- * (`public.sans_accent()` dans supabase/search_logs.sql) : les deux
+ * (`public.sans_accent()` dans supabase/190_search_logs.sql) : les deux
  * implémentations doivent rester identiques, sinon le classement des recherches
  * par l'équipe (« médina » et « medina » comptés comme deux besoins distincts)
  * ne correspondrait plus à ce que le voyageur voit.

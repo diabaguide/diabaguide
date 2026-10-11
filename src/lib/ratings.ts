@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 
 /* Avis des voyageurs : une note, un commentaire, jusqu'à trois photos, un
    compteur « utile » et une modération par l'équipe. Un avis masqué ne compte
-   plus dans la moyenne de la fiche (voir supabase/reviews.sql). */
+   plus dans la moyenne de la fiche (voir supabase/170_reviews.sql). */
 
 export type Review = {
   providerId: string;
@@ -82,7 +82,7 @@ export async function fetchMyReview(providerId: string): Promise<Review | null> 
   return toReview(data as Row, (data as Row).user_id, new Set());
 }
 
-/** Note du voyageur connecté pour une fiche (inchangé depuis ratings.sql). */
+/** Note du voyageur connecté pour une fiche (inchangé depuis 140_ratings.sql). */
 export async function fetchMyRating(providerId: string): Promise<number | null> {
   const r = await fetchMyReview(providerId);
   return r ? r.stars : null;

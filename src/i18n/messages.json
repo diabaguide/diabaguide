@@ -3271,7 +3271,7 @@
 "Annonce « {0} » désactivée.": {"en": "Announcement “{0}” disabled.", "zh": "公告“{0}”已停用。", "ar": "تم تعطيل الإعلان «{0}»."},
 "Annonce « {0} » activée.": {"en": "Announcement “{0}” enabled.", "zh": "公告“{0}”已启用。", "ar": "تم تفعيل الإعلان «{0}»."},
 "Renseignez le titre et le texte de l’annonce.": {"en": "Fill in the title and the text of the announcement.", "zh": "请填写公告的标题和正文。", "ar": "أدخلوا عنوان الإعلان ونصه."},
-"Les annonces ne sont pas encore installées : exécutez supabase/annonces.sql dans Supabase.": {"en": "Announcements are not installed yet: run supabase/annonces.sql in Supabase.", "zh": "公告功能尚未安装：请在 Supabase 中执行 supabase/annonces.sql。", "ar": "لم تُثبَّت الإعلانات بعد: نفّذوا supabase/annonces.sql في Supabase."},
+"Les annonces ne sont pas encore installées : exécutez supabase/230_annonces.sql dans Supabase.": {"en": "Announcements are not installed yet: run supabase/230_annonces.sql in Supabase.", "zh": "公告功能尚未安装：请在 Supabase 中执行 supabase/230_annonces.sql。", "ar": "لم تُثبَّت الإعلانات بعد: نفّذوا supabase/230_annonces.sql في Supabase."},
 "En savoir plus": {"en": "Learn more", "zh": "了解更多", "ar": "اعرف المزيد"},
 "Aucune ligne d’article pour le moment.": {"en": "No item line yet.", "zh": "暂无货物明细。", "ar": "لا يوجد سطر بضاعة بعد."},
 "Les lignes sans poids ne comptent pas dans le total.": {"en": "Lines without a weight are not counted in the total.", "zh": "未填写重量的行不计入总计。", "ar": "الأسطر بدون وزن لا تُحتسب في المجموع."},
