@@ -51,6 +51,10 @@ Supabase est la source des comptes et des données métier en production. Le nav
 
 Le schéma fret de référence en production utilise `expeditions` identifiées par `code`, `colis` et `expedition_etapes`. Les scripts SQL sont numérotés dans l’ordre où ils ont été appliqués (`supabase/010_schema.sql` à `supabase/470_fret_shipsgo_integrity.sql`) et s’exécutent à la main dans le SQL Editor : **`supabase/README.md` documente cet ordre, les dépendances et les règles à respecter**. Ce ne sont pas des migrations automatiques : ne jamais utiliser `supabase db push` sur la production. Avant toute intervention, vérifier le schéma réel et l’en-tête du fichier concerné. Ne jamais exécuter les scripts de `supabase/historique/` : ils décrivent un modèle historique incompatible avec le fret actuel. `supabase/README-fret-clients.md` précise d’autres précautions de production.
 
+### Maintenance : réencoder les photos de fiches existantes
+
+Les photos téléversées avant l’optimisation pèsent environ 200 Ko. `scripts/reencode-fiche-photos.mjs` les réduit (1280 px, WebP ou AVIF). Il fonctionne **par défaut en essai à blanc** (rien n’est écrit), garde les anciens fichiers, ne remplace que les fiches non modifiées entre-temps et écrit un journal permettant le retour arrière (`--rollback`). Il demande la clé `service_role` en variable d’environnement, jamais dans un fichier. Mode d’emploi complet en tête du script.
+
 ## Déploiement
 
 La production web est déployée sur Vercel depuis la branche `main`. Les variables `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` doivent être configurées dans l’environnement Vercel pour le build. Les secrets utilisés par les fonctions API doivent être configurés côté serveur, jamais dans le bundle client.
