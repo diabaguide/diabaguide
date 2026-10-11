@@ -4324,5 +4324,8 @@
   "Modifier mon nom ou mon téléphone": {"en": "Edit my name or phone", "zh": "修改我的姓名或电话", "ar": "تعديل اسمي أو هاتفي"},
   "Ajoutez votre numéro de téléphone dans votre profil : il doit figurer sur la carte.": {"en": "Add your phone number to your profile: it must appear on the card.", "zh": "请在个人资料中添加电话号码：它必须出现在卡片上。", "ar": "أضف رقم هاتفك في ملفك الشخصي: يجب أن يظهر على البطاقة."},
   "Le téléphone de l’entrepôt n’est pas encore renseigné : il apparaîtra sur la carte dès que l’équipe l’aura ajouté.": {"en": "The warehouse phone is not filled in yet: it will appear on the card once the team adds it.", "zh": "仓库电话尚未填写：团队添加后将显示在卡片上。", "ar": "هاتف المستودع غير مُدخل بعد: سيظهر على البطاقة عندما يضيفه الفريق."},
-  "L’impression n’a pas pu démarrer : téléchargez l’image puis imprimez-la.": {"en": "Printing could not start: download the image, then print it.", "zh": "无法开始打印：请先下载图片再打印。", "ar": "تعذّر بدء الطباعة: نزّل الصورة ثم اطبعها."}
+  "L’impression n’a pas pu démarrer : téléchargez l’image puis imprimez-la.": {"en": "Printing could not start: download the image, then print it.", "zh": "无法开始打印：请先下载图片再打印。", "ar": "تعذّر بدء الطباعة: نزّل الصورة ثم اطبعها."},
+  "Position": {"en": "Location", "zh": "位置", "ar": "الموقع"},
+  "Position copiée : collez-la dans WhatsApp ou WeChat. Le lien s’ouvre dans l’application de cartes.": {"en": "Location copied: paste it into WhatsApp or WeChat. The link opens in the maps app.", "zh": "位置已复制：请粘贴到WhatsApp或微信。链接将在地图应用中打开。", "ar": "تم نسخ الموقع: الصقه في واتساب أو ويتشات. يفتح الرابط في تطبيق الخرائط."},
+  "Envoi impossible sur cet appareil.": {"en": "Sending is not possible on this device.", "zh": "此设备无法发送。", "ar": "تعذّر الإرسال على هذا الجهاز."}
 }
