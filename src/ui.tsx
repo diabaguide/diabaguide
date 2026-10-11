@@ -261,8 +261,21 @@ export function KV({ k, children }: { k: string; children?: ReactNode }) {
   const { tr } = useI18n();
   return <div className="kv"><span>{tr(k)}</span><div>{children ?? <NotProvided />}</div></div>;
 }
-export function Section({ title, icon, children }: { title: string; icon?: IconName; children: ReactNode }) {
+export function Section({ title, icon, children, collapsible, defaultOpen, note }: { title: string; icon?: IconName; children: ReactNode; collapsible?: boolean; defaultOpen?: boolean; note?: string }) {
   const { tr } = useI18n();
+  // Section repliable (<details> natif, accessible au clavier) : l'en-tête reste
+  // visible, le contenu s'ouvre à la demande. Sinon, section ouverte classique.
+  if (collapsible) {
+    return (
+      <details className="card sec sec-fold" open={defaultOpen}>
+        <summary>
+          <span className="sec-sum">{icon && <Icon name={icon} size={20} />}{tr(title)}{note ? <span className="small muted sec-note">{tr(note)}</span> : null}</span>
+          <Icon name="chevR" size={20} sw={2.2} />
+        </summary>
+        <div className="sec-body">{children}</div>
+      </details>
+    );
+  }
   return <section className="card sec"><h2>{icon && <Icon name={icon} size={20} />}{tr(title)}</h2>{children}</section>;
 }
 /* Mention « données fictives » : seulement en mode démo (sans Supabase). En
