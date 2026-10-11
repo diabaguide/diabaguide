@@ -46,15 +46,16 @@ interface State {
   installDismissed: boolean;
 }
 
-/** Villes par ordre alphabétique : toutes les listes de villes de l'app suivent cet ordre. */
+/** Villes et catégories par ordre alphabétique : toutes les listes de l'app suivent cet ordre. */
 const villesParNom = (cities: CityRef[]) => [...cities].sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
+const categoriesParNom = (categories: Category[]) => [...categories].sort((a, b) => a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' }));
 
 const KEY = 'diaba-guide-state-v1';
 const initial: State = {
   user: null, authReady: !isSupabaseConfigured, lang: 'fr', theme: 'system', city: 'guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'], myRatings: {},
   downloads: { baiyun: '18 sept. 2026', jinyuan: '18 sept. 2026' }, lastSync: '19 sept. 2026, 09:12',
   providers: PROVIDERS, pendingDeletion: [],
-  categories: STATIC_CATEGORIES, cities: villesParNom(STATIC_CITIES), districts: STATIC_DISTRICTS, productTags: [],
+  categories: categoriesParNom(STATIC_CATEGORIES), cities: villesParNom(STATIC_CITIES), districts: STATIC_DISTRICTS, productTags: [],
   // Avec Supabase, propositions et décisions sont chargées depuis la base.
   proposals: isSupabaseConfigured ? [] : [...SEED_PROPOSALS, ...TEAM_QUEUE_EXTRA],
   decisions: isSupabaseConfigured ? [] : SEED_DECISIONS,
@@ -173,7 +174,7 @@ function reducer(s: State, a: Action): State {
     }
     case 'localLog': return { ...s, decisions: [a.dec, ...s.decisions] };
     case 'localDelete': return { ...s, providers: s.providers.filter((x) => x.id !== a.id), pendingDeletion: s.pendingDeletion.filter((x) => x.id !== a.id), favorites: s.favorites.filter((x) => x !== a.id) };
-    case 'setTaxonomies': return { ...s, categories: a.categories, cities: villesParNom(a.cities), districts: a.districts, productTags: a.productTags };
+    case 'setTaxonomies': return { ...s, categories: categoriesParNom(a.categories), cities: villesParNom(a.cities), districts: a.districts, productTags: a.productTags };
     case 'setProposals': return { ...s, proposals: a.v };
     case 'setDecisions': return { ...s, decisions: a.v };
     case 'dismissInstall': return { ...s, installDismissed: true };
@@ -189,7 +190,7 @@ function load(): State {
       const stored = JSON.parse(raw);
       const parsed = { ...initial, ...stored } as State;
       if (!stored.providers || stored.providers.length === 0) parsed.providers = PROVIDERS;
-      if (!stored.categories || stored.categories.length === 0) parsed.categories = STATIC_CATEGORIES;
+      parsed.categories = categoriesParNom(!stored.categories || stored.categories.length === 0 ? STATIC_CATEGORIES : parsed.categories);
       parsed.cities = villesParNom(!stored.cities || stored.cities.length === 0 ? STATIC_CITIES : parsed.cities);
       if (!stored.districts || stored.districts.length === 0) parsed.districts = STATIC_DISTRICTS;
       
