@@ -635,3 +635,27 @@ tr.clickable:hover { background: var(--surface-2, rgba(0, 0, 0, .04)); }
 .carte-option { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 12px; border: 1px solid var(--border, #d9d9d9); border-radius: 12px; cursor: pointer; font-weight: 600; }
 .carte-option input { width: 22px; height: 22px; flex: none; accent-color: var(--accent, #0B2A6B); }
 .carte-option:has(input:checked) { border-color: var(--accent, #0B2A6B); background: var(--accent-soft, rgba(11, 42, 107, .08)); }
+
+/* Annonces Diaba : bandeaux en tête de l'accueil, très visibles (dégradé de marque, texte blanc, bouton doré),
+   cartes cliquables en entier. Plusieurs annonces : défilement horizontal calé sur chaque carte. */
+.annonces-section { gap: 12px; }
+.annonces-rail { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 12px; margin: 0 -2px; -webkit-overflow-scrolling: touch; }
+.annonces-rail { scrollbar-width: none; }
+.annonces-rail::-webkit-scrollbar { display: none; }
+.annonces-rail.seule { overflow: visible; }
+.annonce-card { flex: 0 0 min(88%, 440px); scroll-snap-align: start; display: flex; flex-direction: column; border-radius: 20px; overflow: hidden; text-decoration: none; color: #fff;
+  background: linear-gradient(145deg, #0E2E7D 0%, #1747B8 55%, #2A63D9 100%); border: 2px solid var(--gold-fill, #E6BC4B);
+  box-shadow: 0 10px 28px rgba(18, 55, 148, .32); transition: transform .15s ease, box-shadow .15s ease; }
+.annonces-rail.seule .annonce-card { flex-basis: 100%; max-width: 560px; }
+.annonce-card:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(18, 55, 148, .4); }
+.annonce-card:focus-visible { outline: 3px solid var(--gold-fill, #E6BC4B); outline-offset: 3px; }
+.annonce-img { position: relative; aspect-ratio: 16 / 9; width: 100%; background: linear-gradient(135deg, #12378F, #2A63D9 60%, #E6BC4B); overflow: hidden; }
+.annonce-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.annonce-img-deco { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, .85); }
+.annonce-body { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px; }
+.annonce-badge { align-self: flex-start; background: var(--gold-fill, #E6BC4B); color: #1B2A52; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; }
+.annonce-body h3 { margin: 0; font-size: 22px; line-height: 1.2; color: #fff; }
+.annonce-body p { margin: 0; font-size: 15px; line-height: 1.45; color: rgba(255, 255, 255, .9); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+.annonce-cta { margin-top: 4px; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 18px; border-radius: 999px; background: var(--gold-fill, #E6BC4B); color: #1B2A52; font-weight: 800; font-size: 15px; }
+@media (min-width: 900px) { .annonce-card { flex-basis: 380px; } }
+.annonce-detail .annonce-img { border-radius: 16px; }

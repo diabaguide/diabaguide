@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { optimizeImage, toWebp } from './image';
 import { THUMB_MAX_SIDE, isThumbPath, thumbPath } from './photoPaths';
 
-export type PhotoBucket = 'proposal-photos' | 'fiche-photos' | 'review-photos' | 'fret-photos' | 'avatars';
+export type PhotoBucket = 'proposal-photos' | 'fiche-photos' | 'review-photos' | 'fret-photos' | 'avatars' | 'annonces-photos';
 
 /** Buckets dont les règles d'accès exigent un dossier au nom du voyageur. */
 const dossierUtilisateur: PhotoBucket[] = ['proposal-photos', 'review-photos', 'avatars'];
@@ -69,7 +69,7 @@ export async function removePhoto(path: string | null | undefined, bucket: Photo
  *  - tous les autres (avis, avatars, propositions, photos d'expéditions) : 1 heure,
  *    comme avant. Ces photos sont privées : on ne prolonge pas leur lien.
  */
-const LONG_TTL: PhotoBucket[] = ['fiche-photos'];
+const LONG_TTL: PhotoBucket[] = ['fiche-photos', 'annonces-photos'];
 export const ttlFor = (bucket: PhotoBucket) => (LONG_TTL.includes(bucket) ? 604800 : 3600);
 
 /* Cache des URL signées : en mémoire (instantané) pour tous les buckets ; dans le
