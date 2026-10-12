@@ -4412,5 +4412,7 @@
   "Précédent": {"en": "Back", "zh": "上一步", "ar": "السابق"},
   "Passer": {"en": "Skip", "zh": "跳过", "ar": "تخطّي"},
   "Commencer": {"en": "Get started", "zh": "开始使用", "ar": "ابدأ"},
-  "Revoir la présentation": {"en": "See the introduction again", "zh": "重看介绍", "ar": "إعادة مشاهدة التعريف"}
+  "Revoir la présentation": {"en": "See the introduction again", "zh": "重看介绍", "ar": "إعادة مشاهدة التعريف"},
+  "Annonce de Diaba Guide": {"en": "Diaba Guide announcement", "zh": "Diaba Guide 公告", "ar": "إعلان من Diaba Guide"},
+  "Format paysage 16:9. Sur le tableau de bord, l’image s’affiche seule, comme une bannière cliquable : elle peut déjà contenir le titre et le bouton. Une seule annonce est montrée (la plus récente).": {"en": "Landscape 16:9. On the dashboard the image is shown alone, as a clickable banner: it can already contain the title and the button. Only one announcement is shown (the most recent).", "zh": "横向 16:9。在首页，图片将单独作为可点击的横幅显示：图片中可以已包含标题和按钮。只显示一条公告（最新的）。", "ar": "أفقي 16:9. على لوحة التحكم تظهر الصورة وحدها كشريط قابل للنقر: يمكن أن تحتوي مسبقًا على العنوان والزر. يُعرض إعلان واحد فقط (الأحدث)."}
 }

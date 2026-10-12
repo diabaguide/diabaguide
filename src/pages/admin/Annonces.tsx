@@ -103,7 +103,7 @@ function ImageAnnonce({ path, onChange, onUploaded, onError }: {
         </Button>
         {path && <Button kind="t" icon="x" full={false} disabled={busy} onClick={() => onChange('')}>{tr("Retirer l’image")}</Button>}
       </span>
-      <span className="small muted">{tr("Format paysage conseillé (16:9). Elle s’affiche en haut de la carte et de la page de l’annonce.")}</span>
+      <span className="small muted">{tr("Format paysage 16:9. Sur le tableau de bord, l’image s’affiche seule, comme une bannière cliquable : elle peut déjà contenir le titre et le bouton. Une seule annonce est montrée (la plus récente).")}</span>
     </div>
   );
 }
