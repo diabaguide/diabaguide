@@ -18,6 +18,7 @@ import { photoUrl, photoThumbUrl, markThumbMissing, uploadPhoto, removePhoto, ty
 import { compressImage } from './lib/image';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ICONS, type IconName } from './icons';
+import { useNotifications } from './lib/notifications';
 import { STATUS_STYLE, type Status } from './data';
 import { useStore, type Lang } from './store';
 import { isTeamRole } from './lib/auth';
@@ -344,13 +345,38 @@ const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: '/mes-envois', label: 'Mes envois', icon: 'box' },
   { to: '/profil', label: 'Profil', icon: 'user' },
 ];
+/** Nombre de notifications non lues pour une pastille : « 9+ » au-delà de neuf. */
+export const pastille = (n: number) => (n > 9 ? '9+' : String(n));
+
+/** Cloche avec pastille : mène à la page des notifications de suivi. Invisible tant que la fonction n'est pas installée. */
+export function Cloche({ className = '' }: { className?: string }) {
+  const { tr, t } = useI18n();
+  const { s } = useStore();
+  const { installe, nonLues } = useNotifications(!!s.user);
+  if (!installe) return null;
+  return (
+    <Link to="/notifications" className={`cloche ${className}`}
+      aria-label={nonLues > 0 ? t('Notifications : {0} non lue(s)', { 0: nonLues }) : tr('Notifications')}>
+      <Icon name="bell" size={22} />
+      {nonLues > 0 && <span className="pastille" aria-hidden="true">{pastille(nonLues)}</span>}
+    </Link>
+  );
+}
+
+/** Pastille sur l'entrée « Mes envois » de la navigation : nouvelles étapes à découvrir. */
+function PastilleEnvois() {
+  const { s } = useStore();
+  const { nonLues } = useNotifications(!!s.user);
+  return nonLues > 0 ? <span className="pastille pastille-nav" aria-hidden="true">{pastille(nonLues)}</span> : null;
+}
+
 export function BottomNav() {
   const { tr } = useI18n();
   return (
     <nav className="bottomnav" aria-label={tr("Navigation principale")}>
       {NAV.map((n) => (
         <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'active' : '')}>
-          <Icon name={n.icon} size={24} /><span>{tr(n.label)}</span>
+          <Icon name={n.icon} size={24} /><span>{tr(n.label)}</span>{n.to === '/mes-envois' && <PastilleEnvois />}
         </NavLink>
       ))}
     </nav>
@@ -369,10 +395,11 @@ export function SiteHeader() {
         <Link to="/accueil" className="site-logo" aria-label={tr("Accueil")}><Logo height={34} /></Link>
         <nav className="site-nav" aria-label={tr("Navigation principale")}>
           {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={n.icon} size={20} /><span>{tr(n.label)}</span></NavLink>
+            <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={n.icon} size={20} /><span>{tr(n.label)}</span>{n.to === '/mes-envois' && <PastilleEnvois />}</NavLink>
           ))}
         </nav>
         <div className="site-tools">
+          <Cloche />
           {isTeamRole(s.user?.role) && <Link to="/equipe" className="site-team"><Icon name="shield" size={18} /><span>{tr("Espace équipe Diaba")}</span></Link>}
           <label className="site-lang">
             <span className="sr">{tr("Langue")}</span>
