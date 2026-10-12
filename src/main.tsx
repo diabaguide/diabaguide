@@ -4,6 +4,8 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { StoreProvider } from './store';
+import { ErrorBoundary } from './ErrorBoundary';
+import { surveillerErreurs } from './lib/erreursJournal';
 import '@fontsource-variable/plus-jakarta-sans';
 import '@fontsource/playfair-display/400.css';
 import '@fontsource/playfair-display/600.css';
@@ -49,8 +51,11 @@ const updateSW = registerSW({
   },
 });
 
+surveillerErreurs();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <ErrorBoundary>
     <StoreProvider>
       <I18nProvider>
       <BrowserRouter>
@@ -58,5 +63,6 @@ createRoot(document.getElementById('root')!).render(
       </BrowserRouter>
       </I18nProvider>
     </StoreProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );
