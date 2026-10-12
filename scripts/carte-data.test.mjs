@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  ENTRY_NAME_RE, cardFileNameFor, cleanEntryName, clientNoLabel, entryNameFromInput, isValidEntryName, phoneLine, printedPhone, suggestEntryName,
+  ENTRY_NAME_RE, cardFileNameFor, cleanCardText, cleanEntryName, clientNoLabel, isValidCardName, isValidCardPhone, entryNameFromInput, isValidEntryName, phoneLine, printedPhone, suggestEntryName,
 } from '../src/lib/carteData.ts';
 
 test('numéro de client sur 4 chiffres, comme (0022) sur la carte', () => {
@@ -71,4 +71,12 @@ test('nom de fichier de la carte', () => {
   assert.equal(cardFileNameFor('BTC', 22), 'diaba-cargo-BTC-0022.png');
   assert.equal(cardFileNameFor('b t c', 22), 'diaba-cargo-BTC-0022.png');
   assert.equal(cardFileNameFor('', 7), 'diaba-cargo-client-0007.png');
+});
+
+test('nom et téléphone propres à la carte', () => {
+  assert.equal(cleanCardText('  Ana   Import  '), 'Ana Import');
+  assert.ok(isValidCardName('') && isValidCardName('Ana') && isValidCardName('x'.repeat(40)));
+  assert.ok(!isValidCardName('A') && !isValidCardName('x'.repeat(41)));
+  assert.ok(isValidCardPhone('') && isValidCardPhone('77 411 51 64') && isValidCardPhone('+221 (77) 411-51.64'));
+  assert.ok(!isValidCardPhone('123') && !isValidCardPhone('abc12345') && !isValidCardPhone('1'.repeat(26)));
 });

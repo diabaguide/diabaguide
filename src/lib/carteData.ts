@@ -59,3 +59,10 @@ export function phoneLine(phone: string | null | undefined, clientNo: number): s
 export function cardFileNameFor(entryName: string, clientNo: number): string {
   return `diaba-cargo-${cleanEntryName(entryName) || 'client'}-${clientNoLabel(clientNo)}.png`;
 }
+
+/** Nom ou téléphone saisi pour la carte : espaces superflus retirés ; vide = reprendre le profil. */
+export const cleanCardText = (raw: string): string => raw.trim().replace(/\s+/g, ' ');
+/** Nom de la carte : vide (profil) ou 2 à 40 caractères. */
+export const isValidCardName = (raw: string): boolean => { const v = cleanCardText(raw); return v === '' || (v.length >= 2 && v.length <= 40); };
+/** Téléphone de la carte : vide (profil) ou 6 à 25 caractères parmi chiffres, espaces et + ( ) . / - */
+export const isValidCardPhone = (raw: string): boolean => { const v = cleanCardText(raw); return v === '' || (v.length >= 6 && v.length <= 25 && /^[0-9+()./ -]+$/.test(v)); };

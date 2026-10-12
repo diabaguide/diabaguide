@@ -5,10 +5,10 @@ import { useStore } from '../store';
 import { isTeamRole } from '../lib/auth';
 import { Button, Field, Icon, Screen, TopBar } from '../ui';
 import {
-  fetchShippingInfo, fetchWarehousesCarte, setClientEntryName, setMyEntryName,
+  fetchShippingInfo, fetchWarehousesCarte, setClientCardContact, setClientEntryName, setMyCardContact, setMyEntryName,
   type ShippingInfo, type WarehouseFull,
 } from '../lib/fret';
-import { clientNoLabel, entryNameFromInput, isValidEntryName, printedPhone, suggestEntryName } from '../lib/carteData';
+import { cleanCardText, clientNoLabel, entryNameFromInput, isValidCardName, isValidCardPhone, isValidEntryName, printedPhone, suggestEntryName } from '../lib/carteData';
 import {
   downloadShippingCard, printShippingCard, renderShippingCard, shareShippingCard, shippingCardFileName,
   type ShippingCardData,
@@ -33,6 +33,10 @@ function CarteContenu({ profileId, onName }: { profileId?: string; onName?: (nam
   const [entry, setEntry] = useState('');
   const [saved, setSaved] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [cName, setCName] = useState('');
+  const [cPhone, setCPhone] = useState('');
+  const [cSaved, setCSaved] = useState({ name: '', phone: '' });
+  const [cSaving, setCSaving] = useState(false);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [renderErr, setRenderErr] = useState<string | null>(null);
@@ -49,6 +53,8 @@ function CarteContenu({ profileId, onName }: { profileId?: string; onName?: (nam
         setInfo(res.data);
         setSaved(res.data.entryName);
         setEntry(res.data.entryName ?? suggestEntryName(res.data.name));
+        setCName(res.data.cardName ?? ''); setCPhone(res.data.cardPhone ?? '');
+        setCSaved({ name: res.data.cardName ?? '', phone: res.data.cardPhone ?? '' });
         onName?.(res.data.name);
       }
       // L'entrepôt de la carte : le premier actif dont le téléphone est renseigné.
@@ -59,10 +65,14 @@ function CarteContenu({ profileId, onName }: { profileId?: string; onName?: (nam
   }, [profileId, onName]);
 
   const valid = isValidEntryName(entry);
-  const data: ShippingCardData | null = useMemo(() => (info && valid ? {
-    customerName: info.name, customerPhone: info.phone, entryName: entry, clientNo: info.clientNo,
+  const contactOk = isValidCardName(cName) && isValidCardPhone(cPhone);
+  // Imprimé : ce que le client a saisi pour la carte, à défaut son profil (aperçu en direct, avant enregistrement).
+  const shownName = info?.contactModifiable ? (cleanCardText(cName) || info.profileName) : info?.name ?? '';
+  const shownPhone = info?.contactModifiable ? (cleanCardText(cPhone) || info.profilePhone) : info?.phone ?? null;
+  const data: ShippingCardData | null = useMemo(() => (info && valid && contactOk ? {
+    customerName: shownName, customerPhone: shownPhone, entryName: entry, clientNo: info.clientNo,
     warehouse: warehouse ? { tel: warehouse.tel, bureauNom: warehouse.bureauNom, bureauTel: warehouse.bureauTel } : null,
-  } : null), [info, valid, entry, warehouse]);
+  } : null), [info, valid, contactOk, shownName, shownPhone, entry, warehouse]);
 
   // Aperçu : redessiné quand une valeur change (avec une courte attente pendant la frappe).
   useEffect(() => {
@@ -92,6 +102,19 @@ function CarteContenu({ profileId, onName }: { profileId?: string; onName?: (nam
     setOk('Nom court enregistré.');
   };
 
+  const enregistrerContact = async () => {
+    if (!contactOk) return;
+    setCSaving(true); setErr(null); setOk(null);
+    const res = profileId ? await setClientCardContact(profileId, cName, cPhone) : await setMyCardContact(cName, cPhone);
+    setCSaving(false);
+    if (res.notInstalled) { setErr('Le changement du nom et du téléphone n’est pas encore disponible.'); return; }
+    if (res.error || !res.data) { setErr(res.error ?? 'Enregistrement impossible.'); return; }
+    const n = res.data.cardName ?? ''; const t = res.data.cardPhone ?? '';
+    setCName(n); setCPhone(t); setCSaved({ name: n, phone: t });
+    setOk('Nom et téléphone de la carte enregistrés.');
+  };
+  const repriseProfil = () => { setCName(''); setCPhone(''); };
+
   const partager = async () => {
     if (!blob || !data) return;
     setErr(null); setOk(null);
@@ -118,7 +141,8 @@ function CarteContenu({ profileId, onName }: { profileId?: string; onName?: (nam
   if (err && !info) return <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>;
   if (!info) return null;
 
-  const phone = printedPhone(info.phone);
+  const phone = printedPhone(shownPhone);
+  const contactDirty = cleanCardText(cName) !== cSaved.name || cleanCardText(cPhone) !== cSaved.phone;
   const dirty = valid && entry !== saved;
   const manque = !warehouse?.tel?.trim();
   const canShare = typeof navigator !== 'undefined' && typeof navigator.canShare === 'function';
@@ -137,13 +161,31 @@ function CarteContenu({ profileId, onName }: { profileId?: string; onName?: (nam
 
         <section className="card stack" style={{ gap: 10 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Ce qui est imprimé")}</h2>
-          <dl className="carte-liste">
-            <div><dt>{tr("Nom du client")}</dt><dd>{info.name.toUpperCase()}</dd></div>
-            <div><dt>{tr("Téléphone du client")}</dt><dd>{phone ? `${phone} / (${clientNoLabel(info.clientNo)})` : `(${clientNoLabel(info.clientNo)})`}</dd></div>
-            <div><dt>{tr("Numéro de client")}</dt><dd>{clientNoLabel(info.clientNo)}</dd></div>
-          </dl>
-          {!phone && <div className="notice warn"><Icon name="alert" size={20} /><span>{tr(profileId ? 'Ce client n’a pas de numéro de téléphone dans son profil.' : 'Ajoutez votre numéro de téléphone dans votre profil : il doit figurer sur la carte.')}</span></div>}
-          {!profileId && <Link className="link small" to="/profil/modifier">{tr("Modifier mon nom ou mon téléphone")}</Link>}
+          {info.contactModifiable ? (
+            <>
+              <Field id="card-name" label={tr("Nom du client")} value={cName} onChange={(v) => setCName(v.slice(0, 40))} placeholder={info.profileName}
+                error={!isValidCardName(cName) ? tr('Entre 2 et 40 caractères.') : null}
+                hint={tr('Laissez vide pour utiliser le nom du profil.')} />
+              <Field id="card-phone" label={tr("Téléphone du client")} type="tel" value={cPhone} onChange={(v) => setCPhone(v.slice(0, 25))} placeholder={info.profilePhone ?? ''}
+                error={!isValidCardPhone(cPhone) ? tr('Chiffres, espaces et + ( ) . / - seulement (6 à 25 caractères).') : null}
+                hint={tr('Laissez vide pour utiliser le téléphone du profil.')} />
+              <dl className="carte-liste">
+                <div><dt>{tr("Numéro de client")}</dt><dd>{clientNoLabel(info.clientNo)}</dd></div>
+              </dl>
+              <Button icon="check" kind={contactDirty ? 'p' : 's'} disabled={!contactDirty || !contactOk || cSaving} onClick={() => void enregistrerContact()}>{tr(cSaving ? 'Enregistrement…' : 'Enregistrer le nom et le téléphone')}</Button>
+              {(cName || cPhone) && <button type="button" className="linklike link small" onClick={repriseProfil}>{tr("Reprendre le nom et le téléphone du profil")}</button>}
+            </>
+          ) : (
+            <>
+              <dl className="carte-liste">
+                <div><dt>{tr("Nom du client")}</dt><dd>{info.name.toUpperCase()}</dd></div>
+                <div><dt>{tr("Téléphone du client")}</dt><dd>{phone ? `${phone} / (${clientNoLabel(info.clientNo)})` : `(${clientNoLabel(info.clientNo)})`}</dd></div>
+                <div><dt>{tr("Numéro de client")}</dt><dd>{clientNoLabel(info.clientNo)}</dd></div>
+              </dl>
+              {!profileId && <Link className="link small" to="/profil/modifier">{tr("Modifier mon nom ou mon téléphone")}</Link>}
+            </>
+          )}
+          {!phone && <div className="notice warn"><Icon name="alert" size={20} /><span>{tr(profileId ? 'Ce client n’a pas de numéro de téléphone pour la carte.' : 'Ajoutez un numéro de téléphone : il doit figurer sur la carte.')}</span></div>}
         </section>
 
         <section className="card stack" style={{ gap: 10 }}>

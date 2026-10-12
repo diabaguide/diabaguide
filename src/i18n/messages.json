@@ -4327,5 +4327,15 @@
   "L’impression n’a pas pu démarrer : téléchargez l’image puis imprimez-la.": {"en": "Printing could not start: download the image, then print it.", "zh": "无法开始打印：请先下载图片再打印。", "ar": "تعذّر بدء الطباعة: نزّل الصورة ثم اطبعها."},
   "Position": {"en": "Location", "zh": "位置", "ar": "الموقع"},
   "Position copiée : collez-la dans WhatsApp ou WeChat. Le lien s’ouvre dans Amap.": {"en": "Location copied: paste it into WhatsApp or WeChat. The link opens in Amap.", "zh": "位置已复制：请粘贴到WhatsApp或微信。链接将在高德地图中打开。", "ar": "تم نسخ الموقع: الصقه في واتساب أو ويتشات. يفتح الرابط في Amap."},
-  "Envoi impossible sur cet appareil.": {"en": "Sending is not possible on this device.", "zh": "此设备无法发送。", "ar": "تعذّر الإرسال على هذا الجهاز."}
+  "Envoi impossible sur cet appareil.": {"en": "Sending is not possible on this device.", "zh": "此设备无法发送。", "ar": "تعذّر الإرسال على هذا الجهاز."},
+  "Entre 2 et 40 caractères.": {"en": "Between 2 and 40 characters.", "zh": "2到40个字符。", "ar": "من 2 إلى 40 حرفًا."},
+  "Laissez vide pour utiliser le nom du profil.": {"en": "Leave empty to use the profile name.", "zh": "留空则使用个人资料中的姓名。", "ar": "اتركه فارغًا لاستخدام اسم الملف الشخصي."},
+  "Laissez vide pour utiliser le téléphone du profil.": {"en": "Leave empty to use the profile phone.", "zh": "留空则使用个人资料中的电话。", "ar": "اتركه فارغًا لاستخدام هاتف الملف الشخصي."},
+  "Chiffres, espaces et + ( ) . / - seulement (6 à 25 caractères).": {"en": "Digits, spaces and + ( ) . / - only (6 to 25 characters).", "zh": "仅限数字、空格和 + ( ) . / -（6到25个字符）。", "ar": "أرقام ومسافات و + ( ) . / - فقط (من 6 إلى 25 حرفًا)."},
+  "Enregistrer le nom et le téléphone": {"en": "Save the name and phone", "zh": "保存姓名和电话", "ar": "حفظ الاسم والهاتف"},
+  "Reprendre le nom et le téléphone du profil": {"en": "Use the profile name and phone", "zh": "使用个人资料中的姓名和电话", "ar": "استخدام اسم وهاتف الملف الشخصي"},
+  "Le changement du nom et du téléphone n’est pas encore disponible.": {"en": "Changing the name and phone is not available yet.", "zh": "暂时无法修改姓名和电话。", "ar": "تغيير الاسم والهاتف غير متاح بعد."},
+  "Nom et téléphone de la carte enregistrés.": {"en": "Card name and phone saved.", "zh": "卡片上的姓名和电话已保存。", "ar": "تم حفظ اسم وهاتف البطاقة."},
+  "Ce client n’a pas de numéro de téléphone pour la carte.": {"en": "This client has no phone number for the card.", "zh": "该客户没有可用于卡片的电话号码。", "ar": "ليس لهذا العميل رقم هاتف للبطاقة."},
+  "Ajoutez un numéro de téléphone : il doit figurer sur la carte.": {"en": "Add a phone number: it must appear on the card.", "zh": "请添加电话号码：它必须出现在卡片上。", "ar": "أضف رقم هاتف: يجب أن يظهر على البطاقة."}
 }
