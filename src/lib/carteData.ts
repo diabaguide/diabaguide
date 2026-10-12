@@ -59,3 +59,23 @@ export function phoneLine(phone: string | null | undefined, clientNo: number): s
 export function cardFileNameFor(entryName: string, clientNo: number): string {
   return `diaba-cargo-${cleanEntryName(entryName) || 'client'}-${clientNoLabel(clientNo)}.png`;
 }
+
+/** Nom ou téléphone saisi pour la carte : espaces superflus retirés ; vide = reprendre le profil. */
+export const cleanCardText = (raw: string): string => raw.trim().replace(/\s+/g, ' ');
+/** Nom de la carte : vide (profil) ou 2 à 40 caractères. */
+export const isValidCardName = (raw: string): boolean => { const v = cleanCardText(raw); return v === '' || (v.length >= 2 && v.length <= 40); };
+/** Téléphone de la carte : vide (profil) ou 6 à 25 caractères parmi chiffres, espaces et + ( ) . / - */
+export const isValidCardPhone = (raw: string): boolean => { const v = cleanCardText(raw); return v === '' || (v.length >= 6 && v.length <= 25 && /^[0-9+()./ -]+$/.test(v)); };
+
+/** Consignes de manutention imprimées sur la carte, dans l'ordre des quatre icônes du modèle. */
+export const MANUTENTION = [
+  { id: 'haut', fr: 'Haut (向上)', en: 'This side up' },
+  { id: 'fragile', fr: 'Fragile (易碎)', en: 'Fragile' },
+  { id: 'sec', fr: 'Craint l’humidité (防潮)', en: 'Keep dry' },
+  { id: 'soin', fr: 'Manipuler avec soin (小心轻放)', en: 'Handle with care' },
+] as const;
+export type ManutentionId = typeof MANUTENTION[number]['id'];
+
+/** Garde les identifiants connus (sans doublon), dans l'ordre du modèle : protège le stockage local. */
+export const cleanManutention = (v: unknown): ManutentionId[] =>
+  MANUTENTION.map((m) => m.id).filter((id) => Array.isArray(v) && v.includes(id));

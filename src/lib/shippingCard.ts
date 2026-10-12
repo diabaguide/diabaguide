@@ -1,5 +1,5 @@
 import { EAN13_MODULES, clientBarcode, ean13Modules } from './barcode';
-import { cardFileNameFor, clientNoLabel, phoneLine } from './carteData';
+import { MANUTENTION, cardFileNameFor, cleanManutention, clientNoLabel, phoneLine, type ManutentionId } from './carteData';
 
 /**
  * Carte d'expédition (« shipping mark ») : le modèle fourni par Diaba (public/
@@ -26,6 +26,14 @@ const ZONE = {
   bureau:     { x: 147, w: 413, baseline: 1478 },
 } as const;
 
+/** Les quatre cases de consignes de manutention (向上, 易碎, 防潮, 小心轻放), dans l'ordre de MANUTENTION. */
+const TUILES = [
+  { x: 33, y: 775, w: 228, h: 226 },
+  { x: 283, y: 775, w: 228, h: 226 },
+  { x: 532, y: 775, w: 228, h: 226 },
+  { x: 781, y: 775, w: 228, h: 226 },
+] as const;
+
 const SANS = "'Plus Jakarta Sans Variable','Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif";
 const INK = '#0A0A0A';
 const NAVY = '#0B2A6B';
@@ -39,6 +47,8 @@ export interface ShippingCardData {
   entryName: string;
   /** Numéro de client (« (0022) », code-barres). */
   clientNo: number;
+  /** Consignes cochées. Aucune = les quatre icônes restent telles quelles ; sinon seules celles-ci sont mises en avant. */
+  manutention?: readonly ManutentionId[];
   warehouse: {
     /** Téléphone de réception de l'entrepôt. */
     tel: string | null;
@@ -176,6 +186,22 @@ export async function renderShippingCard(d: ShippingCardData): Promise<Blob> {
     ctx.textAlign = 'center';
     ctx.fillStyle = NAVY;
     ctx.fillText(text, z.x + z.w / 2 + 14, z.y + z.h - 26);
+  }
+
+  // 5 bis) Consignes de manutention : les cases cochées gardent leurs couleurs et reçoivent une coche,
+  // les autres sont estompées. Rien de coché : le modèle reste inchangé.
+  const coches = cleanManutention(d.manutention);
+  if (coches.length > 0) {
+    TUILES.forEach((t, i) => {
+      const on = coches.includes(MANUTENTION[i].id);
+      ctx.beginPath();
+      ctx.roundRect(t.x + 3, t.y + 3, t.w - 6, t.h - 6, 22);
+      if (!on) { ctx.fillStyle = 'rgba(255,255,255,0.78)'; ctx.fill(); return; }
+      const cx = t.x + t.w - 38, cy = t.y + 38;
+      ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI * 2); ctx.fillStyle = '#12904A'; ctx.fill();
+      ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#fff';
+      ctx.beginPath(); ctx.moveTo(cx - 11, cy + 1); ctx.lineTo(cx - 3, cy + 10); ctx.lineTo(cx + 12, cy - 9); ctx.stroke();
+    });
   }
 
   // 6) Contact du bureau (« Arkim 15711885660 »), sous le libellé « Office ».

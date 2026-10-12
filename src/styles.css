@@ -630,3 +630,8 @@ tr.clickable:hover { background: var(--surface-2, rgba(0, 0, 0, .04)); }
 .carte-liste > div { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .carte-liste dt { color: var(--muted); font-size: 14px; }
 .carte-liste dd { margin: 0; font-weight: 700; }
+
+.carte-options { display: grid; gap: 8px; }
+.carte-option { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 12px; border: 1px solid var(--border, #d9d9d9); border-radius: 12px; cursor: pointer; font-weight: 600; }
+.carte-option input { width: 22px; height: 22px; flex: none; accent-color: var(--accent, #0B2A6B); }
+.carte-option:has(input:checked) { border-color: var(--accent, #0B2A6B); background: var(--accent-soft, rgba(11, 42, 107, .08)); }
