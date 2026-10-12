@@ -18,6 +18,7 @@ interface ProposalRow {
   products: string; product_tags: string[] | null; moq: string; tel: string; wechat: string; addr_cn: string;
   photos: number; card_front: boolean; card_back: boolean;
   photo_paths: string[] | null; card_front_path: string | null; card_back_path: string | null;
+  lat?: number | null; lng?: number | null; position_link?: string | null;   // script 520
   status: Status; date: string; feedback: string | null; author: string;
 }
 
@@ -27,6 +28,7 @@ function rowToProposal(r: ProposalRow): Proposal {
     products: r.products, productTags: r.product_tags ?? [], moq: r.moq, tel: r.tel, wechat: r.wechat, addrCn: r.addr_cn,
     photos: r.photos, cardFront: r.card_front, cardBack: r.card_back,
     photoPaths: r.photo_paths ?? [], cardFrontPath: r.card_front_path ?? undefined, cardBackPath: r.card_back_path ?? undefined,
+    lat: r.lat ?? null, lng: r.lng ?? null, positionLink: r.position_link ?? null,
     status: r.status, date: r.date, feedback: r.feedback ?? undefined, author: r.author,
   };
 }
@@ -39,9 +41,21 @@ function proposalToRow(p: Proposal) {
     products: p.products, product_tags: p.productTags ?? [], moq: p.moq, tel: p.tel, wechat: p.wechat, addr_cn: p.addrCn,
     photos: p.photos, card_front: p.cardFront, card_back: p.cardBack,
     photo_paths: p.photoPaths ?? [], card_front_path: p.cardFrontPath ?? null, card_back_path: p.cardBackPath ?? null,
+    lat: p.lat ?? null, lng: p.lng ?? null, position_link: p.positionLink ?? null,
     status: p.status, date: p.date, feedback: p.feedback ?? null, author: p.author,
   };
 }
+
+/** Colonnes ajoutées par le script 520 : retirées de l'envoi tant que ce script n'est pas lancé. */
+const COLONNES_POSITION = ['lat', 'lng', 'position_link'] as const;
+const sansPosition = <T extends Record<string, unknown>>(row: T) => {
+  const r: Record<string, unknown> = { ...row };
+  for (const k of COLONNES_POSITION) delete r[k];
+  return r;
+};
+const aUnePosition = (p: Proposal) => p.lat != null || p.lng != null || !!p.positionLink;
+const colonneAbsente = (e: { code?: string; message?: string }) => e.code === '42703' || e.code === 'PGRST204' || /position_link|column .*(lat|lng)/i.test(e.message ?? '');
+const MSG_520 = 'La position ne peut pas encore être enregistrée : la base doit d’abord être mise à jour (supabase/520_proposition_position.sql). Retirez la position pour envoyer le reste.';
 
 const newId = () =>
   (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'p' + Date.now());
@@ -58,6 +72,9 @@ function validateProposal(p: Proposal): string | null {
   if (p.products.length > 1000) return "La description des produits ne doit pas dépasser 1000 caractères.";
   if (p.moq.length > 1000) return "Le minimum de commande ne doit pas dépasser 1000 caractères.";
   if (p.addrCn.length > 1000) return "L'adresse complète en chinois ne doit pas dépasser 1000 caractères.";
+  if ((p.positionLink || '').length > 500) return "Le lien de position ne doit pas dépasser 500 caractères.";
+  if ((p.lat == null) !== (p.lng == null)) return "La position doit avoir une latitude et une longitude.";
+  if (p.lat != null && p.lng != null && (!Number.isFinite(p.lat) || !Number.isFinite(p.lng) || Math.abs(p.lat) > 90 || Math.abs(p.lng) > 180)) return "La position n’est pas valide.";
   return null;
 }
 
@@ -104,7 +121,11 @@ export async function saveProposal(p: Proposal, status: Status, datePrefix: stri
     date: frDate(datePrefix),
     author: author ?? p.author,
   });
-  const { data, error } = await supabase.from('proposals').upsert(row).select().single();
+  let { data, error } = await supabase.from('proposals').upsert(row).select().single();
+  if (error && colonneAbsente(error)) {
+    if (aUnePosition(p)) return { error: MSG_520 };
+    ({ data, error } = await supabase.from('proposals').upsert(sansPosition(row)).select().single());
+  }
   if (error) { warn('enregistrement de la proposition', error); return { error: error.message }; }
   return { data: rowToProposal(data as ProposalRow) };
 }
@@ -115,7 +136,11 @@ export async function updateProposalFields(p: Proposal): Promise<{ error?: strin
   if (vErr) return { error: vErr };
   if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
   const { id: _id, status: _s, date: _d, feedback: _f, author: _a, ...fields } = proposalToRow(p);
-  const { data, error } = await supabase.from('proposals').update(fields).eq('id', p.id).select('id, photo_paths');
+  let { data, error } = await supabase.from('proposals').update(fields).eq('id', p.id).select('id, photo_paths');
+  if (error && colonneAbsente(error)) {
+    if (aUnePosition(p)) return { error: MSG_520 };
+    ({ data, error } = await supabase.from('proposals').update(sansPosition(fields)).eq('id', p.id).select('id, photo_paths'));
+  }
   if (error) { warn('enregistrement des modifications', error); return { error: error.message }; }
   // Sans ligne renvoyée, la base a ignoré la mise à jour (droits insuffisants) sans lever d'erreur.
   if (!data?.length) return { error: 'Aucune modification enregistrée : la base a refusé la mise à jour (droits insuffisants ?).' };

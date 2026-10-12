@@ -216,6 +216,11 @@ export interface Proposal {
   photos: number;
   cardFront: boolean;
   cardBack: boolean;
+  /** Position du lieu en WGS84 (envoyée avec Amap ou prise au GPS), si le voyageur l'a fournie. */
+  lat?: number | null;
+  lng?: number | null;
+  /** Lien Amap collé par le voyageur (l'équipe peut l'ouvrir). */
+  positionLink?: string | null;
   photoPaths: string[];    // chemins dans le bucket proposal-photos
   cardFrontPath?: string;
   cardBackPath?: string;
