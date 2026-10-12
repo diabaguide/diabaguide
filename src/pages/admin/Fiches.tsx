@@ -1,7 +1,7 @@
 import { useI18n } from '../../i18n';
 import { useMemo, useState, type ReactNode } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { catLabel, cityName, type Cat, type City, type Freight, type Provider } from '../../data';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { catLabel, cityName, type Cat, type City, type Freight, type Proposal, type Provider } from '../../data';
 import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
 import { newProviderId, validateProvider } from '../../lib/providers';
@@ -117,9 +117,13 @@ export function FicheEdit() {
   // Catégorie proposée : la première dans l'ordre défini en base (colonne sort),
   // et non la première par ordre alphabétique, ordre d'affichage des listes.
   const firstCat = [...s.categories].filter((c) => c.active).sort((a, b) => a.sort - b.sort)[0] ?? s.categories[0];
+  // « Créer la fiche avec ces informations » depuis une proposition : les champs sont préremplis.
+  const depuis = (useLocation().state as { depuis?: Proposal } | null)?.depuis;
   const [p, setP] = useState<Provider | null>(() => existing ?? (isNew ? {
-    id: '', name: '', cn: '', cat: firstCat.id, city: firstCity.id, district: '',
-    lat: firstCity.lat ?? 23.13, lng: firstCity.lng ?? 113.27, verified: today(), desc: '', addrCn: '', addrFr: '', productTags: [],
+    id: '', name: depuis?.name ?? '', cn: depuis?.cn ?? '', cat: depuis?.cat ?? firstCat.id, city: depuis?.city ?? firstCity.id, district: '',
+    lat: depuis?.lat ?? firstCity.lat ?? 23.13, lng: depuis?.lng ?? firstCity.lng ?? 113.27, verified: today(), desc: '', addrCn: depuis?.addrCn ?? '', addrFr: depuis?.loc ?? '',
+    productTags: depuis?.productTags ?? [], tel: depuis?.tel || undefined, wechat: depuis?.wechat || undefined,
+    products: depuis?.products ? [depuis.products] : undefined, moq: depuis?.moq || undefined,
   } : null));
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);

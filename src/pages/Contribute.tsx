@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catLabel, cityName, type Cat, type City, type Proposal, type Status } from '../data';
 import { emptyProposal, useStore } from '../store';
 import { compressImage } from '../lib/image';
+import { lienAmap, lirePosition } from '../lib/amap';
 import { uploadPhoto, type PhotoBucket } from '../lib/photos';
 import { Button, DemoNote, Field, Icon, RadioCard, Screen, Section, StatusBadge, StoredPhoto, TextArea, TopBar, Select } from '../ui';
 
@@ -53,6 +54,53 @@ export function FilePick({ label, onPick, done, bucket }: { label: string; onPic
   );
 }
 
+/** Position du lieu : lien de partage d'Amap (高德地图) ou GPS du téléphone. Facultatif. */
+function PositionSection({ p, set }: { p: Proposal; set: (patch: Partial<Proposal>) => void }) {
+  const { tr } = useI18n();
+  const [texte, setTexte] = useState(p.positionLink ?? '');
+  const [err, setErr] = useState<string | null>(null);
+  const [gps, setGps] = useState(false);
+  const aPoint = p.lat != null && p.lng != null;
+  const efface = () => { setTexte(''); setErr(null); set({ lat: null, lng: null, positionLink: null }); };
+  const colle = (v: string) => {
+    setTexte(v);
+    if (!v.trim()) { efface(); return; }
+    const r = lirePosition(v);
+    if (r?.type === 'coordonnees') { setErr(null); set({ lat: r.lat, lng: r.lng, positionLink: r.lien ?? null }); }
+    else if (r?.type === 'lien') { setErr(null); set({ lat: null, lng: null, positionLink: r.lien }); }
+    else { setErr('Position non reconnue. Collez le lien de partage d’Amap, ou les coordonnées (latitude, longitude).'); set({ lat: null, lng: null, positionLink: null }); }
+  };
+  const maPosition = () => {
+    if (!('geolocation' in navigator)) { setErr('La localisation n’est pas disponible sur cet appareil.'); return; }
+    setGps(true); setErr(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGps(false); setTexte('');
+        set({ lat: Math.round(pos.coords.latitude * 1e6) / 1e6, lng: Math.round(pos.coords.longitude * 1e6) / 1e6, positionLink: null });
+      },
+      (e) => { setGps(false); setErr(e.code === 1 ? 'Localisation refusée : autorisez-la dans les réglages du navigateur, ou collez un lien Amap.' : 'Position introuvable pour le moment. Réessayez dehors, ou collez un lien Amap.'); },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
+    );
+  };
+  return (
+    <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Position du lieu")}</h2>
+      <div className="small muted">{tr("Facultatif, mais très utile : elle permet de retrouver le lieu sur la carte. Dans Amap (高德地图), ouvrez le lieu, touchez Partager puis copiez le lien, et collez-le ici. Vous pouvez coller le message de partage en entier.")}</div>
+      <TextArea id="pos" label={tr("Lien Amap ou coordonnées")} rows={2} value={texte} onChange={colle} placeholder="https://surl.amap.com/…" />
+      <Button kind="s" icon="pin" onClick={maPosition} disabled={gps}>{tr(gps ? 'Recherche de votre position…' : 'Utiliser ma position actuelle')}</Button>
+      <div className="small muted">{tr("À utiliser quand vous êtes devant le lieu.")}</div>
+      {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
+      {aPoint && (
+        <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} />
+          <span>{tr("Position enregistrée")} : {p.lat?.toFixed(5)}, {p.lng?.toFixed(5)}{' · '}
+            <a className="link" href={lienAmap({ lat: p.lat as number, lng: p.lng as number }, p.name)} target="_blank" rel="noopener noreferrer">{tr("Vérifier dans Amap")}</a></span>
+        </div>
+      )}
+      {!aPoint && p.positionLink && <div role="status" className="notice"><Icon name="info" size={20} /><span>{tr("Lien enregistré. Il ne contient pas les coordonnées : l’équipe l’ouvrira pour placer le lieu.")}</span></div>}
+      {(aPoint || p.positionLink) && <button type="button" className="linklike link small" onClick={efface}>{tr("Retirer la position")}</button>}
+    </section>
+  );
+}
+
 export function Wizard() {
   const { tr } = useI18n();
   const { s, d, api } = useStore();
@@ -79,6 +127,7 @@ export function Wizard() {
         <Field id="nom" label={tr("Nom du prestataire")} value={p.name} onChange={(v) => set({ name: v })} req hint={tr("Tel qu’écrit sur l’enseigne ou la carte, en chinois ou en lettres latines.")} error={tr(tried ? errs.name : null)} />
         <Select id="ville" label={tr("Ville")} value={p.city} onChange={(v) => set({ city: v as City })} options={s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }))} />
         <Field id="loc" label={tr("Où se trouve-t-il ?")} value={p.loc} onChange={(v) => set({ loc: v })} req hint={tr("Quartier, marché, rue ou repère : ce que vous savez.")} error={tr(tried ? errs.loc : null)} />
+        <PositionSection p={p} set={set} />
         <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Photo de la devanture ou de la carte de visite ")}<span className="req" aria-hidden="true">*</span></h2>
           <div className="small muted">{tr("Une photo suffit, on s’occupe du reste : nom en chinois, adresse, téléphone, WeChat.")}</div>
           <div className="grid2">

@@ -4,6 +4,7 @@ import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate, useParams, u
 import { STATUSES, catLabel, cityName, type Cat, type City, type Provider, type Proposal, type Status } from '../../data';
 import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
+import { lienAmap } from '../../lib/amap';
 import { signOut } from '../../lib/auth';
 import { FilePick, MAX_PHOTOS } from '../Contribute';
 import { Avatar, Button, DemoNote, Field, Icon, Logo, Photo, Section, Select, StatusBadge, StoredPhoto, Tag, TextArea, useWide } from '../../ui';
@@ -446,6 +447,23 @@ function VerifyBody() {
               </div>
               <TextArea id="p" label={tr("Produits ou services")} value={p.products} onChange={(v) => set({ products: v })} />
               <div className="form2"><Field id="moq" label={tr("Minimum de commande")} value={p.moq} onChange={(v) => set({ moq: v })} placeholder={tr("Non renseigné par le contributeur")} /><Field id="metro" label={tr("Station de métro proche")} value="" placeholder={tr("À compléter par l’équipe")} /></div>
+            </Section>
+            <Section title={tr("Position du lieu")} icon="pin">
+              {p.lat != null && p.lng != null
+                ? <div className="small muted">{tr("Envoyée par le contributeur (Amap ou GPS), en coordonnées GPS. Vérifiez qu’elle tombe bien sur le lieu avant de publier.")}</div>
+                : <div className="small muted">{tr("Le contributeur n’a pas envoyé de coordonnées.")}</div>}
+              <div className="form2">
+                <Field id="plat" label={tr("Latitude")} value={p.lat == null ? '' : String(p.lat)} onChange={(v) => set({ lat: v.trim() === '' ? null : Number(v.replace(',', '.')) })} placeholder="23.1065" />
+                <Field id="plng" label={tr("Longitude")} value={p.lng == null ? '' : String(p.lng)} onChange={(v) => set({ lng: v.trim() === '' ? null : Number(v.replace(',', '.')) })} placeholder="113.3245" />
+              </div>
+              <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
+                {p.lat != null && p.lng != null && Number.isFinite(p.lat) && Number.isFinite(p.lng) && <>
+                  <a className="link" href={lienAmap({ lat: p.lat, lng: p.lng }, p.name)} target="_blank" rel="noopener noreferrer">{tr("Voir dans Amap")}</a>
+                  <a className="link" href={`https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lng}#map=18/${p.lat}/${p.lng}`} target="_blank" rel="noopener noreferrer">{tr("Voir sur OpenStreetMap")}</a>
+                </>}
+                {p.positionLink && /^https?:\/\//i.test(p.positionLink) && <a className="link" href={p.positionLink} target="_blank" rel="noopener noreferrer">{tr("Ouvrir le lien envoyé")}</a>}
+              </div>
+              <Button kind="s" icon="plus" onClick={() => nav('/equipe/fiches/nouvelle', { state: { depuis: p } })}>{tr("Créer la fiche avec ces informations")}</Button>
             </Section>
             <Section title={tr("Photos du lieu")} icon="camera">
               <div className="grid2" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
