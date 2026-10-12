@@ -32,14 +32,21 @@ export function AnnonceImage({ path, alt = '', eager = false }: { path: string |
   );
 }
 
-/** Carte d'une annonce sur l'accueil : toute la carte est cliquable et mène à la page de détail. */
+/** L'annonce du tableau de bord : avec une image, l'image est la carte (elle porte déjà son titre et son bouton) ;
+    sans image, une carte de texte aux couleurs de la marque. Toute la carte est cliquable. */
 function AnnonceCarte({ a }: { a: Annonce }) {
   const { tr } = useI18n();
+  const nom = `${tr(a.titre)} — ${tr("Voir l’annonce")}`;
+  if (a.imagePath) {
+    return (
+      <Link to={`/annonces/${a.id}`} className="annonce-banniere" aria-label={nom}>
+        <AnnonceImage path={a.imagePath} alt={a.titre} eager />
+      </Link>
+    );
+  }
   return (
-    <Link to={`/annonces/${a.id}`} className="annonce-card" aria-label={`${tr(a.titre)} — ${tr("Voir l’annonce")}`}>
-      <AnnonceImage path={a.imagePath} />
+    <Link to={`/annonces/${a.id}`} className="annonce-card" aria-label={nom}>
       <div className="annonce-body">
-        <span className="annonce-badge">{tr("Annonce Diaba")}</span>
         <h3 className="display">{tr(a.titre)}</h3>
         <p>{tr(a.texte)}</p>
         <span className="annonce-cta">{tr("Voir l’annonce")}<Icon name="chevR" size={18} sw={2.4} /></span>
@@ -48,25 +55,21 @@ function AnnonceCarte({ a }: { a: Annonce }) {
   );
 }
 
-/* Annonces de services rédigées par l'équipe (console : /equipe/annonces).
-   La base ne rend que les annonces actives et dans leur période : la section
-   disparaît d'elle-même quand il n'y a rien à montrer, et l'échec d'un
-   chargement ne casse pas l'accueil. */
+/* Annonce de service rédigée par l'équipe (console : /equipe/annonces). Une seule est montrée : la plus
+   récemment modifiée parmi celles que la base rend (actives et dans leur période). La section disparaît
+   d'elle-même quand il n'y a rien à montrer, et l'échec d'un chargement ne casse pas l'accueil. */
 export function AnnoncesDiaba() {
   const { tr } = useI18n();
-  const [annonces, setAnnonces] = useState<Annonce[]>([]);
+  const [annonce, setAnnonce] = useState<Annonce | null>(null);
   useEffect(() => {
     let alive = true;
-    void fetchAnnonces().then((liste) => { if (alive) setAnnonces(liste); });
+    void fetchAnnonces().then((liste) => { if (alive) setAnnonce(liste[0] ?? null); });
     return () => { alive = false; };
   }, []);
-  if (annonces.length === 0) return null;
+  if (!annonce) return null;
   return (
-    <section className="stack annonces-section" aria-label={tr("Annonces de Diaba Guide")}>
-      <h2 className="display" style={{ fontSize: 21 }}><Icon name="send" size={22} />{tr("Les services Diaba Guide")}</h2>
-      <div className={`annonces-rail${annonces.length === 1 ? ' seule' : ''}`}>
-        {annonces.map((a) => <AnnonceCarte key={a.id} a={a} />)}
-      </div>
+    <section className="annonce-section" aria-label={tr("Annonce de Diaba Guide")}>
+      <AnnonceCarte a={annonce} />
     </section>
   );
 }
