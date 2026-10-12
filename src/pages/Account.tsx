@@ -113,6 +113,7 @@ export function Profile() {
         <section className="stack"><h2 className="row" style={{ fontSize: 17 }}><Icon name="pin" size={20} />{tr("Préférences de localisation")}</h2>
           {prefs.map((x) => <RadioCard key={x.v} name="loc" label={tr(x.l)} sub={tr(x.sub)} checked={s.locPref === x.v} onChange={() => d({ t: 'locPref', v: x.v })} />)}
         </section>
+        <Button kind="t" icon="info" onClick={() => { d({ t: 'tour', v: false }); nav('/accueil'); }}>{tr("Revoir la présentation")}</Button>
         <Button kind="s" icon="logout" onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}>{tr("Se déconnecter")}</Button>
         <div className="small muted center">{tr("Diaba Guide · version de démonstration")}</div>
       </div>

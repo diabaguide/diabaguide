@@ -1,4 +1,5 @@
 import type { Session } from '@supabase/supabase-js';
+import { convivial, messageReseau } from './erreurs';
 import { supabase } from './supabase';
 import { identifiantEstUnNumero, isInternalEmail, phoneLoginId, phoneOf } from './phone';
 
@@ -21,6 +22,8 @@ export const homeFor = (r: Role | undefined) => (r === 'livreur' ? '/fret' : isT
 
 /** Traduit les messages d'erreur Supabase courants en français. */
 function translate(msg: string): string {
+  const reseau = messageReseau(msg);
+  if (reseau) return reseau;
   const m = msg.toLowerCase();
   if (m.includes('invalid login credentials')) return 'E-mail, téléphone ou mot de passe incorrect.';
   if (m.includes('already registered') || m.includes('already been registered')) return 'Un compte existe déjà pour cet identifiant.';
@@ -157,7 +160,7 @@ export async function updateMyProfile(
   const { error } = await supabase.rpc('update_my_profile', {
     p_name: name, p_phone: phone, p_avatar: avatar.path ?? null, p_remove_avatar: avatar.remove ?? false,
   });
-  return { error: error ? error.message : undefined };
+  return { error: error ? convivial(error.message) : undefined };
 }
 
 /**

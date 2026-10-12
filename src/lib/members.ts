@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { messageReseau } from './erreurs';
 import type { AccountStatus, Role } from './auth';
 import { isInternalEmail, phoneOf } from './phone';
 
@@ -250,6 +251,8 @@ export async function revokeInvitation(email: string): Promise<{ error?: string 
 
 /** Les garde-fous SQL remontent des messages déjà lisibles : on les laisse passer. */
 function humanize(msg: string): string {
+  const reseau = messageReseau(msg);
+  if (reseau) return reseau;
   if (/row-level security|permission denied/i.test(msg)) return "Action non autorisée : vous n'êtes pas administrateur.";
   return msg;
 }

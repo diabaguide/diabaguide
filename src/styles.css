@@ -659,3 +659,20 @@ tr.clickable:hover { background: var(--surface-2, rgba(0, 0, 0, .04)); }
 .annonce-cta { margin-top: 4px; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 18px; border-radius: 999px; background: var(--gold-fill, #E6BC4B); color: #1B2A52; font-weight: 800; font-size: 15px; }
 @media (min-width: 900px) { .annonce-card { flex-basis: 380px; } }
 .annonce-detail .annonce-img { border-radius: 16px; }
+
+/* Visite guidée du premier lancement : fiche en bas d'écran sur téléphone, centrée sur grand écran. */
+.tour-overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; justify-content: center; background: rgba(12, 28, 76, .72); padding: 0; }
+.tour-card { width: 100%; max-width: 520px; background: var(--surface); border-radius: 24px 24px 0 0; padding: 22px 22px calc(22px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 18px; box-shadow: 0 -12px 40px rgba(0, 0, 0, .3); }
+@media (min-width: 640px) { .tour-overlay { align-items: center; padding: 24px; } .tour-card { border-radius: 24px; } }
+.tour-card h2 { margin: 0; font-size: 24px; line-height: 1.2; }
+.tour-card p { margin: 0; font-size: 17px; line-height: 1.5; color: var(--muted); }
+.tour-ico { width: 64px; height: 64px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; background: var(--info-bg, #E7EEFC); color: #153E9F; }
+.tour-dots { display: flex; gap: 8px; justify-content: center; }
+.tour-dots span { width: 9px; height: 9px; border-radius: 999px; background: var(--line, #D6DCEA); }
+.tour-dots span.fait { background: #8DA4DA; }
+.tour-dots span.on { width: 28px; background: #153E9F; }
+.tour-langs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tour-langs button { min-height: 56px; border-radius: 14px; border: 2px solid var(--line, #D6DCEA); background: var(--surface); color: inherit; font: inherit; font-weight: 700; font-size: 17px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.tour-langs button.on { border-color: #153E9F; background: var(--info-bg, #E7EEFC); }
+.tour-actions { display: flex; align-items: center; gap: 8px; }
+.tour-actions .btn-p { min-width: 150px; }

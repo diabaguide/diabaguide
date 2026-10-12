@@ -4396,5 +4396,21 @@
   "Contact de l’équipe retiré : le bouton de contact des annonces ne s’affiche plus.": {"en": "Team contact removed: the contact button no longer shows on announcements.", "zh": "团队联系方式已移除：公告中不再显示联系按钮。", "ar": "تمت إزالة وسيلة التواصل: لن يظهر زر التواصل في الإعلانات."},
   "Titre, description, image, lien, dates de publication.": {"en": "Title, description, image, link, publication dates.", "zh": "标题、说明、图片、链接、发布日期。", "ar": "العنوان والوصف والصورة والرابط وتواريخ النشر."},
   "Publier seule": {"en": "Publish alone", "zh": "单独发布", "ar": "نشر وحدها"},
-  "Pour changer l’annonce du tableau de bord : « Publier seule » active l’annonce choisie et désactive les autres.": {"en": "To change the dashboard announcement: “Publish alone” activates the chosen announcement and deactivates the others.", "zh": "要更换首页公告：“单独发布”会启用所选公告并停用其他公告。", "ar": "لتغيير إعلان لوحة التحكم: «نشر وحدها» يفعّل الإعلان المختار ويعطّل الباقي."}
+  "Pour changer l’annonce du tableau de bord : « Publier seule » active l’annonce choisie et désactive les autres.": {"en": "To change the dashboard announcement: “Publish alone” activates the chosen announcement and deactivates the others.", "zh": "要更换首页公告：“单独发布”会启用所选公告并停用其他公告。", "ar": "لتغيير إعلان لوحة التحكم: «نشر وحدها» يفعّل الإعلان المختار ويعطّل الباقي."},
+  "Vous n’êtes pas connecté à Internet. Vérifiez le Wi-Fi ou vos données mobiles, puis réessayez.": {"en": "You are not connected to the Internet. Check Wi-Fi or mobile data, then try again.", "zh": "您未连接到互联网。请检查 Wi-Fi 或移动数据，然后重试。", "ar": "أنت غير متصل بالإنترنت. تحقق من الواي فاي أو بيانات الهاتف ثم أعد المحاولة."},
+  "Connexion impossible pour le moment. Vérifiez votre réseau, puis réessayez.": {"en": "Unable to connect right now. Check your network, then try again.", "zh": "暂时无法连接。请检查网络，然后重试。", "ar": "تعذّر الاتصال حاليًا. تحقق من الشبكة ثم أعد المحاولة."},
+  "Votre session a expiré. Reconnectez-vous, puis réessayez.": {"en": "Your session has expired. Sign in again, then try again.", "zh": "您的登录已过期。请重新登录后再试。", "ar": "انتهت جلستك. سجّل الدخول من جديد ثم أعد المحاولة."},
+  "Le service est momentanément indisponible. Réessayez dans quelques instants.": {"en": "The service is temporarily unavailable. Try again in a few moments.", "zh": "服务暂时不可用。请稍后再试。", "ar": "الخدمة غير متاحة مؤقتًا. أعد المحاولة بعد قليل."},
+  "Bienvenue sur Diaba Guide": {"en": "Welcome to Diaba Guide", "zh": "欢迎使用 Diaba Guide", "ar": "مرحبًا بك في Diaba Guide"},
+  "Choisissez votre langue. Vous pourrez la changer à tout moment dans le profil.": {"en": "Choose your language. You can change it at any time in your profile.", "zh": "请选择语言。您可以随时在个人资料中更改。", "ar": "اختر لغتك. يمكنك تغييرها في أي وقت من الملف الشخصي."},
+  "Trouvez les bonnes adresses": {"en": "Find the right addresses", "zh": "找到合适的地址", "ar": "اعثر على العناوين المناسبة"},
+  "Marchés, hôtels et restaurants à Guangzhou et Shenzhen, vérifiés par l’équipe. Montrez l’adresse en chinois à votre chauffeur, ou appelez le lieu en un geste.": {"en": "Markets, hotels and restaurants in Guangzhou and Shenzhen, checked by the team. Show the address in Chinese to your driver, or call the place in one tap.", "zh": "广州和深圳的市场、酒店和餐厅，均由团队核实。向司机出示中文地址，或一键拨打电话。", "ar": "أسواق وفنادق ومطاعم في قوانغتشو وشنتشن، تحقق منها الفريق. أرِ السائق العنوان بالصينية أو اتصل بالمكان بلمسة واحدة."},
+  "Préparez vos achats": {"en": "Prepare your purchases", "zh": "准备您的采购", "ar": "جهّز مشترياتك"},
+  "Créez une liste de produits, ajoutez les lieux à visiter et partagez-la par WhatsApp.": {"en": "Create a product list, add the places to visit and share it on WhatsApp.", "zh": "创建产品清单，添加要去的地点，并通过 WhatsApp 分享。", "ar": "أنشئ قائمة منتجات وأضف الأماكن التي ستزورها وشاركها عبر واتساب."},
+  "Suivez vos envois": {"en": "Track your shipments", "zh": "跟踪您的货运", "ar": "تتبّع شحناتك"},
+  "Annoncez vos colis, suivez-les de la Chine jusqu’à Dakar, et créez votre carte d’expédition à coller sur vos marchandises.": {"en": "Announce your parcels, follow them from China to Dakar, and create your shipping card to stick on your goods.", "zh": "预报您的包裹，从中国到达喀尔全程跟踪，并生成贴在货物上的发货卡。", "ar": "أعلن عن طرودك وتابعها من الصين إلى داكار وأنشئ بطاقة الشحن لتلصقها على بضائعك."},
+  "Précédent": {"en": "Back", "zh": "上一步", "ar": "السابق"},
+  "Passer": {"en": "Skip", "zh": "跳过", "ar": "تخطّي"},
+  "Commencer": {"en": "Get started", "zh": "开始使用", "ar": "ابدأ"},
+  "Revoir la présentation": {"en": "See the introduction again", "zh": "重看介绍", "ar": "إعادة مشاهدة التعريف"}
 }

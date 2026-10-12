@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { messageReseau } from './erreurs';
 import { removePhoto } from './photos';
 
 /* Annonces de services de Diaba Guide : rédigées par l'équipe depuis la
@@ -249,6 +250,8 @@ export const lienContactEquipe = (numero: string, titre: string) =>
    exécutée), l'accueil et la console s'affichent normalement, simplement sans
    annonces. Le message ci-dessous n'apparaît qu'après une tentative d'écriture. */
 function humanize(msg: string): string {
+  const reseau = messageReseau(msg);
+  if (reseau) return reseau;
   if (/row-level security|permission denied/i.test(msg)) return 'Action réservée aux administrateurs.';
   if (/could not find the function|does not exist|schema cache/i.test(msg)) {
     return 'Cette fonction n’est pas encore installée : exécutez supabase/230_annonces.sql puis supabase/530_annonces_image_contact.sql dans Supabase.';

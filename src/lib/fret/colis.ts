@@ -1,4 +1,5 @@
 /* Colis : côté équipe (dispatching, clients) et côté voyageur (annonce, suivi). */
+import { convivial } from '../erreurs';
 import { supabase } from '../supabase';
 import { suggestColisCode, type Caracteristique, type Colis, type EtapeType, type FretMode } from './model';
 import { humanize, str, toColis, warn, type Row } from './internal';
@@ -61,7 +62,7 @@ export async function creerVoyageurFret(input: {
   if (error) {
     const response = 'context' in error ? error.context as Response | undefined : undefined;
     const detail = response ? await response.json().catch(() => null) as { error?: string } | null : null;
-    return { error: detail?.error ?? error.message };
+    return { error: detail?.error ?? convivial(error.message) };
   }
   return { traveler: data as ClientLite };
 }

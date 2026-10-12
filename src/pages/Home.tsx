@@ -6,6 +6,7 @@ import { districtPos, requestPosition, setPos } from '../geo';
 import { useStore } from '../store';
 import { Button, DemoNote, Icon, Logo, RadioCard, Screen, TopBar } from '../ui';
 import { AnnoncesDiaba } from './Annonces';
+import { PremiereVisite } from './Tour';
 import { ResultCard } from './Search';
 
 interface InstallEvent extends Event { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> }
@@ -98,6 +99,7 @@ export function Home() {
 
   return (
     <Screen className="sceau" wide>
+      <PremiereVisite />
       <header className="hero">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <Logo height={30} tail="GUIDE" />

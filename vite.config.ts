@@ -43,6 +43,12 @@ export default defineConfig(({ mode }) => {
           short_name: 'Diaba Guide',
           description: 'Votre guide pour le sourcing en Chine',
           theme_color: '#153E9F',
+          // Raccourcis de l'icône (appui long sur Android) : les trois gestes les plus fréquents.
+          shortcuts: [
+            { name: 'Suivre un envoi', short_name: 'Suivi', description: 'Voir où en sont vos colis', url: '/mes-envois', icons: [{ src: 'logo.png', sizes: '192x192', type: 'image/png' }] },
+            { name: 'Ma carte d’expédition', short_name: 'Ma carte', description: 'Créer la carte à coller sur vos colis', url: '/mes-envois/carte', icons: [{ src: 'logo.png', sizes: '192x192', type: 'image/png' }] },
+            { name: 'Trouver une adresse', short_name: 'Explorer', description: 'Chercher un marché, un hôtel, un restaurant', url: '/recherche', icons: [{ src: 'logo.png', sizes: '192x192', type: 'image/png' }] },
+          ],
           icons: [
             {
               src: 'logo.png',

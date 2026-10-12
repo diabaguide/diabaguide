@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { messageReseau } from './erreurs';
 
 /* Liste d'achats du voyageur : un produit, une quantité, un prix visé et, si
    besoin, la fiche du fournisseur où l'acheter. Les listes sont privées (RLS :
@@ -216,6 +217,8 @@ export const whatsappUrl = (text: string) => `https://wa.me/?text=${encodeURICom
 
 function humanize(msg?: string): string {
   if (!msg) return 'L’enregistrement a échoué. Réessayez.';
+  const reseau = messageReseau(msg);
+  if (reseau) return reseau;
   if (/row-level security|permission denied/i.test(msg)) return 'Connectez-vous pour utiliser vos listes d’achats.';
   return msg;
 }

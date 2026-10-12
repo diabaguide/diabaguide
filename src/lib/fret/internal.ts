@@ -1,5 +1,6 @@
 /* Utilitaires internes au module Fret (non ré-exportés par index.ts). */
 import type { Caracteristique, Colis, ColisStatut, Expedition, ExpeditionStatut, FretMode } from './model';
+import { messageReseau } from '../erreurs';
 
 
 export type Row = Record<string, unknown>;
@@ -27,6 +28,8 @@ export function toColis(r: Row): Colis {
 }
 
 export function humanize(msg: string): string {
+  const reseau = messageReseau(msg);
+  if (reseau) return reseau;
   if (/row-level security|permission denied/i.test(msg)) return "Action non autorisée : réservé à l’équipe.";
   if (/duplicate key|already exists/i.test(msg)) return 'Ce code existe déjà. Choisissez-en un autre.';
   return msg;
