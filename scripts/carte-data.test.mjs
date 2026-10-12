@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  ENTRY_NAME_RE, cardFileNameFor, cleanCardText, cleanEntryName, clientNoLabel, isValidCardName, isValidCardPhone, entryNameFromInput, isValidEntryName, phoneLine, printedPhone, suggestEntryName,
+  ENTRY_NAME_RE, cardFileNameFor, cleanCardText, cleanManutention, cleanEntryName, clientNoLabel, isValidCardName, isValidCardPhone, entryNameFromInput, isValidEntryName, phoneLine, printedPhone, suggestEntryName,
 } from '../src/lib/carteData.ts';
 
 test('numéro de client sur 4 chiffres, comme (0022) sur la carte', () => {
@@ -79,4 +79,10 @@ test('nom et téléphone propres à la carte', () => {
   assert.ok(!isValidCardName('A') && !isValidCardName('x'.repeat(41)));
   assert.ok(isValidCardPhone('') && isValidCardPhone('77 411 51 64') && isValidCardPhone('+221 (77) 411-51.64'));
   assert.ok(!isValidCardPhone('123') && !isValidCardPhone('abc12345') && !isValidCardPhone('1'.repeat(26)));
+});
+
+test('consignes de manutention : identifiants connus, sans doublon, dans l’ordre du modèle', () => {
+  assert.deepEqual(cleanManutention(['soin', 'haut', 'haut', 'inconnu']), ['haut', 'soin']);
+  assert.deepEqual(cleanManutention(null), []);
+  assert.deepEqual(cleanManutention('haut'), []);
 });

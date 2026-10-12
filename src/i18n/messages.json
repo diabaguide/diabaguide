@@ -4337,5 +4337,11 @@
   "Le changement du nom et du téléphone n’est pas encore disponible.": {"en": "Changing the name and phone is not available yet.", "zh": "暂时无法修改姓名和电话。", "ar": "تغيير الاسم والهاتف غير متاح بعد."},
   "Nom et téléphone de la carte enregistrés.": {"en": "Card name and phone saved.", "zh": "卡片上的姓名和电话已保存。", "ar": "تم حفظ اسم وهاتف البطاقة."},
   "Ce client n’a pas de numéro de téléphone pour la carte.": {"en": "This client has no phone number for the card.", "zh": "该客户没有可用于卡片的电话号码。", "ar": "ليس لهذا العميل رقم هاتف للبطاقة."},
-  "Ajoutez un numéro de téléphone : il doit figurer sur la carte.": {"en": "Add a phone number: it must appear on the card.", "zh": "请添加电话号码：它必须出现在卡片上。", "ar": "أضف رقم هاتف: يجب أن يظهر على البطاقة."}
+  "Ajoutez un numéro de téléphone : il doit figurer sur la carte.": {"en": "Add a phone number: it must appear on the card.", "zh": "请添加电话号码：它必须出现在卡片上。", "ar": "أضف رقم هاتف: يجب أن يظهر على البطاقة."},
+  "Consignes sur le colis": {"en": "Instructions on the parcel", "zh": "包裹上的标识", "ar": "تعليمات على الطرد"},
+  "Cochez les consignes qui s’appliquent : les autres icônes sont estompées sur la carte. Rien de coché : les quatre icônes restent visibles.": {"en": "Tick the instructions that apply: the other icons are faded on the card. Nothing ticked: all four icons stay visible.", "zh": "请勾选适用的标识：卡片上其余图标将变淡。未勾选任何项：四个图标全部保持可见。", "ar": "حدّد التعليمات المطبقة: تُخفَّف الأيقونات الأخرى على البطاقة. دون تحديد: تبقى الأيقونات الأربع ظاهرة."},
+  "Haut (向上)": {"en": "This side up (向上)", "zh": "向上（此面朝上）", "ar": "هذا الجانب لأعلى (向上)"},
+  "Fragile (易碎)": {"en": "Fragile (易碎)", "zh": "易碎", "ar": "قابل للكسر (易碎)"},
+  "Craint l’humidité (防潮)": {"en": "Keep dry (防潮)", "zh": "防潮（怕潮湿）", "ar": "يُحفظ جافًا (防潮)"},
+  "Manipuler avec soin (小心轻放)": {"en": "Handle with care (小心轻放)", "zh": "小心轻放", "ar": "تعامل بحذر (小心轻放)"}
 }

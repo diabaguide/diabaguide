@@ -8,7 +8,7 @@ import {
   fetchShippingInfo, fetchWarehousesCarte, setClientCardContact, setClientEntryName, setMyCardContact, setMyEntryName,
   type ShippingInfo, type WarehouseFull,
 } from '../lib/fret';
-import { cleanCardText, clientNoLabel, entryNameFromInput, isValidCardName, isValidCardPhone, isValidEntryName, printedPhone, suggestEntryName } from '../lib/carteData';
+import { MANUTENTION, cleanCardText, cleanManutention, clientNoLabel, entryNameFromInput, isValidCardName, isValidCardPhone, isValidEntryName, printedPhone, suggestEntryName, type ManutentionId } from '../lib/carteData';
 import {
   downloadShippingCard, printShippingCard, renderShippingCard, shareShippingCard, shippingCardFileName,
   type ShippingCardData,
@@ -41,6 +41,15 @@ function CarteContenu({ profileId, onName }: { profileId?: string; onName?: (nam
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [renderErr, setRenderErr] = useState<string | null>(null);
   const urlRef = useRef<string | null>(null);
+  // Consignes de manutention : propres à chaque envoi, donc retenues sur l'appareil seulement.
+  const [manu, setManu] = useState<ManutentionId[]>(() => {
+    try { return cleanManutention(JSON.parse(localStorage.getItem('diaba.carte.manutention') ?? '[]')); } catch { return []; }
+  });
+  const basculerManu = (id: ManutentionId) => setManu((cur) => {
+    const next = cleanManutention(cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]);
+    try { localStorage.setItem('diaba.carte.manutention', JSON.stringify(next)); } catch { /* stockage indisponible */ }
+    return next;
+  });
 
   useEffect(() => {
     let live = true;
@@ -70,9 +79,9 @@ function CarteContenu({ profileId, onName }: { profileId?: string; onName?: (nam
   const shownName = info?.contactModifiable ? (cleanCardText(cName) || info.profileName) : info?.name ?? '';
   const shownPhone = info?.contactModifiable ? (cleanCardText(cPhone) || info.profilePhone) : info?.phone ?? null;
   const data: ShippingCardData | null = useMemo(() => (info && valid && contactOk ? {
-    customerName: shownName, customerPhone: shownPhone, entryName: entry, clientNo: info.clientNo,
+    customerName: shownName, customerPhone: shownPhone, entryName: entry, clientNo: info.clientNo, manutention: manu,
     warehouse: warehouse ? { tel: warehouse.tel, bureauNom: warehouse.bureauNom, bureauTel: warehouse.bureauTel } : null,
-  } : null), [info, valid, contactOk, shownName, shownPhone, entry, warehouse]);
+  } : null), [info, valid, contactOk, shownName, shownPhone, entry, manu, warehouse]);
 
   // Aperçu : redessiné quand une valeur change (avec une courte attente pendant la frappe).
   useEffect(() => {
@@ -195,6 +204,19 @@ function CarteContenu({ profileId, onName }: { profileId?: string; onName?: (nam
             error={entry && !valid ? tr('Au moins 2 caractères.') : null}
             hint={saved ? undefined : tr('Proposition à partir de votre nom : modifiez-la, puis enregistrez-la pour la garder.')} />
           <Button icon="check" kind={dirty ? 'p' : 's'} disabled={!dirty || saving} onClick={() => void enregistrer()}>{tr(saving ? 'Enregistrement…' : 'Enregistrer le nom court')}</Button>
+        </section>
+
+        <section className="card stack" style={{ gap: 10 }}>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Consignes sur le colis")}</h2>
+          <p className="small muted" style={{ margin: 0 }}>{tr("Cochez les consignes qui s’appliquent : les autres icônes sont estompées sur la carte. Rien de coché : les quatre icônes restent visibles.")}</p>
+          <div className="carte-options" role="group" aria-label={tr("Consignes sur le colis")}>
+            {MANUTENTION.map((m) => (
+              <label key={m.id} className="carte-option">
+                <input type="checkbox" checked={manu.includes(m.id)} onChange={() => basculerManu(m.id)} />
+                <span>{tr(m.fr)}</span>
+              </label>
+            ))}
+          </div>
         </section>
 
         {manque && (
