@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { messageReseau } from './erreurs';
 import {
   STATIC_CATEGORIES, STATIC_CITIES, STATIC_DISTRICTS,
   type Category, type CityRef, type District, type FieldBlock, type ProductTag,
@@ -130,6 +131,8 @@ export async function usageCount(column: 'city' | 'cat', value: string): Promise
 }
 
 function humanize(msg: string): string {
+  const reseau = messageReseau(msg);
+  if (reseau) return reseau;
   if (/duplicate key|already exists/i.test(msg)) return 'Cet identifiant existe déjà.';
   if (/foreign key|violates/i.test(msg)) return 'Élément encore utilisé par des fiches : désactivez-le plutôt que de le supprimer.';
   if (/row-level security|permission denied/i.test(msg)) return "Action réservée aux administrateurs.";

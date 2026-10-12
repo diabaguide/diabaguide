@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { convivial } from './erreurs';
 import type { Cat, City, Decision, Proposal, Status } from '../data';
 
 /* ------------------------------------------------------------------ */
@@ -126,7 +127,7 @@ export async function saveProposal(p: Proposal, status: Status, datePrefix: stri
     if (aUnePosition(p)) return { error: MSG_520 };
     ({ data, error } = await supabase.from('proposals').upsert(sansPosition(row)).select().single());
   }
-  if (error) { warn('enregistrement de la proposition', error); return { error: error.message }; }
+  if (error) { warn('enregistrement de la proposition', error); return { error: convivial(error.message) }; }
   return { data: rowToProposal(data as ProposalRow) };
 }
 
@@ -141,7 +142,7 @@ export async function updateProposalFields(p: Proposal): Promise<{ error?: strin
     if (aUnePosition(p)) return { error: MSG_520 };
     ({ data, error } = await supabase.from('proposals').update(sansPosition(fields)).eq('id', p.id).select('id, photo_paths'));
   }
-  if (error) { warn('enregistrement des modifications', error); return { error: error.message }; }
+  if (error) { warn('enregistrement des modifications', error); return { error: convivial(error.message) }; }
   // Sans ligne renvoyée, la base a ignoré la mise à jour (droits insuffisants) sans lever d'erreur.
   if (!data?.length) return { error: 'Aucune modification enregistrée : la base a refusé la mise à jour (droits insuffisants ?).' };
   return {};

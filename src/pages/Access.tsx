@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 import { homeFor, sendPasswordReset, signIn, signOut, signUp, updatePassword, ACCOUNT_NOTICE_KEY } from '../lib/auth';
 import { DIAL_CODES, EMAIL, PHONE } from '../lib/phone';
 
-const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }, { v: 'ar', l: 'العربية', flag: '🇸🇦' }];
+export const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }, { v: 'ar', l: 'العربية', flag: '🇸🇦' }];
 export function LangSwitch({ dark = false }: { dark?: boolean }) {
   const { tr } = useI18n();
   const { s, d } = useStore();

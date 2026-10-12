@@ -74,6 +74,8 @@ const checks = [
   ['fichiers d’import surdimensionnés rejetés avant lecture', () => files.adminExpeditions.includes('file.size > 2_000_000') && files.adminExpeditions.indexOf('file.size > 2_000_000') < files.adminExpeditions.indexOf('file.text()')],
   ['carte imprimable du lot limitée aux données publiques', () => files.suivi.includes('tracking-print-card') && files.suivi.includes('print-only') && files.suivi.includes('no-print') && files.suivi.includes('window.print()') && files.suivi.includes('suivi.code') && files.suivi.includes('publicUrl')],
   ['vignettes utilisées dans les listes de fiches', () => files.search.includes('round={12} thumb />') && files.ui.includes('photoThumbUrl') && files.ui.includes('onError')],
+  ['raccourcis d’installation : suivi, carte d’expédition, explorer', () => ['/mes-envois', '/mes-envois/carte', '/recherche'].every((u) => files.vite.includes(`url: '${u}'`)) && files.vite.includes('shortcuts:')],
+  ['visite guidée : une seule fois, rouvrable depuis le profil', () => files.home.includes('<PremiereVisite />') && files.app.length > 0],
   ['nouveaux libellés traduits', () => translatedTravelerCopy.every((key) => catalog[key]?.en && catalog[key]?.zh && catalog[key]?.ar)],
 ];
 

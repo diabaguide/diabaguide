@@ -44,6 +44,8 @@ interface State {
   decisions: Decision[]; // journal équipe
   draft: Proposal | null;
   installDismissed: boolean;
+  /** Visite guidée du premier lancement terminée ou passée. */
+  tourDone: boolean;
 }
 
 /** Villes, catégories, quartiers et produits par ordre alphabétique : toutes les listes de l'app suivent cet ordre. */
@@ -61,7 +63,7 @@ const initial: State = {
   // Avec Supabase, propositions et décisions sont chargées depuis la base.
   proposals: isSupabaseConfigured ? [] : [...SEED_PROPOSALS, ...TEAM_QUEUE_EXTRA],
   decisions: isSupabaseConfigured ? [] : SEED_DECISIONS,
-  draft: null, installDismissed: false,
+  draft: null, installDismissed: false, tourDone: false,
 };
 
 type Action =
@@ -92,7 +94,8 @@ type Action =
   | { t: 'setTaxonomies'; categories: Category[]; cities: CityRef[]; districts: District[]; productTags: ProductTag[] }
   | { t: 'setProposals'; v: Proposal[] }
   | { t: 'setDecisions'; v: Decision[] }
-  | { t: 'dismissInstall' };
+  | { t: 'dismissInstall' }
+  | { t: 'tour'; v: boolean };
 
 const TODAY = '20 sept. 2026';
 const cleared = isSupabaseConfigured ? { proposals: [] as Proposal[], decisions: [] as Decision[] } : {};
@@ -180,6 +183,7 @@ function reducer(s: State, a: Action): State {
     case 'setProposals': return { ...s, proposals: a.v };
     case 'setDecisions': return { ...s, decisions: a.v };
     case 'dismissInstall': return { ...s, installDismissed: true };
+    case 'tour': return { ...s, tourDone: a.v };
   }
 }
 
@@ -191,6 +195,8 @@ function load(): State {
     if (raw) {
       const stored = JSON.parse(raw);
       const parsed = { ...initial, ...stored } as State;
+      // Une personne qui a déjà utilisé l'application n'a pas besoin de la visite guidée.
+      parsed.tourDone = stored.tourDone ?? true;
       if (!stored.providers || stored.providers.length === 0) parsed.providers = PROVIDERS;
       parsed.categories = categoriesParNom(!stored.categories || stored.categories.length === 0 ? STATIC_CATEGORIES : parsed.categories);
       parsed.cities = villesParNom(!stored.cities || stored.cities.length === 0 ? STATIC_CITIES : parsed.cities);
@@ -253,7 +259,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     try {
       const base = {
         lang: s.lang, theme: s.theme, city: s.city, locPref: s.locPref, favorites: s.favorites, myRatings: s.myRatings,
-        downloads: s.downloads, lastSync: s.lastSync, draft: s.draft, installDismissed: s.installDismissed,
+        downloads: s.downloads, lastSync: s.lastSync, draft: s.draft, installDismissed: s.installDismissed, tourDone: s.tourDone,
         providers: s.providers, pendingDeletion: s.pendingDeletion, categories: s.categories, cities: s.cities, districts: s.districts, productTags: s.productTags
       };
       const persist = isSupabaseConfigured ? base
