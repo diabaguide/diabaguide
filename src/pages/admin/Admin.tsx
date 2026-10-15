@@ -56,6 +56,7 @@ export function AdminLayout() {
       ['/equipe/tarifs', 'Tarifs et entrepôts', 'sliders', false],
       ['/equipe/membres', 'Membres', 'users', false],
       ['/equipe/voyageurs', 'Voyageurs', 'user', false],
+      ['/equipe/corbeille', 'Corbeille', 'trash', false],
       ['/equipe/avis', 'Avis', 'star', false],
       ['/equipe/villes', 'Villes', 'pin', false],
       ['/equipe/categories', 'Catégories', 'grid', false],

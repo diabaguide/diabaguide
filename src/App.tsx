@@ -52,6 +52,7 @@ const Tarifs = lazy(() => import('./pages/admin/Tarifs').then(m => ({ default: m
 const FicheEdit = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.FicheEdit })));
 const Deletions = lazy(() => import('./pages/admin/Fiches').then(m => ({ default: m.Deletions })));
 const SearchLogs = lazy(() => import('./pages/admin/SearchLogs').then(m => ({ default: m.SearchLogs })));
+const Trash = lazy(() => import('./pages/admin/Trash').then(m => ({ default: m.Trash })));
 const Members = lazy(() => import('./pages/admin/Members').then(m => ({ default: m.Members })));
 const Travelers = lazy(() => import('./pages/admin/Travelers').then(m => ({ default: m.Travelers })));
 const AdminCities = lazy(() => import('./pages/admin/Taxonomies').then(m => ({ default: m.AdminCities })));
@@ -202,6 +203,7 @@ export default function App() {
               <Route path="/equipe/suppressions" element={<Deletions />} />
               <Route path="/equipe/membres" element={<Members />} />
               <Route path="/equipe/voyageurs" element={<Travelers />} />
+              <Route path="/equipe/corbeille" element={<Trash />} />
               <Route path="/equipe/avis" element={<ReviewsAdminPage />} />
               <Route path="/equipe/villes" element={<AdminCities />} />
               <Route path="/equipe/categories" element={<AdminCategories />} />
