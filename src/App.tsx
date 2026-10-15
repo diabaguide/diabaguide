@@ -35,6 +35,7 @@ const ReviewsAdminPage = lazy(() => import('./pages/Reviews').then(m => ({ defau
 const AnnonceDetail = lazy(() => import('./pages/Annonces').then(m => ({ default: m.AnnonceDetail })));
 const MesEnvois = lazy(() => import('./pages/Fret').then(m => ({ default: m.MesEnvois })));
 const FactureView = lazy(() => import('./pages/Fret').then(m => ({ default: m.FactureView })));
+const MesColisListe = lazy(() => import('./pages/Fret').then(m => ({ default: m.MesColisListe })));
 const CarteVoyageur = lazy(() => import('./pages/Carte').then(m => ({ default: m.CarteVoyageur })));
 const CarteClient = lazy(() => import('./pages/Carte').then(m => ({ default: m.CarteClient })));
 const SuiviPublic = lazy(() => import('./pages/Suivi').then(m => ({ default: m.SuiviPublic })));
@@ -150,6 +151,7 @@ export default function App() {
           <Route element={<ModuleGate module="shipments" />}>
             <Route path="/mes-envois" element={<MesEnvois />} />
             <Route path="/mes-envois/carte" element={<CarteVoyageur />} />
+            <Route path="/mes-envois/colis/:groupe" element={<MesColisListe />} />
             <Route path="/facture/:code" element={<FactureView />} />
           </Route>
           <Route element={<ModuleGate module="shopping" />}>

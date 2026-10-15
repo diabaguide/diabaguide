@@ -1,6 +1,6 @@
 import { useI18n } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { cityName } from '../data';
 import { Button, Icon, Logo, Screen, TopBar } from '../ui';
 import {
@@ -9,6 +9,8 @@ import {
   type Colis, type EtapeVue, type Facture, type SuiviPublic,
 } from '../lib/fret';
 
+/** Un colis est « reçu » une fois remis, ou disponible/arrivé à destination. */
+const estRecu = (c: Colis) => ['arrive_dakar', 'dispo_retrait', 'en_livraison', 'remis'].includes(c.statut);
 const ETAPES_SUIVI = ['annonce', 'en_transit', 'arrive_dakar', 'dispo_retrait', 'en_livraison', 'remis'] as const;
 const formatDateCourte = (value: string) => {
   const [year, month, day] = value.split('-').map(Number);
@@ -33,7 +35,8 @@ export function MesEnvois() {
   }, []);
   useEffect(() => { void reload(); }, [reload]);
 
-  const lots = [...new Set(colis.map((c) => c.expeditionCode).filter((code): code is string => Boolean(code)))];
+  const enCours = colis.filter((c) => !estRecu(c));
+  const recus = colis.filter(estRecu);
 
   return (
     <Screen>
@@ -51,20 +54,58 @@ export function MesEnvois() {
           <Button to="/mes-envois/carte" icon="download" kind="s">{tr("Créer ma carte")}</Button>
         </section>
 
-        {lots.length > 0 && (
-          <section className="card stack freight-section freight-tracking" style={{ gap: 12 }}>
-            <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Suivi de lot")}</h2>
-            {lots.map((code) => <LotTrackingCard key={code} code={code} />)}
-          </section>
-        )}
+        <Link className="card freight-section freight-packages freight-hub-link" to="/mes-envois/colis/en-cours">
+          <Icon name="route" size={26} />
+          <span className="stack" style={{ gap: 2, flex: 1 }}>
+            <strong>{tr("Mes colis en cours")}{loading ? '' : ` (${enCours.length})`}</strong>
+            <span className="small muted">{tr("Suivez vos colis actuellement en transit vers votre pays.")}</span>
+          </span>
+          <Icon name="chevR" size={20} />
+        </Link>
 
-        {/* ---- Mes colis ---- */}
-        <section className="card stack freight-section freight-packages" style={{ gap: 12 }}>
-          <h2 style={{ fontSize: 17, margin: 0 }}>{tr(`Mes colis (${colis.length})`)}</h2>
-          {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
-            : colis.length === 0 ? <p className="muted">{tr("Aucun colis pour l’instant.")}</p>
-            : colis.map((c) => <ColisCard key={c.code} c={c} facture={factures[c.code]} />)}
-        </section>
+        <Link className="card freight-section freight-received freight-hub-link" to="/mes-envois/colis/recus">
+          <Icon name="check" size={26} />
+          <span className="stack" style={{ gap: 2, flex: 1 }}>
+            <strong>{tr("Mes colis reçus")}{loading ? '' : ` (${recus.length})`}</strong>
+            <span className="small muted">{tr("Consultez les colis déjà arrivés à destination.")}</span>
+          </span>
+          <Icon name="chevR" size={20} />
+        </Link>
+      </div>
+    </Screen>
+  );
+}
+
+/** Liste des colis d'un groupe ; chaque ligne est un lien vers le suivi du lot. */
+export function MesColisListe() {
+  const { tr } = useI18n();
+  const { groupe } = useParams();
+  const recus = groupe === 'recus';
+  const [colis, setColis] = useState<Colis[] | null>(null);
+  useEffect(() => { void fetchMesColis().then(setColis); }, []);
+  const visibles = (colis ?? []).filter((c) => estRecu(c) === recus);
+  return (
+    <Screen>
+      <TopBar title={tr(recus ? "Mes colis reçus" : "Mes colis en cours")} back="/mes-envois" />
+      <div className="main mes-envois-main" style={{ gap: 12 }}>
+        {colis === null ? <p className="muted" role="status">{tr("Chargement…")}</p>
+          : visibles.length === 0 ? <p className="muted">{tr("Aucun colis pour l’instant.")}</p>
+          : visibles.map((c) => {
+            const contenu = (
+              <>
+                <Icon name="box" size={22} />
+                <span className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}>
+                  <strong>{c.code}</strong>
+                  <span className="small muted">{c.description || c.marqueColis || tr(MODE_LABEL[c.mode])}</span>
+                  <span className="small">{tr(COLIS_STATUT_LABEL[c.statut])}</span>
+                </span>
+                {c.expeditionCode && <Icon name="chevR" size={20} />}
+              </>
+            );
+            return c.expeditionCode
+              ? <Link key={c.code} className="card freight-hub-link" to={`/suivi/${encodeURIComponent(c.expeditionCode)}`}>{contenu}</Link>
+              : <div key={c.code} className="card freight-hub-link">{contenu}</div>;
+          })}
       </div>
     </Screen>
   );

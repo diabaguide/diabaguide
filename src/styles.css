@@ -260,6 +260,7 @@ details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 
 .tracking-share { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); }
 .tracking-share .notice { margin: 0; }
 .mes-envois-main .freight-section { order: 4; }
+.freight-hub-link { display: flex; align-items: center; gap: 12px; padding: 14px; text-decoration: none; color: inherit; }
 .mes-envois-main .freight-public-tracking { order: 1; border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); }
 .mes-envois-main .freight-tracking { order: 2; }
 .mes-envois-main .freight-packages { order: 3; }
