@@ -4414,5 +4414,20 @@
   "Commencer": {"en": "Get started", "zh": "开始使用", "ar": "ابدأ"},
   "Revoir la présentation": {"en": "See the introduction again", "zh": "重看介绍", "ar": "إعادة مشاهدة التعريف"},
   "Annonce de Diaba Guide": {"en": "Diaba Guide announcement", "zh": "Diaba Guide 公告", "ar": "إعلان من Diaba Guide"},
-  "Format paysage 16:9. Sur le tableau de bord, l’image s’affiche seule, comme une bannière cliquable : elle peut déjà contenir le titre et le bouton. Une seule annonce est montrée (la plus récente).": {"en": "Landscape 16:9. On the dashboard the image is shown alone, as a clickable banner: it can already contain the title and the button. Only one announcement is shown (the most recent).", "zh": "横向 16:9。在首页，图片将单独作为可点击的横幅显示：图片中可以已包含标题和按钮。只显示一条公告（最新的）。", "ar": "أفقي 16:9. على لوحة التحكم تظهر الصورة وحدها كشريط قابل للنقر: يمكن أن تحتوي مسبقًا على العنوان والزر. يُعرض إعلان واحد فقط (الأحدث)."}
+  "Format paysage 16:9. Sur le tableau de bord, l’image s’affiche seule, comme une bannière cliquable : elle peut déjà contenir le titre et le bouton. Une seule annonce est montrée (la plus récente).": {"en": "Landscape 16:9. On the dashboard the image is shown alone, as a clickable banner: it can already contain the title and the button. Only one announcement is shown (the most recent).", "zh": "横向 16:9。在首页，图片将单独作为可点击的横幅显示：图片中可以已包含标题和按钮。只显示一条公告（最新的）。", "ar": "أفقي 16:9. على لوحة التحكم تظهر الصورة وحدها كشريط قابل للنقر: يمكن أن تحتوي مسبقًا على العنوان والزر. يُعرض إعلان واحد فقط (الأحدث)."},
+  "Erreurs de l’application": {"en": "Application errors", "zh": "应用错误", "ar": "أخطاء التطبيق"},
+  "Les plantages inattendus constatés chez les voyageurs, sans attendre qu’ils écrivent.": {"en": "Unexpected crashes seen by travellers, without waiting for them to write to us.", "zh": "旅客遇到的意外崩溃，无需等他们来信反馈。", "ar": "الأعطال غير المتوقعة التي واجهها المسافرون دون انتظار مراسلتهم لنا."},
+  "Le journal des erreurs n’est pas encore installé : lancez supabase/550_journal_erreurs.sql dans Supabase.": {"en": "The error log is not installed yet: run supabase/550_journal_erreurs.sql in Supabase.", "zh": "错误日志尚未安装：请在 Supabase 中运行 supabase/550_journal_erreurs.sql。", "ar": "سجل الأخطاء غير مثبت بعد: شغّل supabase/550_journal_erreurs.sql في Supabase."},
+  "À traiter ({0})": {"en": "To handle ({0})", "zh": "待处理（{0}）", "ar": "للمعالجة ({0})"},
+  "Résolues": {"en": "Resolved", "zh": "已解决", "ar": "تمت معالجتها"},
+  "Supprimer les résolues de plus de 30 jours": {"en": "Delete resolved ones older than 30 days", "zh": "删除超过30天的已解决项", "ar": "حذف المعالجة منذ أكثر من 30 يومًا"},
+  "{0} erreur(s) résolue(s) supprimée(s).": {"en": "{0} resolved error(s) deleted.", "zh": "已删除 {0} 条已解决的错误。", "ar": "تم حذف {0} من الأخطاء المعالجة."},
+  "Aucune erreur à traiter. Tout va bien.": {"en": "No error to handle. All good.", "zh": "没有待处理的错误。一切正常。", "ar": "لا أخطاء للمعالجة. كل شيء بخير."},
+  "Aucune erreur dans cette liste.": {"en": "No error in this list.", "zh": "此列表中没有错误。", "ar": "لا أخطاء في هذه القائمة."},
+  "{0} fois": {"en": "{0} time(s)", "zh": "{0} 次", "ar": "{0} مرة"},
+  "dernière :": {"en": "last:", "zh": "最近：", "ar": "الأخيرة:"},
+  "page :": {"en": "page:", "zh": "页面：", "ar": "الصفحة:"},
+  "Détail technique": {"en": "Technical detail", "zh": "技术详情", "ar": "تفاصيل تقنية"},
+  "Rouvrir": {"en": "Reopen", "zh": "重新打开", "ar": "إعادة الفتح"},
+  "Marquer comme résolue": {"en": "Mark as resolved", "zh": "标记为已解决", "ar": "وضع علامة معالجة"}
 }

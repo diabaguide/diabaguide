@@ -53,6 +53,7 @@ export function AdminLayout() {
     ...(isAdmin ? ([
       ['/equipe/suppressions', s.pendingDeletion.length ? `Suppressions (${s.pendingDeletion.length})` : 'Suppressions', 'trash', false],
       ['/equipe/tarifs', 'Tarifs et entrepôts', 'sliders', false],
+      ['/equipe/erreurs', 'Erreurs de l’application', 'alert', false],
       ['/equipe/membres', 'Membres', 'users', false],
       ['/equipe/voyageurs', 'Voyageurs', 'user', false],
       ['/equipe/avis', 'Avis', 'star', false],

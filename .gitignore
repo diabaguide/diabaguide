@@ -56,3 +56,6 @@ audit_i18n.json
 .claude/agents/
 .claude/skills/*/
 skills-lock.json
+
+# Sauvegardes locales de la base (scripts/sauvegarde-base.ps1) : jamais dans git
+/sauvegardes/

@@ -60,6 +60,7 @@ const FretDashboard = lazy(() => import('./pages/admin/FretConsole').then(m => (
 const FretVoyageurs = lazy(() => import('./pages/admin/FretConsole').then(m => ({ default: m.FretVoyageurs })));
 const FretTarifs = lazy(() => import('./pages/admin/FretConsole').then(m => ({ default: m.FretTarifs })));
 const FretProfil = lazy(() => import('./pages/admin/FretConsole').then(m => ({ default: m.FretProfil })));
+const AdminErreurs = lazy(() => import('./pages/admin/Erreurs').then(m => ({ default: m.AdminErreurs })));
 const AdminAnnonces = lazy(() => import('./pages/admin/Annonces').then(m => ({ default: m.AdminAnnonces })));
 
 /* Compte obligatoire : toute page de contenu redirige vers la connexion.
@@ -179,6 +180,7 @@ export default function App() {
             <Route path="/equipe/fiches/:id" element={<FicheEdit />} />
             {/* Annonces de services : l'équipe consulte, l'administration rédige. */}
             <Route path="/equipe/annonces" element={<AdminAnnonces />} />
+            <Route path="/equipe/erreurs" element={<AdminErreurs />} />
             {/* Administration : réservée au rôle admin */}
             <Route element={<RequireAuth need="admin" />}>
               <Route path="/equipe/tarifs" element={<Tarifs />} />
