@@ -682,3 +682,4 @@ tr.clickable:hover { background: var(--surface-2, rgba(0, 0, 0, .04)); }
 .module-toggle-knob { position: absolute; top: 4px; left: 4px; width: 28px; height: 28px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .2); transition: transform .16s ease; }
 .module-toggle[aria-checked="true"] .module-toggle-knob { transform: translateX(22px); }
 .module-setting-card { min-height: 112px; }
+.bulk-bar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; background: var(--card, #fff); border: 1px solid var(--border, #cfd6e4); border-radius: 12px; box-shadow: 0 -4px 16px rgba(0,0,0,.12); }

@@ -4476,6 +4476,7 @@
   "De 3 à 6 chiffres. À transmettre vous-même à la personne.": {"en": "3 to 6 digits. Give it to the person yourself.", "zh": "3至6位数字。请亲自告知对方。", "ar": "من 3 إلى 6 أرقام. سلّمه للشخص بنفسك."},
   "Code secret (facultatif)": {"en": "Secret code (optional)", "zh": "安全码（可选）", "ar": "الرمز السري (اختياري)"},
   "De 3 à 6 chiffres. Si vous le renseignez, le compte est créé tout de suite.": {"en": "3 to 6 digits. If you fill it in, the account is created right away.", "zh": "3至6位数字。填写后将立即创建账户。", "ar": "من 3 إلى 6 أرقام. إذا أدخلته يُنشأ الحساب فورًا."},
+  "{0} sélectionné(s)": {"en": "{0} selected", "zh": "已选择 {0} 项", "ar": "تم تحديد {0}"},
   "Changer le code secret": {"en": "Change the secret code", "zh": "更改安全码", "ar": "تغيير الرمز السري"},
   "Déconnecter tous mes appareils": {"en": "Sign out of all my devices", "zh": "退出所有设备", "ar": "تسجيل الخروج من جميع أجهزتي"},
   "Le code secret actuel est incorrect.": {"en": "The current secret code is incorrect.", "zh": "当前安全码不正确。", "ar": "الرمز السري الحالي غير صحيح."},
