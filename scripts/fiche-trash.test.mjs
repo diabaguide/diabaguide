@@ -57,3 +57,21 @@ test('la purge quotidienne supprime aussi les fiches échues et leurs photos', a
   assert.equal(res.body.fiches, 2);
   assert.ok(calls.some((c) => c.method === 'DELETE' && c.url.includes('fiche-photos')));
 });
+
+test('publier / dépublier : masqué aux voyageurs par la base, visible et modifiable par l’équipe', async () => {
+  const sql = await read('supabase/610_fiche_publish.sql');
+  assert.match(sql, /add column if not exists unpublished_at/);
+  assert.match(sql, /providers_read_authenticated[\s\S]*unpublished_at is null/);
+  assert.match(sql, /deleted_at is null/);
+  assert.match(sql, /function public\.admin_set_fiches_published/);
+  assert.match(sql, /is_admin\(\)/);
+  assert.match(sql, /grant execute on function public\.admin_set_fiches_published\(text\[\], boolean\) to authenticated/);
+  const store = await read('src/store.tsx');
+  assert.match(store, /!x\.unpublishedAt/);
+  assert.match(store, /hiddenProviders/);
+  const lib = await read('src/lib/providers.ts');
+  assert.match(lib, /export const publishProviders/);
+  assert.match(lib, /export const unpublishProviders/);
+  const fiches = await read('src/pages/admin/Fiches.tsx');
+  for (const k of ['publishProviders', 'unpublishProviders', 'fiches\\.publish', 'fiches\\.unpublish']) assert.match(fiches, new RegExp(k));
+});

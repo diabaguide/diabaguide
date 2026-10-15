@@ -38,6 +38,7 @@ interface ProviderRow {
   deletion_requested_by: string | null;
   deletion_reason: string | null;
   deleted_at?: string | null;
+  unpublished_at?: string | null;
 }
 
 const undef = <T,>(v: T | null | undefined): T | undefined => (v == null ? undefined : v);
@@ -80,6 +81,7 @@ function rowToProvider(r: ProviderRow): Provider {
     deletionRequestedBy: undef(r.deletion_requested_by),
     deletionReason: undef(r.deletion_reason),
     deletedAt: undef(r.deleted_at),
+    unpublishedAt: undef(r.unpublished_at),
   };
 }
 
@@ -231,3 +233,14 @@ export async function setProviderCategory(id: string, cat: Cat): Promise<{ error
   const { error } = await supabase.from('providers').update({ cat }).eq('id', id);
   return error ? { error: error.message } : {};
 }
+
+/** Publier / dépublier (supabase/610_fiche_publish.sql) : une fiche dépubliée est masquée aux voyageurs. */
+async function publishRpc(id: string, published: boolean): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { data, error } = await supabase.rpc('admin_set_fiches_published', { p_ids: [id], p_published: published });
+  if (error) return { error: error.message };
+  const row = (data as FicheTrashRow[] | null)?.[0];
+  return row?.res_status === 'skipped' ? { error: row.res_reason ?? 'Refusé.' } : {};
+}
+export const publishProviders = (id: string) => publishRpc(id, true);
+export const unpublishProviders = (id: string) => publishRpc(id, false);
