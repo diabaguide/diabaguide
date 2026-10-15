@@ -4414,5 +4414,35 @@
   "Commencer": {"en": "Get started", "zh": "开始使用", "ar": "ابدأ"},
   "Revoir la présentation": {"en": "See the introduction again", "zh": "重看介绍", "ar": "إعادة مشاهدة التعريف"},
   "Annonce de Diaba Guide": {"en": "Diaba Guide announcement", "zh": "Diaba Guide 公告", "ar": "إعلان من Diaba Guide"},
-  "Format paysage 16:9. Sur le tableau de bord, l’image s’affiche seule, comme une bannière cliquable : elle peut déjà contenir le titre et le bouton. Une seule annonce est montrée (la plus récente).": {"en": "Landscape 16:9. On the dashboard the image is shown alone, as a clickable banner: it can already contain the title and the button. Only one announcement is shown (the most recent).", "zh": "横向 16:9。在首页，图片将单独作为可点击的横幅显示：图片中可以已包含标题和按钮。只显示一条公告（最新的）。", "ar": "أفقي 16:9. على لوحة التحكم تظهر الصورة وحدها كشريط قابل للنقر: يمكن أن تحتوي مسبقًا على العنوان والزر. يُعرض إعلان واحد فقط (الأحدث)."}
+  "Format paysage 16:9. Sur le tableau de bord, l’image s’affiche seule, comme une bannière cliquable : elle peut déjà contenir le titre et le bouton. Une seule annonce est montrée (la plus récente).": {"en": "Landscape 16:9. On the dashboard the image is shown alone, as a clickable banner: it can already contain the title and the button. Only one announcement is shown (the most recent).", "zh": "横向 16:9。在首页，图片将单独作为可点击的横幅显示：图片中可以已包含标题和按钮。只显示一条公告（最新的）。", "ar": "أفقي 16:9. على لوحة التحكم تظهر الصورة وحدها كشريط قابل للنقر: يمكن أن تحتوي مسبقًا على العنوان والزر. يُعرض إعلان واحد فقط (الأحدث)."},
+  "Gestion des modules": {"en": "Module management", "zh": "模块管理", "ar": "إدارة الوحدات"},
+  "Activez ou mettez en pause les services complémentaires, sans supprimer leurs données.": {"en": "Enable or pause optional services without deleting their data.", "zh": "启用或暂停可选服务，不会删除其数据。", "ar": "فعّلوا الخدمات الإضافية أو أوقفوها مؤقتًا دون حذف بياناتها."},
+  "Recherche de lieux": {"en": "Place search", "zh": "地点搜索", "ar": "البحث عن الأماكن"},
+  "Marchés, hôtels et restaurants : le cœur de Diaba Guide reste toujours actif et ne peut pas être désactivé.": {"en": "Markets, hotels and restaurants: the core of Diaba Guide always stays active and cannot be disabled.", "zh": "市场、酒店和餐厅：Diaba Guide 的核心始终启用，不能关闭。", "ar": "الأسواق والفنادق والمطاعم: يظل هذا جوهر Diaba Guide نشطًا دائمًا ولا يمكن تعطيله."},
+  "Toujours actif": {"en": "Always active", "zh": "始终启用", "ar": "نشط دائمًا"},
+  "Modules complémentaires": {"en": "Optional modules", "zh": "可选模块", "ar": "الوحدات الإضافية"},
+  "Ce module est temporairement indisponible. Vos données sont conservées.": {"en": "This module is temporarily unavailable. Your data is preserved.", "zh": "此模块暂时不可用。您的数据会保留。", "ar": "هذه الوحدة غير متاحة مؤقتًا. بياناتكم محفوظة."},
+  "Les réglages des modules ne sont pas accessibles. La migration de configuration doit être appliquée.": {"en": "Module settings are unavailable. The configuration migration must be applied.", "zh": "模块设置不可用。请先应用配置迁移。", "ar": "إعدادات الوحدات غير متاحة. يجب تطبيق ترحيل الإعدادات."},
+  "Les réglages seront disponibles après connexion à la base de données.": {"en": "Settings will be available after connecting to the database.", "zh": "连接数据库后即可使用设置。", "ar": "ستتوفر الإعدادات بعد الاتصال بقاعدة البيانات."},
+  "Mes Achats": {"en": "My purchases", "zh": "我的采购", "ar": "مشترياتي"},
+  "Créer et gérer ses listes d’achats.": {"en": "Create and manage shopping lists.", "zh": "创建和管理采购清单。", "ar": "إنشاء قوائم المشتريات وإدارتها."},
+  "Mes Envois": {"en": "My shipments", "zh": "我的货运", "ar": "شحناتي"},
+  "Annoncer des colis et consulter leur suivi.": {"en": "Announce parcels and view their tracking.", "zh": "申报包裹并查看物流跟踪。", "ar": "الإعلان عن الطرود ومتابعة شحنها."},
+
+  "Proposer une adresse ou signaler une correction.": {"en": "Suggest a place or report a correction.", "zh": "推荐一个地点或报告需要更正的信息。", "ar": "اقترحوا مكانًا أو أبلغوا عن تصحيح."},
+  "Annonces de Diaba": {"en": "Diaba announcements", "zh": "Diaba 公告", "ar": "إعلانات Diaba"},
+  "Afficher les annonces de service sur l’accueil.": {"en": "Show service announcements on the home page.", "zh": "在首页显示服务公告。", "ar": "عرض إعلانات الخدمات على الصفحة الرئيسية."},
+
+  "En pause": {"en": "Paused", "zh": "已暂停", "ar": "متوقف مؤقتًا"},
+  "Activer": {"en": "Enable", "zh": "启用", "ar": "تفعيل"},
+
+
+  "Module désactivé. Vos données sont conservées.": {"en": "Module disabled. Your data is preserved.", "zh": "模块已停用。您的数据已保留。", "ar": "تم تعطيل الوحدة. بياناتكم محفوظة."},
+  "Module activé.": {"en": "Module enabled.", "zh": "模块已启用。", "ar": "تم تفعيل الوحدة."},
+  "Seul l’administrateur principal peut gérer les modules.": {"en": "Only the primary administrator can manage modules.", "zh": "只有主管理员可以管理模块。", "ar": "يمكن للمسؤول الرئيسي وحده إدارة الوحدات."},
+  "Le réglage n’a pas pu être enregistré. Réessayez.": {"en": "The setting could not be saved. Try again.", "zh": "无法保存设置，请重试。", "ar": "تعذر حفظ الإعداد. حاولوا مرة أخرى."},
+  "Marchés, hôtels et restaurants : trouvez les bonnes adresses et leurs services.": {"en": "Markets, hotels and restaurants: find trusted places and their services.", "zh": "市场、酒店和餐厅：查找合适的地点及其服务。", "ar": "الأسواق والفنادق والمطاعم: اعثروا على الأماكن المناسبة وخدماتها."},
+  "Retour au tableau de bord": {"en": "Back to dashboard", "zh": "返回管理面板", "ar": "العودة إلى لوحة التحكم"},
+  "Configuration indisponible sans connexion à la base de données.": {"en": "Configuration is unavailable without a database connection.", "zh": "未连接数据库，配置不可用。", "ar": "الإعدادات غير متاحة دون اتصال بقاعدة البيانات."},
+  "Le réglage n’a pas pu être confirmé. Réessayez.": {"en": "The setting could not be confirmed. Try again.", "zh": "无法确认设置，请重试。", "ar": "تعذر تأكيد الإعداد. حاولوا مرة أخرى."}
 }

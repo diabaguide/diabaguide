@@ -12,7 +12,7 @@ export type AccountStatus = 'active' | 'suspended';
  * (compte désactivé) jusqu'à l'écran de connexion.
  */
 export const ACCOUNT_NOTICE_KEY = 'diaba-account-notice';
-export interface AuthUser { id: string; name: string; phone: string; email: string; role: Role; status: AccountStatus; avatarPath?: string | null }
+export interface AuthUser { id: string; name: string; phone: string; email: string; role: Role; status: AccountStatus; avatarPath?: string | null; isPrimaryAdmin?: boolean }
 /** Un admin dispose aussi de tous les droits « équipe ». */
 export const isTeamRole = (r: Role | undefined) => r === 'team' || r === 'admin';
 /** Accès au module fret : le livreur, l'équipe et les administrateurs. */
@@ -47,20 +47,22 @@ async function profileFor(id: string, email: string, metaName?: string, metaPhon
   let phone = metaPhone ?? '';
   let status: AccountStatus = 'active';
   let avatarPath: string | null = null;
+  let isPrimaryAdmin = false;
   try {
-    const { data } = await supabase!.from('profiles').select('name, phone, role, status, avatar_path').eq('id', id).maybeSingle();
+    const { data } = await supabase!.from('profiles').select('name, phone, role, status, avatar_path, is_primary_admin').eq('id', id).maybeSingle();
     if (data) {
       role = (data.role as Role) ?? role;
       name = data.name ?? name;
       phone = data.phone ?? phone;
       status = (data.status as AccountStatus) ?? status;
       avatarPath = (data.avatar_path as string | null) ?? null;
+      isPrimaryAdmin = data.is_primary_admin === true;
     }
   } catch { /* profil pas encore créé (trigger) : on reste « voyageur » */ }
   // Un compte inscrit avec son seul numéro reçoit une adresse interne
   // (« p782254040@diabaguide.local ») : elle ne doit jamais être montrée. On
   // affiche le numéro, que l'on retrouve aussi sans profil lisible.
-  return { id, name, phone: phoneOf(phone, email), email: isInternalEmail(email) ? '' : email, role, status, avatarPath };
+  return { id, name, phone: phoneOf(phone, email), email: isInternalEmail(email) ? '' : email, role, status, avatarPath, isPrimaryAdmin };
 }
 
 /** Utilisateur courant à partir d'une session Supabase (ou null). */

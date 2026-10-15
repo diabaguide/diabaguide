@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { catLabel, type Provider } from '../data';
 import { useOnline, useStore, type LocPref, type Theme } from '../store';
+import { useModules } from '../lib/modules';
 import { changeMyPassword, isTeamRole, signOut, updateMyProfile } from '../lib/auth';
 import { Avatar, AvatarPicker, Button, DemoNote, Field, Icon, RadioCard, Screen, StoredPhoto, Tag, TopBar } from '../ui';
 import { LangSwitch } from './Access';
@@ -74,6 +75,7 @@ export function Favorites() {
 export function Profile() {
   const { tr } = useI18n();
   const { s, d } = useStore();
+  const { settings } = useModules();
   const nav = useNavigate();
   const initials = (s.user?.name ?? '?').split(/[\s.]+/).map((x) => x[0]?.toUpperCase()).slice(0, 2).join('');
   const prefs: { v: LocPref; l: string; sub?: string }[] = [
@@ -101,10 +103,10 @@ export function Profile() {
           
         </section>
         <section className="card" style={{ padding: 0 }}>
-          <Link className="listrow" to="/liste-achats"><Icon name="list" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Ma liste d'achats")}</div><div className="small muted">{tr("Produits à acheter, à partager ou à imprimer")}</div></div><Icon name="chevR" size={20} /></Link>
+          {settings.shopping && <Link className="listrow" to="/liste-achats"><Icon name="list" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Ma liste d'achats")}</div><div className="small muted">{tr("Produits à acheter, à partager ou à imprimer")}</div></div><Icon name="chevR" size={20} /></Link>}
           <Link className="listrow" to="/favoris"><Icon name="heart" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Favoris")}</div><div className="small muted">{tr("Adresses enregistrées pour les retrouver rapidement")}</div></div><Icon name="chevR" size={20} /></Link>
           <Link className="listrow" to="/profil/telechargements"><Icon name="download" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Fiches téléchargées")}</div><div className="small muted">{tr(Object.keys(s.downloads).length)} {tr(" fiche(s) disponibles hors connexion")}</div></div><Icon name="chevR" size={20} /></Link>
-          <Link className="listrow" to="/contributions"><Icon name="pen" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Mes contributions")}</div><div className="small muted">{tr(s.proposals.filter((p) => p.status === 'Complément demandé').length)} {tr(" complément demandé")}</div></div><Icon name="chevR" size={20} /></Link>
+          {settings.contributions && <Link className="listrow" to="/contributions"><Icon name="pen" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Mes contributions")}</div><div className="small muted">{tr(s.proposals.filter((p) => p.status === 'Complément demandé').length)} {tr(" complément demandé")}</div></div><Icon name="chevR" size={20} /></Link>}
           {isTeamRole(s.user?.role) && <Link className="listrow" to="/equipe"><Icon name="shield" /><div className="grow"><div style={{ fontWeight: 600 }}>{tr("Espace équipe Diaba")}</div></div><Icon name="chevR" size={20} /></Link>}
         </section>
         <section className="stack"><h2 className="row" style={{ fontSize: 17 }}><Icon name="sun" size={20} />{tr("Apparence")}</h2>

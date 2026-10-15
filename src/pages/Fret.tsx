@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '../store';
 import { cityName } from '../data';
-import { fetchList } from '../lib/shopping';
+import { useModules } from '../lib/modules';
 import { Button, Field, Icon, Logo, Screen, Select, TextArea, TopBar } from '../ui';
 import {
   devisFret, annoncerColis, fetchMesColis, fetchEtapesColis, fetchSuiviPublic, fetchFactures, fetchColisByCode,
@@ -35,6 +35,7 @@ const money = (n: number, d = 'XOF') => `${n.toLocaleString('fr-FR')} ${d === 'X
 
 export function MesEnvois() {
   const { tr } = useI18n();
+  const { settings } = useModules();
   const [colis, setColis] = useState<Colis[]>([]);
   const [factures, setFactures] = useState<Record<string, Facture>>({});
   const [loading, setLoading] = useState(true);
@@ -42,7 +43,7 @@ export function MesEnvois() {
   const [linkErr, setLinkErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const shoppingListId = searchParams.get('liste')?.trim() ?? '';
+  const shoppingListId = settings.shopping ? (searchParams.get('liste')?.trim() ?? '') : '';
   const [linkedList, setLinkedList] = useState<{ id: string; title: string } | null>(null);
   const [linkLoading, setLinkLoading] = useState(Boolean(shoppingListId));
   const linkedDescription = useRef('');
@@ -75,7 +76,7 @@ export function MesEnvois() {
     linkedDescription.current = '';
     if (!shoppingListId) return;
     let live = true;
-    fetchList(shoppingListId).then((result) => {
+    void import('../lib/shopping').then(({ fetchList }) => fetchList(shoppingListId)).then((result) => {
       if (!live) return;
       setLinkLoading(false);
       if (!result.list || result.error) { setLinkErr(result.error ?? 'Cette liste est introuvable.'); return; }
@@ -89,6 +90,10 @@ export function MesEnvois() {
         linkedDescription.current = description;
         return { ...current, ville: current.ville || result.list?.city || '', description };
       });
+    }).catch(() => {
+      if (!live) return;
+      setLinkLoading(false);
+      setLinkErr('La liste d’achats n’a pas pu être chargée.');
     });
     return () => { live = false; };
   }, [shoppingListId]);

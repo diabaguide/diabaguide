@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { cityName } from '../data';
 import { useStore } from '../store';
+import { useModules } from '../lib/modules';
 import { Button, Field, Icon, Screen, TopBar } from '../ui';
 import {
   addItem, createList, deleteItem, deleteList, fetchList, fetchLists, listText, toggleItem,
@@ -90,6 +91,7 @@ export function ShoppingListPage() {
   const { id = '' } = useParams();
   const nav = useNavigate();
   const { s } = useStore();
+  const { settings } = useModules();
   const [list, setList] = useState<ShoppingList | null>(null);
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -275,17 +277,19 @@ export function ShoppingListPage() {
             </div>
           )}
 
-          <div className="card stack shopping-ship" style={{ gap: 10, marginTop: 14 }}>
-            <h2 style={{ fontSize: 16, margin: 0 }}>{tr("Expédier cette liste")}</h2>
-            {items.length > 0 ? (
-              <Button icon="box" to={`/mes-envois?liste=${encodeURIComponent(id)}`}>{tr("Expédier cette liste")}</Button>
-            ) : (
-              <>
-                <Button icon="box" disabled>{tr("Expédier cette liste")}</Button>
-                <p className="small muted" style={{ margin: 0 }}>{tr("Ajoutez au moins un produit avant de préparer l’envoi.")}</p>
-              </>
-            )}
-          </div>
+          {settings.shipments && (
+            <div className="card stack shopping-ship" style={{ gap: 10, marginTop: 14 }}>
+              <h2 style={{ fontSize: 16, margin: 0 }}>{tr("Expédier cette liste")}</h2>
+              {items.length > 0 ? (
+                <Button icon="box" to={`/mes-envois?liste=${encodeURIComponent(id)}`}>{tr("Expédier cette liste")}</Button>
+              ) : (
+                <>
+                  <Button icon="box" disabled>{tr("Expédier cette liste")}</Button>
+                  <p className="small muted" style={{ margin: 0 }}>{tr("Ajoutez au moins un produit avant de préparer l’envoi.")}</p>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="card stack" style={{ gap: 10, marginTop: 14 }}>
             <h2 style={{ fontSize: 16, margin: 0 }}>{tr("Partager la liste")}</h2>
