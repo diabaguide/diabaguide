@@ -7,9 +7,9 @@ import { BulkBar, BulkReport } from './BulkBar';
 import { logBulk, runBulk, toggleAll, toggleOne, type BulkResult } from '../../lib/bulk';
 import { SortTh, compare, useSort } from './tableSort';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
-import type { Role } from '../../lib/auth';
+import type { AccountStatus, Role } from '../../lib/auth';
 import {
-  trashAccounts, creerMembreAvecCode, definirCodeSecret, fetchInvitations, fetchMembers, inviteMember, resetPasswordFor, revokeInvitation, setMemberRole, updateMember,
+  trashAccounts, creerMembreAvecCode, definirCodeSecret, fetchInvitations, fetchMembers, inviteMember, resetPasswordFor, revokeInvitation, setMemberRole, setMemberStatus, updateMember,
   ROLE_LABEL, type Invitation, type Member,
 } from '../../lib/members';
 import { DIAL_CODES, PHONE, formatPhone, joinPhone, phoneKey } from '../../lib/phone';
@@ -140,6 +140,40 @@ export function Members() {
 
   const visibleIds = shown.map((m) => m.id);
   const names = Object.fromEntries(members.map((m) => [m.id, m.name ?? m.email]));
+  const memberSkip = (id: string): string | null => {
+    const m = members.find((x) => x.id === id);
+    if (!m) return 'Compte introuvable.';
+    if (m.id === meId) return 'Vous-même';
+    if (m.primary) return 'Administrateur principal';
+    if (m.role === 'traveler') return 'Voyageur : voir la page Voyageurs.';
+    return null;
+  };
+  const bulkStatus = async (status: AccountStatus) => {
+    const ids = [...selected];
+    const verb = status === 'suspended' ? 'désactiver' : 'réactiver';
+    if (!window.confirm(t('Voulez-vous {0} {1} compte(s) ?', { 0: verb, 1: ids.length }))) return;
+    setBulkBusy(true); setErr(null); setOk(null);
+    const result = await runBulk(ids, (id) => setMemberStatus(id, status, status === 'suspended' ? 'Désactivé par l’équipe' : ''), {
+      skip: (id) => {
+        const motif = memberSkip(id);
+        if (motif) return motif;
+        const m = members.find((x) => x.id === id);
+        return m && m.status === status ? (status === 'suspended' ? 'Déjà désactivé.' : 'Déjà actif.') : null;
+      },
+    });
+    setBulkBusy(false); setReport(result); setSelected(new Set());
+    await logBulk(status === 'suspended' ? 'members.suspend' : 'members.reactivate', 'member', result);
+    await reload();
+  };
+  const bulkRevoke = async () => {
+    const ids = [...selected];
+    if (!window.confirm(t('Retirer l’accès équipe à {0} compte(s) ? Ils redeviennent voyageurs.', { 0: ids.length }))) return;
+    setBulkBusy(true); setErr(null); setOk(null);
+    const result = await runBulk(ids, (id) => setMemberRole(id, 'traveler'), { skip: memberSkip });
+    setBulkBusy(false); setReport(result); setSelected(new Set());
+    await logBulk('members.revoke', 'member', result);
+    await reload();
+  };
   const bulkTrash = async () => {
     const ids = [...selected];
     if (!window.confirm(t('Mettre {0} compte(s) à la corbeille ? Ils seront restaurables pendant 30 jours.', { 0: ids.length }))) return;
@@ -365,6 +399,9 @@ export function Members() {
 
         <BulkReport report={report} names={names} />
         <BulkBar count={selected.size} onClear={() => setSelected(new Set())}>
+          <Button kind="s" icon="x" full={false} disabled={bulkBusy} onClick={() => void bulkStatus('suspended')}>{tr("Désactiver")}</Button>
+          <Button kind="s" icon="check" full={false} disabled={bulkBusy} onClick={() => void bulkStatus('active')}>{tr("Réactiver")}</Button>
+          <Button kind="s" icon="x" full={false} disabled={bulkBusy} onClick={() => void bulkRevoke()}>{tr("Retirer l’accès")}</Button>
           <Button kind="d" icon="trash" full={false} disabled={bulkBusy} onClick={() => void bulkTrash()}>{tr("Mettre à la corbeille")}</Button>
         </BulkBar>
 

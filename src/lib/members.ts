@@ -87,6 +87,17 @@ export async function setTravelerStatus(
   return { error: error ? humanize(error.message) : undefined };
 }
 
+/** Désactive ou réactive un membre de l'équipe (supabase/590_member_status.sql). */
+export async function setMemberStatus(
+  id: string, status: AccountStatus, reason = '',
+): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { error } = await supabase.rpc('admin_set_member_status', {
+    p_id: id, p_status: status, p_reason: reason || null,
+  });
+  return { error: error ? humanize(error.message) : undefined };
+}
+
 /**
  * Réinitialise le mot de passe d'un compte, par un administrateur.
  *

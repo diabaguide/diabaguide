@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { BULK_MAX, runBulk, summarizeBulk, toggleAll, toggleOne } from '../src/lib/bulk.ts';
 
@@ -47,4 +48,24 @@ test('le compte rendu résume les faits, ignorés et échecs', () => {
   ]);
   assert.equal(text, '2 effectués, 1 ignoré, 1 en échec.');
   assert.equal(summarizeBulk([{ id: 'a', status: 'done' }]), '1 effectué.');
+});
+
+test('la migration des membres protège soi-même, l’administrateur principal et le dernier administrateur', async () => {
+  const sql = await readFile(new URL('../supabase/590_member_status.sql', import.meta.url), 'utf8');
+  assert.match(sql, /function public\.admin_set_member_status/);
+  assert.match(sql, /is_admin\(\)/);
+  assert.match(sql, /auth\.uid\(\)/);
+  assert.match(sql, /is_primary_admin/);
+  assert.match(sql, /Dernier administrateur/);
+  assert.match(sql, /banned_until/);
+  assert.match(sql, /grant execute on function public\.admin_set_member_status\(uuid, text, text\) to authenticated/);
+});
+
+test('la page Membres propose désactiver, réactiver et retirer l’accès en groupe', async () => {
+  const members = await readFile(new URL('../src/pages/admin/Members.tsx', import.meta.url), 'utf8');
+  assert.match(members, /setMemberStatus/);
+  assert.match(members, /bulkStatus/);
+  assert.match(members, /bulkRevoke/);
+  assert.match(members, /members\.suspend/);
+  assert.match(members, /members\.revoke/);
 });
