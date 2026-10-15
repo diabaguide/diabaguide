@@ -263,3 +263,35 @@ function warn(what: string, e: unknown) {
     console.warn(`[Diaba Guide] Échec : ${what}.`, e);
   }
 }
+
+async function authPinAdmin(payload: Record<string, unknown>): Promise<{ id?: string; email?: string; ok?: boolean; error?: string }> {
+  if (!supabase) return { error: 'Indisponible en mode démonstration.' };
+  const { data } = await supabase.auth.getSession();
+  const jeton = data.session?.access_token;
+  if (!jeton) return { error: 'Session expirée. Reconnectez-vous.' };
+  try {
+    const r = await fetch('/api/auth-pin', {
+      method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${jeton}` }, body: JSON.stringify(payload),
+    });
+    const corps = (await r.json().catch(() => ({}))) as { id?: string; email?: string; ok?: boolean; error?: string };
+    return r.ok ? corps : { error: corps.error ?? 'L’opération a échoué. Réessayez.' };
+  } catch {
+    return { error: 'Connexion impossible. Vérifiez votre réseau et réessayez.' };
+  }
+}
+
+/** Crée un compte avec son code secret, puis lui accorde le rôle voulu (garde-fous de la base). */
+export async function creerMembreAvecCode(v: {
+  name: string; phone: string; email: string; pin: string; role: Exclude<Role, 'traveler'>;
+}): Promise<{ error?: string }> {
+  const created = await authPinAdmin({ action: 'admin-create', name: v.name, phone: v.phone, email: v.email, pin: v.pin });
+  if (created.error || !created.id) return { error: created.error ?? 'La création du compte a échoué.' };
+  const res = await setMemberRole(created.id, v.role);
+  return res.error ? { error: `Compte créé, mais le rôle n’a pas pu être appliqué : ${res.error}` } : {};
+}
+
+/** Définit le code secret d'un autre compte (administrateurs). */
+export async function definirCodeSecret(id: string, pin: string): Promise<{ error?: string }> {
+  const res = await authPinAdmin({ action: 'admin-set-pin', id, pin });
+  return res.error ? { error: res.error } : {};
+}

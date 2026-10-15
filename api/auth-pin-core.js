@@ -151,6 +151,17 @@ async function adminUpdatePassword(env, fetchImpl, userId, password) {
   return response.ok;
 }
 
+/** Appelant administrateur : jeton validé par Supabase, rôle relu en base avec ce même jeton. */
+async function adminCaller(req, env, fetchImpl) {
+  const user = await authenticatedUser(req, env, fetchImpl);
+  if (!user) return { status: 401, error: 'Session expirée. Reconnectez-vous.' };
+  const token = String(req.headers?.authorization ?? req.headers?.Authorization ?? '').slice(7);
+  const response = await fetchImpl(`${env.VITE_SUPABASE_URL}/rest/v1/profiles?select=role&id=eq.${encodeURIComponent(user.id)}`, { headers: anonHeaders(env, token) });
+  const rows = response.ok ? await jsonFrom(response) : null;
+  if (!Array.isArray(rows) || rows[0]?.role !== 'admin') return { status: 403, error: 'Action réservée aux administrateurs.' };
+  return { user };
+}
+
 function sessionBody(session) {
   return { access_token: session.access_token, refresh_token: session.refresh_token, expires_in: session.expires_in };
 }
@@ -211,6 +222,56 @@ export async function handleAuthPin(req, res, runtime = {}) {
       const session = await tokenFor(env, fetchImpl, email, password);
       if (!session) return reply(res, 503, { error: 'Compte créé. Revenez à la connexion.' });
       return reply(res, 200, sessionBody(session));
+    }
+
+    if (action === 'admin-create') {
+      const caller = await adminCaller(req, env, fetchImpl);
+      if (!caller.user) return reply(res, caller.status, { error: caller.error });
+      const name = typeof body.name === 'string' ? body.name.trim() : '';
+      const phone = normalizePhone(body.phone);
+      const pin = typeof body.pin === 'string' ? body.pin : '';
+      const emailInput = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+      if (!name || !phone || !validatePin(pin) || (emailInput && !EMAIL.test(emailInput))) {
+        return reply(res, 400, { error: 'Vérifiez les informations saisies.' });
+      }
+      const key = phoneKey(phone);
+      const email = emailInput || `p${key}@${INTERNAL_DOMAIN}`;
+      const taken = new URLSearchParams({ select: 'id', or: `(phone_key.eq.${key},email.eq.${email})`, limit: '1' });
+      const takenResponse = await fetchImpl(`${env.VITE_SUPABASE_URL}/rest/v1/profiles?${taken}`, { headers: serviceHeaders(env) });
+      if (!takenResponse.ok) return reply(res, 503, { error: 'Création de compte temporairement indisponible.' });
+      const existing = await jsonFrom(takenResponse);
+      if (Array.isArray(existing) && existing.length) return reply(res, 409, { error: 'Ce numéro ou cette adresse est déjà associé à un compte.' });
+      const create = await fetchImpl(`${env.VITE_SUPABASE_URL}/auth/v1/admin/users`, {
+        method: 'POST', headers: serviceHeaders(env),
+        body: JSON.stringify({ email, password: deriveTechnicalPassword(pin, env.AUTH_PIN_PEPPER, email), email_confirm: true, user_metadata: { name, phone } }),
+      });
+      if (!create.ok) return reply(res, create.status === 422 ? 409 : 503, { error: create.status === 422 ? 'Ce numéro ou cette adresse est déjà associé à un compte.' : 'Création de compte temporairement indisponible.' });
+      const created = await jsonFrom(create);
+      if (!created?.id) return reply(res, 503, { error: 'Création de compte temporairement indisponible.' });
+      const profile = await fetchImpl(`${env.VITE_SUPABASE_URL}/rest/v1/profiles?on_conflict=id`, {
+        method: 'POST', headers: { ...serviceHeaders(env), Prefer: 'resolution=merge-duplicates' },
+        body: JSON.stringify({ id: created.id, name, phone, phone_key: key, email, role: 'traveler' }),
+      });
+      if (!profile.ok) return reply(res, 503, { error: 'Le compte est créé mais sa fiche est incomplète. Reprenez-la depuis la liste des membres.' });
+      return reply(res, 200, { id: created.id, email });
+    }
+
+    if (action === 'admin-set-pin') {
+      const caller = await adminCaller(req, env, fetchImpl);
+      if (!caller.user) return reply(res, caller.status, { error: caller.error });
+      const target = typeof body.id === 'string' ? body.id : '';
+      const pin = typeof body.pin === 'string' ? body.pin : '';
+      if (!target || !validatePin(pin)) return reply(res, 400, { error: 'Le code secret doit contenir entre 3 et 6 chiffres.' });
+      if (target === caller.user.id) return reply(res, 400, { error: 'Pour votre propre compte, utilisez « Changer le code secret » dans votre profil.' });
+      const guard = await fetchImpl(`${env.VITE_SUPABASE_URL}/rest/v1/profiles?select=is_primary_admin&id=eq.${encodeURIComponent(target)}`, { headers: serviceHeaders(env) });
+      const guardRows = guard.ok ? await jsonFrom(guard) : null;
+      if (!Array.isArray(guardRows)) return reply(res, 503, { error: 'Vérification du compte impossible. Réessayez.' });
+      if (guardRows[0]?.is_primary_admin) return reply(res, 403, { error: 'Ce compte est l’administrateur principal : son code ne peut être changé que par lui-même.' });
+      const account = await fetchImpl(`${env.VITE_SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(target)}`, { headers: serviceHeaders(env) });
+      const accountData = account.ok ? await jsonFrom(account) : null;
+      if (!accountData?.email) return reply(res, 404, { error: 'Ce compte est introuvable.' });
+      const updated = await adminUpdatePassword(env, fetchImpl, target, deriveTechnicalPassword(pin, env.AUTH_PIN_PEPPER, accountData.email));
+      return updated ? reply(res, 200, { ok: true }) : reply(res, 503, { error: 'Le code secret n’a pas pu être modifié.' });
     }
 
     if (action === 'change' || action === 'update') {
