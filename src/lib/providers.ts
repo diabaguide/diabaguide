@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { PROVIDERS, type City, type Provider } from '../data';
+import { PROVIDERS, type Cat, type City, type Provider } from '../data';
 
 /** Ligne telle que renvoyée par la table Supabase `providers` (snake_case). */
 interface ProviderRow {
@@ -37,6 +37,7 @@ interface ProviderRow {
   deletion_requested_at: string | null;
   deletion_requested_by: string | null;
   deletion_reason: string | null;
+  deleted_at?: string | null;
 }
 
 const undef = <T,>(v: T | null | undefined): T | undefined => (v == null ? undefined : v);
@@ -78,6 +79,7 @@ function rowToProvider(r: ProviderRow): Provider {
     deletionRequestedAt: undef(r.deletion_requested_at),
     deletionRequestedBy: undef(r.deletion_requested_by),
     deletionReason: undef(r.deletion_reason),
+    deletedAt: undef(r.deleted_at),
   };
 }
 
@@ -201,4 +203,31 @@ export async function deleteProvider(id: string): Promise<{ error?: string }> {
   if (error) return { error: error.message };
   if (!count) return { error: 'Suppression refusée : réservée à l\'administrateur.' };
   return {};
+}
+
+/* Corbeille des fiches (supabase/600_fiche_trash.sql) : 30 jours avant suppression définitive. */
+type FicheTrashRow = { res_id: string; res_status: 'done' | 'skipped'; res_reason: string | null };
+async function ficheRpc(fn: 'admin_trash_fiches' | 'admin_restore_fiches' | 'admin_purge_fiches', id: string): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { data, error } = await supabase.rpc(fn, { p_ids: [id] });
+  if (error) return { error: error.message };
+  const row = (data as FicheTrashRow[] | null)?.[0];
+  return row?.res_status === 'skipped' ? { error: row.res_reason ?? 'Refusé.' } : {};
+}
+export const trashProviders = (id: string) => ficheRpc('admin_trash_fiches', id);
+export const restoreProviders = (id: string) => ficheRpc('admin_restore_fiches', id);
+/** Suppression définitive immédiate d'une fiche déjà à la corbeille, photos comprises. */
+export async function purgeProviders(id: string, photoPaths: string[] = []): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const res = await ficheRpc('admin_purge_fiches', id);
+  if (res.error) return res;
+  if (photoPaths.length) await supabase.storage.from('fiche-photos').remove(photoPaths);
+  return {};
+}
+
+/** Action groupée : changer de catégorie. */
+export async function setProviderCategory(id: string, cat: Cat): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { error } = await supabase.from('providers').update({ cat }).eq('id', id);
+  return error ? { error: error.message } : {};
 }

@@ -12,7 +12,7 @@
     "verify:bundle": "node scripts/verify-bundle.mjs",
     "verify:traveler-ui": "node scripts/verify-traveler-ui.mjs",
     "verify:bulk": "node --experimental-strip-types --test scripts/bulk-actions.test.mjs",
-    "verify:trash": "node --experimental-strip-types --test scripts/account-trash.test.mjs",
+    "verify:trash": "node --experimental-strip-types --test scripts/account-trash.test.mjs scripts/fiche-trash.test.mjs",
     "verify:modules": "node --test scripts/module-management.test.mjs",
     "verify:auth": "node --experimental-strip-types --test scripts/simple-auth.test.mjs scripts/auth-pin-api.test.mjs",
     "verify:shipsgo": "node --test scripts/shipsgo-core.test.mjs scripts/shipsgo-api.test.mjs scripts/shipsgo-integrity.test.mjs scripts/verify-shipsgo-ui.mjs",

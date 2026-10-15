@@ -32,6 +32,7 @@ interface State {
   downloads: Record<string, string>; // id -> date de téléchargement
   lastSync: string;
   providers: Provider[]; // adresses (Supabase, avec repli statique)
+  trashedProviders: Provider[]; // corbeille des fiches (30 jours), visible de l'équipe seulement
   pendingDeletion: Provider[]; // fiches dont la suppression attend l'administrateur (masquées aux voyageurs)
   // Taxonomies administrables (Supabase, avec repli statique)
   categories: Category[];
@@ -58,7 +59,7 @@ const KEY = 'diaba-guide-state-v1';
 const initial: State = {
   user: null, authReady: !isSupabaseConfigured, lang: 'fr', theme: 'system', city: 'guangzhou', locPref: 'ask', favorites: ['baiyun', 'jinyuan', 'alnour', 'sinodakar'], myRatings: {},
   downloads: { baiyun: '18 sept. 2026', jinyuan: '18 sept. 2026' }, lastSync: '19 sept. 2026, 09:12',
-  providers: PROVIDERS, pendingDeletion: [],
+  providers: PROVIDERS, pendingDeletion: [], trashedProviders: [],
   categories: categoriesParNom(STATIC_CATEGORIES), cities: villesParNom(STATIC_CITIES), districts: quartiersParNom(STATIC_DISTRICTS), productTags: [],
   // Avec Supabase, propositions et décisions sont chargées depuis la base.
   proposals: isSupabaseConfigured ? [] : [...SEED_PROPOSALS, ...TEAM_QUEUE_EXTRA],
@@ -167,7 +168,7 @@ function reducer(s: State, a: Action): State {
       };
       return { ...s, proposals: s.proposals.map(upd), decisions: [dec, ...s.decisions] };
     }
-    case 'setProviders': return { ...s, providers: a.v.filter((x) => !x.deletionRequestedAt), pendingDeletion: a.v.filter((x) => x.deletionRequestedAt) };
+    case 'setProviders': return { ...s, providers: a.v.filter((x) => !x.deletionRequestedAt && !x.deletedAt), pendingDeletion: a.v.filter((x) => x.deletionRequestedAt && !x.deletedAt), trashedProviders: a.v.filter((x) => x.deletedAt) };
     case 'localProvider': return { ...s, providers: s.providers.some((x) => x.id === a.p.id) ? s.providers.map((x) => (x.id === a.p.id ? a.p : x)) : [a.p, ...s.providers] };
     case 'localDeletion': {
       const t = s.providers.find((x) => x.id === a.id);
@@ -225,6 +226,8 @@ interface ContribApi {
   /** Fiches (équipe) : chaque fonction renvoie un message d'erreur, ou null si tout va bien. */
   saveProvider: (p: Provider) => Promise<string | null>;
   requestDeletion: (id: string, reason: string) => Promise<string | null>;
+  /** Recharge les fiches depuis la base (après une action groupée). */
+  reloadProviders: () => Promise<void>;
   restoreProvider: (id: string) => Promise<string | null>;
   removeProvider: (id: string) => Promise<string | null>;
   /** Recharge les taxonomies après une modification dans l'administration. */
@@ -399,6 +402,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       d({ t: 'setProviders', v: await fetchProviders() });
       return null;
     },
+    reloadProviders: async () => { d({ t: 'setProviders', v: await fetchProviders() }); },
     requestDeletion: async (id, reason) => {
       const by = sRef.current.user?.name ?? 'Équipe';
       const t = sRef.current.providers.find((x) => x.id === id);

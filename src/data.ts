@@ -101,6 +101,7 @@ export interface Provider {
   deletionRequestedAt?: string;  // demande de suppression en attente de l’administrateur
   deletionRequestedBy?: string;
   deletionReason?: string;
+  deletedAt?: string;       // mise à la corbeille (supabase/600_fiche_trash.sql)
 }
 
 export const CITY_DIRECTORY_CATEGORIES: Cat[] = ['gros', 'hotel', 'resto'];

@@ -51,6 +51,7 @@ test('la purge efface les fichiers puis les comptes échus, sans toucher aux aut
       assert.match(u, /deleted_at=lt\./);
       return response(200, [{ id: 'old-1' }, { id: 'old-2' }]);
     }
+    if (u.includes('/rest/v1/providers?')) return response(200, []);
     if (u.includes('/storage/v1/object/list/')) return response(200, [{ name: 'photo.webp' }]);
     if (init.method === 'DELETE' && u.includes('/storage/v1/object/')) return response(200, []);
     if (u.endsWith('/rest/v1/rpc/purge_expired_accounts')) return response(200, [{ res_id: 'old-1', res_status: 'done' }, { res_id: 'old-2', res_status: 'skipped', res_reason: 'Administrateur principal' }]);
@@ -59,7 +60,7 @@ test('la purge efface les fichiers puis les comptes échus, sans toucher aux aut
   const res = makeRes();
   await handlePurgeTrash({ method: 'GET', headers: { authorization: 'Bearer cron-secret-123456' } }, res, { env, fetch });
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(res.body, { purged: 1, skipped: 1, failed: 0 });
+  assert.deepEqual(res.body, { purged: 1, skipped: 1, failed: 0, fiches: 0 });
   assert.ok(calls.some((c) => c.url.includes('/storage/v1/object/list/')));
   assert.equal(JSON.stringify(res.body).includes('service-key'), false);
 });
