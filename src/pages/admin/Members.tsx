@@ -3,11 +3,13 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
 import { Avatar, AvatarPicker, Button, Field, Icon, Select, useWide } from '../../ui';
+import { BulkBar, BulkReport } from './BulkBar';
+import { logBulk, runBulk, toggleAll, toggleOne, type BulkResult } from '../../lib/bulk';
 import { SortTh, compare, useSort } from './tableSort';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { Role } from '../../lib/auth';
 import {
-  creerMembreAvecCode, definirCodeSecret, fetchInvitations, fetchMembers, inviteMember, resetPasswordFor, revokeInvitation, setMemberRole, updateMember,
+  trashAccounts, creerMembreAvecCode, definirCodeSecret, fetchInvitations, fetchMembers, inviteMember, resetPasswordFor, revokeInvitation, setMemberRole, updateMember,
   ROLE_LABEL, type Invitation, type Member,
 } from '../../lib/members';
 import { DIAL_CODES, PHONE, formatPhone, joinPhone, phoneKey } from '../../lib/phone';
@@ -40,6 +42,9 @@ function MemberEdit({ m, onSaved }: { m: Member; onSaved: (msg: string) => void 
   const [phone, setPhone] = useState(m.phone ?? '');
   const [avatar, setAvatar] = useState<string | null>(m.avatarPath);
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [report, setReport] = useState<BulkResult[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const save = async () => {
     setErr(null);
@@ -67,7 +72,7 @@ function MemberEdit({ m, onSaved }: { m: Member; onSaved: (msg: string) => void 
 }
 
 export function Members() {
-  const { tr } = useI18n();
+  const { tr, t } = useI18n();
   const { s } = useStore();
   const meId = s.user?.id;
   const wide = useWide();
@@ -116,10 +121,13 @@ export function Members() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [report, setReport] = useState<BulkResult[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const reload = useCallback(async () => {
     const [m, i] = await Promise.all([fetchMembers(), fetchInvitations()]);
-    setMembers(m); setInvites(i); setLoading(false);
+    setMembers(m.filter((x) => !x.deletedAt)); setInvites(i); setLoading(false);
   }, []);
   useEffect(() => { void reload(); }, [reload]);
 
@@ -129,6 +137,26 @@ export function Members() {
   const shown = (showAll ? members : staff)
     .filter((m) => contient(`${m.name ?? ''} ${m.email}`, pq))
     .sort((a, b) => compare(sort.k === 'role' ? a.role : (a.name ?? a.email).toLowerCase(), sort.k === 'role' ? b.role : (b.name ?? b.email).toLowerCase(), sort.dir));
+
+  const visibleIds = shown.map((m) => m.id);
+  const names = Object.fromEntries(members.map((m) => [m.id, m.name ?? m.email]));
+  const bulkTrash = async () => {
+    const ids = [...selected];
+    if (!window.confirm(t('Mettre {0} compte(s) à la corbeille ? Ils seront restaurables pendant 30 jours.', { 0: ids.length }))) return;
+    setBulkBusy(true); setErr(null); setOk(null);
+    const result = await runBulk(ids, trashAccounts, {
+      skip: (id) => {
+        const m = members.find((x) => x.id === id);
+        if (!m) return 'Compte introuvable.';
+        if (m.id === meId) return 'Vous-même';
+        if (m.primary) return 'Administrateur principal';
+        return null;
+      },
+    });
+    setBulkBusy(false); setReport(result); setSelected(new Set());
+    await logBulk('members.trash', 'member', result);
+    await reload();
+  };
 
   const invite = async (e: FormEvent) => {
     e.preventDefault();
@@ -269,12 +297,13 @@ export function Members() {
           {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
             : shown.length === 0 ? <p className="muted">{tr("Aucun compte à afficher.")}</p> : wide ? (
             <div className="table dense"><table>
-              <thead><tr><SortTh k="name" label="Personne" sort={sort} onSort={toggle} /><SortTh k="role" label="Rôle" sort={sort} onSort={toggle} /><th>{tr("Actions")}</th></tr></thead>
+              <thead><tr><th style={{ width: 36 }}><input type="checkbox" aria-label={tr("Tout sélectionner")} checked={visibleIds.length > 0 && visibleIds.every((id) => selected.has(id))} onChange={() => setSelected(toggleAll(selected, visibleIds))} /></th><SortTh k="name" label="Personne" sort={sort} onSort={toggle} /><SortTh k="role" label="Rôle" sort={sort} onSort={toggle} /><th>{tr("Actions")}</th></tr></thead>
               <tbody>
                 {shown.map((m) => {
                   const isMe = m.id === meId;
                   return (
                     <tr key={m.id}>
+                      <td><input type="checkbox" aria-label={t('Sélectionner {0}', { 0: m.name ?? m.email })} checked={selected.has(m.id)} onChange={() => setSelected(toggleOne(selected, m.id))} /></td>
                       <td>
                         <div className="row" style={{ gap: 10 }}>
                           <Avatar path={m.avatarPath} name={m.name ?? m.email} />
@@ -314,18 +343,30 @@ export function Members() {
             </table></div>
           ) : (
             <div className="acards">
+              <label className="row small" style={{ gap: 8 }}>
+                <input type="checkbox" checked={visibleIds.length > 0 && visibleIds.every((id) => selected.has(id))} onChange={() => setSelected(toggleAll(selected, visibleIds))} />
+                {tr("Tout sélectionner")}
+              </label>
               {shown.map((m) => {
                 const isMe = m.id === meId;
                 return (
-                  <AdminCard key={m.id} toneSeed={m.name ?? m.email} thumb={m.avatarPath ? <Avatar path={m.avatarPath} name={m.name ?? m.email} size={44} /> : undefined}
+                  <div key={m.id} className="row" style={{ gap: 8, alignItems: 'center' }}>
+                  <input type="checkbox" style={{ width: 24, height: 24, flex: 'none' }} aria-label={t('Sélectionner {0}', { 0: m.name ?? m.email })} checked={selected.has(m.id)} onChange={() => setSelected(toggleOne(selected, m.id))} />
+                  <div style={{ flex: 1, minWidth: 0 }}><AdminCard key={m.id} toneSeed={m.name ?? m.email} thumb={m.avatarPath ? <Avatar path={m.avatarPath} name={m.name ?? m.email} size={44} /> : undefined}
                     title={<>{tr(m.name ?? '—')}{isMe && <span className="muted" style={{ fontWeight: 400 }}>{tr(" (vous)")}</span>}</>}
                     sub={m.email} badge={<RoleBadge role={m.role} />}
-                    onOpen={() => { setConfirmId(null); setOpenMember(m); }} />
+                    onOpen={() => { setConfirmId(null); setOpenMember(m); }} /></div>
+                  </div>
                 );
               })}
             </div>
           )}
         </section>
+
+        <BulkReport report={report} names={names} />
+        <BulkBar count={selected.size} onClear={() => setSelected(new Set())}>
+          <Button kind="d" icon="trash" full={false} disabled={bulkBusy} onClick={() => void bulkTrash()}>{tr("Mettre à la corbeille")}</Button>
+        </BulkBar>
 
         {openMember && (
           <AdminSheet title={tr(openMember.name ?? '—')} sub={openMember.email}

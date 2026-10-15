@@ -13,6 +13,8 @@ export interface Member {
   suspendedReason: string | null;
   /** Administrateur principal : aucun autre compte ne peut le modifier ni le supprimer (supabase/370_admin_principal.sql). */
   primary: boolean;
+  /** Date de mise à la corbeille (supabase/580_account_trash.sql), sinon null. */
+  deletedAt: string | null;
 }
 export interface Invitation { email: string; role: Exclude<Role, 'traveler'>; createdAt: string; name: string | null; phone: string | null; avatarPath: string | null }
 export const STATUS_LABEL: Record<AccountStatus, string> = {
@@ -30,20 +32,24 @@ export const ROLE_LABEL: Record<Role, string> = {
 /** Tous les comptes (RLS : réservé aux administrateurs). */
 export async function fetchMembers(): Promise<Member[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from('profiles').select('id, name, phone, email, role, status, suspended_at, suspended_reason, created_at, avatar_path, is_primary_admin').order('created_at', { ascending: true });
-  if (error) { warn('chargement des comptes', error); return []; }
-  return (data as {
+  type Row = {
     id: string; name: string | null; phone: string | null; email: string; role: Role;
     status: AccountStatus | null; suspended_at: string | null; suspended_reason: string | null; created_at: string; avatar_path: string | null; is_primary_admin: boolean | null;
-  }[]).map((r) => ({
+    deleted_at?: string | null;
+  };
+  const colonnes = 'id, name, phone, email, role, status, suspended_at, suspended_reason, created_at, avatar_path, is_primary_admin';
+  // La colonne `deleted_at` n'existe qu'après la migration 580 : sans elle, on relit sans.
+  let res = await supabase.from('profiles').select(`${colonnes}, deleted_at`).order('created_at', { ascending: true });
+  if (res.error) res = await supabase.from('profiles').select(colonnes).order('created_at', { ascending: true }) as typeof res;
+  if (res.error) { warn('chargement des comptes', res.error); return []; }
+  return (res.data as unknown as Row[]).map((r) => ({
     id: r.id, name: r.name, phone: r.phone,
     // Compte inscrit avec son seul numéro : l'adresse interne n'est jamais
     // montrée, on affiche le téléphone à la place.
     email: isInternalEmail(r.email) ? phoneOf(r.phone, r.email) : r.email,
     role: r.role, createdAt: r.created_at, avatarPath: r.avatar_path,
     status: r.status ?? 'active', suspendedAt: r.suspended_at, suspendedReason: r.suspended_reason,
-    primary: r.is_primary_admin === true,
+    primary: r.is_primary_admin === true, deletedAt: r.deleted_at ?? null,
   }));
 }
 
@@ -294,4 +300,28 @@ export async function creerMembreAvecCode(v: {
 export async function definirCodeSecret(id: string, pin: string): Promise<{ error?: string }> {
   const res = await authPinAdmin({ action: 'admin-set-pin', id, pin });
   return res.error ? { error: res.error } : {};
+}
+
+/* Corbeille des comptes (supabase/580_account_trash.sql) : 30 jours avant suppression définitive. */
+export const TRASH_DAYS = 30;
+type TrashRow = { res_id: string; res_status: 'done' | 'skipped'; res_reason: string | null };
+async function trashRpc(fn: 'admin_trash_accounts' | 'admin_restore_accounts' | 'admin_purge_accounts', id: string): Promise<{ error?: string; skipped?: string }> {
+  if (!supabase) return {};
+  const { data, error } = await supabase.rpc(fn, { p_ids: [id] });
+  if (error) return { error: humanize(error.message) };
+  const row = (data as TrashRow[] | null)?.[0];
+  return row?.res_status === 'skipped' ? { error: row.res_reason ?? 'Refusé.' } : {};
+}
+/** Met un compte à la corbeille : désactivé, masqué, restaurable 30 jours. */
+export const trashAccounts = (id: string) => trashRpc('admin_trash_accounts', id);
+export const restoreAccounts = (id: string) => trashRpc('admin_restore_accounts', id);
+/** Suppression définitive immédiate d'un compte déjà à la corbeille. */
+export const purgeAccounts = async (id: string) => {
+  const files = await purgeTravelerFiles(id);
+  const res = await trashRpc('admin_purge_accounts', id);
+  return res.error ? res : files.error ? { error: `Compte supprimé, mais ses photos n’ont pas pu être retirées : ${files.error}` } : res;
+};
+/** Jours restants avant la purge automatique. */
+export function trashDaysLeft(deletedAt: string, now = Date.now()): number {
+  return Math.max(0, TRASH_DAYS - Math.floor((now - new Date(deletedAt).getTime()) / 86400000));
 }

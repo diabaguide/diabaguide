@@ -250,7 +250,7 @@ export async function handleAuthPin(req, res, runtime = {}) {
       if (!created?.id) return reply(res, 503, { error: 'Création de compte temporairement indisponible.' });
       const profile = await fetchImpl(`${env.VITE_SUPABASE_URL}/rest/v1/profiles?on_conflict=id`, {
         method: 'POST', headers: { ...serviceHeaders(env), Prefer: 'resolution=merge-duplicates' },
-        body: JSON.stringify({ id: created.id, name, phone, phone_key: key, email, role: 'traveler' }),
+        body: JSON.stringify({ id: created.id, name, phone, phone_key: key, email, role: 'traveler', status: 'active', suspended_at: null, suspended_reason: null }),
       });
       if (!profile.ok) return reply(res, 503, { error: 'Le compte est créé mais sa fiche est incomplète. Reprenez-la depuis la liste des membres.' });
       return reply(res, 200, { id: created.id, email });

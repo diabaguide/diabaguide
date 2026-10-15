@@ -8,7 +8,7 @@ import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { AccountStatus } from '../../lib/auth';
 import { contient } from '../../lib/texte';
 import {
-  STATUS_LABEL, deleteTraveler, fetchMembers, fetchTravelerFiles, purgeTravelerFiles, setTravelerStatus, updateTraveler,
+  STATUS_LABEL, trashAccounts, deleteTraveler, fetchMembers, fetchTravelerFiles, purgeTravelerFiles, setTravelerStatus, updateTraveler,
   type Member, type VoyageurFile,
 } from '../../lib/members';
 
@@ -163,7 +163,7 @@ export function Travelers() {
 
   const reload = useCallback(async () => {
     const m = await fetchMembers();
-    setTravelers(m.filter((x) => x.role === 'traveler'));
+    setTravelers(m.filter((x) => x.role === 'traveler' && !x.deletedAt));
     setLoading(false);
   }, []);
 
@@ -190,6 +190,16 @@ export function Travelers() {
     });
     setBulkBusy(false); setReport(result); setSelected(new Set());
     await logBulk(status === 'suspended' ? 'travelers.suspend' : 'travelers.reactivate', 'traveler', result);
+    await reload();
+  };
+
+  const bulkTrash = async () => {
+    const ids = [...selected];
+    if (!window.confirm(t('Mettre {0} compte(s) à la corbeille ? Ils seront restaurables pendant 30 jours.', { 0: ids.length }))) return;
+    setBulkBusy(true); setErr(null); setOk(null);
+    const result = await runBulk(ids, trashAccounts, { skip: (id) => (travelers.some((x) => x.id === id) ? null : 'Compte introuvable.') });
+    setBulkBusy(false); setReport(result); setSelected(new Set());
+    await logBulk('travelers.trash', 'traveler', result);
     await reload();
   };
 
@@ -273,6 +283,7 @@ export function Travelers() {
         <BulkBar count={selected.size} onClear={() => setSelected(new Set())}>
           <Button kind="s" icon="x" full={false} disabled={bulkBusy} onClick={() => void bulkStatus('suspended')}>{tr("Désactiver")}</Button>
           <Button kind="s" icon="check" full={false} disabled={bulkBusy} onClick={() => void bulkStatus('active')}>{tr("Réactiver")}</Button>
+          <Button kind="d" icon="trash" full={false} disabled={bulkBusy} onClick={() => void bulkTrash()}>{tr("Mettre à la corbeille")}</Button>
         </BulkBar>
 
         {open && <TravelerSheet m={open} onClose={() => setOpen(null)} onSaved={saved} />}

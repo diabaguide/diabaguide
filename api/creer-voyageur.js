@@ -141,6 +141,7 @@ export default async function handler(req, res) {
     headers: { ...entetesService, Prefer: 'resolution=merge-duplicates' },
     body: JSON.stringify({
       id: compte.id, name: nom, phone: telephone, phone_key: cle, email: adresse, role: 'traveler',
+      status: 'active', suspended_at: null, suspended_reason: null,
     }),
   });
   if (!fiche.ok) {
