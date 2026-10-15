@@ -32,6 +32,7 @@ const ShoppingLists = lazy(() => import('./pages/Shopping').then(m => ({ default
 const ShoppingListPage = lazy(() => import('./pages/Shopping').then(m => ({ default: m.ShoppingListPage })));
 const ReviewsAdminPage = lazy(() => import('./pages/Reviews').then(m => ({ default: m.ReviewsAdminPage })));
 const AnnonceDetail = lazy(() => import('./pages/Annonces').then(m => ({ default: m.AnnonceDetail })));
+const NotificationsPage = lazy(() => import('./pages/Notifications').then(m => ({ default: m.NotificationsPage })));
 const MesEnvois = lazy(() => import('./pages/Fret').then(m => ({ default: m.MesEnvois })));
 const FactureView = lazy(() => import('./pages/Fret').then(m => ({ default: m.FactureView })));
 const CarteVoyageur = lazy(() => import('./pages/Carte').then(m => ({ default: m.CarteVoyageur })));
@@ -139,6 +140,7 @@ export default function App() {
           <Route path="/favoris" element={<Favorites />} />
           <Route path="/annonces/:id" element={<AnnonceDetail />} />
           <Route path="/mes-envois" element={<MesEnvois />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/mes-envois/carte" element={<CarteVoyageur />} />
           <Route path="/facture/:code" element={<FactureView />} />
           <Route path="/liste-achats" element={<ShoppingLists />} />

@@ -15,7 +15,7 @@
     "verify:import": "node --test scripts/expedition-import.test.mjs",
     "verify:photos": "node --test scripts/photo-paths.test.mjs scripts/photo-url-batcher.test.mjs",
     "verify:carte": "node --test scripts/barcode.test.mjs scripts/carte-data.test.mjs scripts/position.test.mjs scripts/amap.test.mjs",
-    "verify:ux": "node --test scripts/erreurs.test.mjs",
+    "verify:ux": "node --test scripts/erreurs.test.mjs scripts/notifications.test.mjs",
     "verify": "npm run verify:traveler-ui && npm run verify:shipsgo && npm run verify:import && npm run verify:photos && npm run verify:carte && npm run verify:ux",
     "preview": "vite preview"
   },

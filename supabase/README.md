@@ -7,7 +7,7 @@ Les scripts de ce dossier s'exécutent **à la main**, un par un, dans Supabase 
 - **La base de production a déjà reçu tous les scripts numérotés.** Le numéro indique l'ordre dans lequel ils ont été appliqués la première fois. Il ne veut pas dire « à rejouer ».
 - **Ne jamais utiliser `supabase db push` ni `supabase db reset` sur la production.** Le dossier `supabase/migrations/` n'existe pas, volontairement : ne pas le créer en y copiant ces scripts, sinon la CLI Supabase les appliquerait tous d'un coup.
 - **Avant de relancer un script, lire son en-tête.** La plupart se déclarent « idempotents » (on peut les relancer sans risque), mais pas tous.
-- **Nouveau script** : prendre le numéro suivant (`540_…`, `550_…`), garder les intervalles de 10 et écrire dans l'en-tête de quoi il dépend.
+- **Nouveau script** : prendre le numéro suivant (`550_…`, `560_…`), garder les intervalles de 10 et écrire dans l'en-tête de quoi il dépend.
 - Les dossiers `donnees/`, `controles/` et `historique/` sont hors de la séquence (voir plus bas).
 
 ## Séquence (numéros = ordre d'application)
@@ -74,6 +74,7 @@ Les scripts de ce dossier s'exécutent **à la main**, un par un, dans Supabase 
 | 510 | `510_carte_nom_telephone.sql` | Carte d’expédition : nom et téléphone propres à la carte | 500 |
 | 520 | `520_proposition_position.sql` | Position (lat, lng, lien Amap) d’une adresse proposée | 010, 060 |
 | 530 | `530_annonces_image_contact.sql` | Annonces : image (bucket `annonces-photos`) et contact WhatsApp de l’équipe | 230, 020 |
+| 540 | `540_notifications_suivi.sql` | Notifications de suivi d’envoi (une par étape visible, par voyageur) | 240, 330 |
 
 (*) **Le bucket `fret-photos`** a d’abord été créé par le script historique `historique/fret_lot2b.sql`. Il est maintenant créé par `480_fret_photos_bucket.sql`, sans effet sur la production où il existe déjà. Sur une base neuve, 310 et 410 peuvent s’exécuter avant 480 (une règle de stockage se crée même si le bucket manque) : il suffit de lancer 480 avant d’envoyer la première photo.
 

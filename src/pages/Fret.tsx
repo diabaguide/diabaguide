@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n';
+import { NotificationsRecentes } from './Notifications';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '../store';
@@ -120,6 +121,8 @@ export function MesEnvois() {
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
         {linkErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(linkErr)}</span></div>}
         {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
+
+        <NotificationsRecentes />
 
         <section className="card stack freight-section freight-public-tracking" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Suivre un envoi")}</h2>

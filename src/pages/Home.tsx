@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { citiesWithPublicEntries, cityName, publicEntryCount, type City } from '../data';
 import { districtPos, requestPosition, setPos } from '../geo';
 import { useStore } from '../store';
-import { Button, DemoNote, Icon, Logo, RadioCard, Screen, TopBar } from '../ui';
+import { Button, Cloche, DemoNote, Icon, Logo, RadioCard, Screen, TopBar } from '../ui';
 import { AnnoncesDiaba } from './Annonces';
 import { PremiereVisite } from './Tour';
 import { ResultCard } from './Search';
@@ -103,7 +103,7 @@ export function Home() {
       <header className="hero">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <Logo height={30} tail="GUIDE" />
-          <span className="seal seal-sm" aria-hidden="true"><span>指</span><span>南</span></span>
+          <span className="row" style={{ gap: 12 }}><Cloche className="cloche-hero" /><span className="seal seal-sm" aria-hidden="true"><span>指</span><span>南</span></span></span>
         </div>
         {/* Recherche d'abord, en pastille pleine largeur ; les villes ensuite, en pastilles. */}
         <Link to={`/recherche?ville=${s.city}`} className="searchfake" aria-label={tr("Rechercher un produit ou un service")}>

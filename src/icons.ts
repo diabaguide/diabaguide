@@ -1,5 +1,6 @@
 // Icônes de trait (viewBox 24). Générées à partir de la maquette.
 export const ICONS = {
+  bell: "<path d=\"M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9z\"/><path d=\"M10 19a2 2 0 0 0 4 0\"/>",
   home: "<path d=\"M3 10.5 12 3l9 7.5\"/><path d=\"M5 9.5V21h14V9.5\"/><path d=\"M10 21v-6h4v6\"/>",
   compass: "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m16 8-2 6-6 2 2-6z\"/>",
   heart: "<path d=\"M12 20.5s-8-4.6-8-10.4A4.6 4.6 0 0 1 12 7.6a4.6 4.6 0 0 1 8 2.5c0 5.8-8 10.4-8 10.4z\"/>",

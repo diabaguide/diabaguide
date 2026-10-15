@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n';
+import { oublierNotifications } from '../lib/notifications';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { catLabel, type Provider } from '../data';
@@ -114,7 +115,7 @@ export function Profile() {
           {prefs.map((x) => <RadioCard key={x.v} name="loc" label={tr(x.l)} sub={tr(x.sub)} checked={s.locPref === x.v} onChange={() => d({ t: 'locPref', v: x.v })} />)}
         </section>
         <Button kind="t" icon="info" onClick={() => { d({ t: 'tour', v: false }); nav('/accueil'); }}>{tr("Revoir la présentation")}</Button>
-        <Button kind="s" icon="logout" onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}>{tr("Se déconnecter")}</Button>
+        <Button kind="s" icon="logout" onClick={async () => { await signOut(); oublierNotifications(); d({ t: 'logout' }); nav('/'); }}>{tr("Se déconnecter")}</Button>
         <div className="small muted center">{tr("Diaba Guide · version de démonstration")}</div>
       </div>
     </Screen>
