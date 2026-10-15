@@ -8,6 +8,9 @@ import { newProviderId, validateProvider } from '../../lib/providers';
 import { Button, DemoNote, Field, Icon, Section, Select, StoredPhoto, TextArea, useWide } from '../../ui';
 import { FilePick, MAX_PHOTOS } from '../Contribute';
 import { SortTh, compare, useSort } from './tableSort';
+import { BulkBar, BulkReport } from './BulkBar';
+import { logBulk, runBulk, toggleAll, toggleOne, type BulkResult } from '../../lib/bulk';
+import { setProviderCategory, trashProviders } from '../../lib/providers';
 import { AdminCard, AdminSheet, SheetActions } from './mobile';
 
 /* Gestion des fiches par l'équipe : ajout, modification, demande de suppression.
@@ -23,9 +26,13 @@ const shown = (iso?: string) => (iso ? new Date(iso).toLocaleDateString('fr-FR',
 
 export function FichesList() {
   const { tr, t } = useI18n();
-  const { s } = useStore();
+  const { s, api } = useStore();
   const wide = useWide();
   const nav = useNavigate();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [report, setReport] = useState<BulkResult[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkCat, setBulkCat] = useState('');
   const [q, setQ] = useState('');
   const [city, setCity] = useState<'' | City>('');
   const [cat, setCat] = useState<'' | Cat>('');
@@ -39,6 +46,28 @@ export function FichesList() {
   }), [s.providers, s.categories, s.cities, city, cat, q, sort]); // eslint-disable-line react-hooks/exhaustive-deps
   const filtered = !!(city || cat || q);
   const pending = s.pendingDeletion.filter(match);
+  const visibleIds = rows.map((p) => p.id);
+  const names = Object.fromEntries(s.providers.map((p) => [p.id, p.name]));
+  const finish = async (action: string, result: BulkResult[]) => {
+    setBulkBusy(false); setReport(result); setSelected(new Set());
+    await logBulk(action, 'fiche', result);
+    await api.reloadProviders();
+  };
+  const bulkTrash = async () => {
+    const ids = [...selected];
+    if (!window.confirm(t('Mettre {0} fiche(s) à la corbeille ? Elles seront restaurables pendant 30 jours.', { 0: ids.length }))) return;
+    setBulkBusy(true);
+    await finish('fiches.trash', await runBulk(ids, trashProviders));
+  };
+  const bulkCategory = async () => {
+    const ids = [...selected];
+    if (!bulkCat) return;
+    if (!window.confirm(t('Changer la catégorie de {0} fiche(s) ?', { 0: ids.length }))) return;
+    setBulkBusy(true);
+    await finish('fiches.category', await runBulk(ids, (id) => setProviderCategory(id, bulkCat), {
+      skip: (id) => (s.providers.find((p) => p.id === id)?.cat === bulkCat ? 'Déjà dans cette catégorie.' : null),
+    }));
+  };
   return (
     <>
       <Head title={tr("Fiches")} sub={t(rows.length > 1 ? '{0} fiches publiées. Ajoutez, modifiez ou demandez la suppression d’une fiche.' : '{0} fiche publiée. Ajoutez, modifiez ou demandez la suppression d’une fiche.', { 0: rows.length })}
@@ -52,11 +81,12 @@ export function FichesList() {
         </div>
         {wide ? (
         <div className="table dense"><table>
-          <thead><tr><th className="thumb" />
+          <thead><tr><th style={{ width: 36 }}><input type="checkbox" aria-label={tr("Tout sélectionner")} checked={visibleIds.length > 0 && visibleIds.every((id) => selected.has(id))} onChange={() => setSelected(toggleAll(selected, visibleIds))} /></th><th className="thumb" />
             <SortTh k="name" label="Fiche" sort={sort} onSort={toggle} /><SortTh k="cat" label="Catégorie" sort={sort} onSort={toggle} /><SortTh k="city" label="Ville" sort={sort} onSort={toggle} /><SortTh k="verified" label="Vérifiée le" sort={sort} onSort={toggle} /><th /></tr></thead>
           <tbody>
             {rows.map((p) => (
               <tr key={p.id}>
+                <td><input type="checkbox" aria-label={t('Sélectionner {0}', { 0: p.name })} checked={selected.has(p.id)} onChange={() => setSelected(toggleOne(selected, p.id))} /></td>
                 <td className="thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={48} w={48} round={8} thumb /></td>
                 <td><strong>{p.name}</strong>{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}<div className="small muted zh">{p.cn}</div></td>
                 <td>{tr(catLabel(p.cat))}</td><td>{tr(cityName(p.city))}</td><td>{p.verified || '—'}</td>
@@ -65,25 +95,32 @@ export function FichesList() {
             ))}
             {pending.map((p) => (
               <tr key={p.id} style={{ opacity: 0.75 }}>
-                <td className="thumb" />
+                <td /><td className="thumb" />
                 <td><strong>{p.name}</strong><div className="small muted zh">{p.cn}</div></td>
                 <td>{tr(catLabel(p.cat))}</td><td>{tr(cityName(p.city))}</td>
                 <td colSpan={2}><span className="row" style={{ gap: 6, fontWeight: 600, color: '#8A4310' }}><Icon name="clock" size={16} sw={2.2} />{tr(isAdmin ? 'Suppression à valider' : 'Suppression demandée : en attente de l’administrateur')}</span></td>
               </tr>
             ))}
-            {rows.length + pending.length === 0 && <tr><td colSpan={6} className="center muted">{tr("Aucune fiche ne correspond aux filtres.")}</td></tr>}
+            {rows.length + pending.length === 0 && <tr><td colSpan={7} className="center muted">{tr("Aucune fiche ne correspond aux filtres.")}</td></tr>}
           </tbody>
         </table></div>
         ) : rows.length + pending.length === 0 ? (
           <p className="muted">{tr("Aucune fiche ne correspond aux filtres.")}</p>
         ) : (
           <div className="acards">
+            <label className="row small" style={{ gap: 8 }}>
+              <input type="checkbox" checked={visibleIds.length > 0 && visibleIds.every((id) => selected.has(id))} onChange={() => setSelected(toggleAll(selected, visibleIds))} />
+              {tr("Tout sélectionner")}
+            </label>
             {rows.map((p) => (
-              <AdminCard key={p.id} toneSeed={undefined}
+              <div key={p.id} className="row" style={{ gap: 8, alignItems: 'center' }}>
+              <input type="checkbox" style={{ width: 24, height: 24, flex: 'none' }} aria-label={t('Sélectionner {0}', { 0: p.name })} checked={selected.has(p.id)} onChange={() => setSelected(toggleOne(selected, p.id))} />
+              <div style={{ flex: 1, minWidth: 0 }}><AdminCard toneSeed={undefined}
                 title={<>{p.name}{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}</>}
                 sub={<>{tr(catLabel(p.cat))} · {tr(cityName(p.city))}{p.verified ? ` · ${tr("vérifiée le")} ${p.verified}` : ''}</>}
                 thumb={<span className="acard-thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={46} w={46} round={12} thumb /></span>}
-                onOpen={() => nav(`/equipe/fiches/${p.id}`)} />
+                onOpen={() => nav(`/equipe/fiches/${p.id}`)} /></div>
+              </div>
             ))}
             {pending.map((p) => (
               <AdminCard key={p.id}
@@ -94,6 +131,14 @@ export function FichesList() {
                 onOpen={() => nav(`/equipe/fiches/${p.id}`)} />
             ))}
           </div>
+        )}
+        <BulkReport report={report} names={names} />
+        {isAdmin && (
+          <BulkBar count={selected.size} onClear={() => setSelected(new Set())}>
+            <Select id="bc" label={tr("Catégorie")} value={bulkCat} onChange={setBulkCat} options={[{ v: '', l: 'Choisir…' }, ...s.categories.map((c) => ({ v: c.id, l: c.label }))]} />
+            <Button kind="s" icon="check" full={false} disabled={bulkBusy || !bulkCat} onClick={() => void bulkCategory()}>{tr("Changer la catégorie")}</Button>
+            <Button kind="d" icon="trash" full={false} disabled={bulkBusy} onClick={() => void bulkTrash()}>{tr("Mettre à la corbeille")}</Button>
+          </BulkBar>
         )}
         <DemoNote />
       </div>
