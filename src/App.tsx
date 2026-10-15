@@ -4,6 +4,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useStore } from './store';
 import { homeFor, isFretRole, isTeamRole } from './lib/auth';
 import { lazy, Suspense } from 'react';
+import { ModuleGate } from './ModuleGate';
 
 const Welcome = lazy(() => import('./pages/Access').then(m => ({ default: m.Welcome })));
 const Signup = lazy(() => import('./pages/Access').then(m => ({ default: m.Signup })));
@@ -61,11 +62,12 @@ const FretVoyageurs = lazy(() => import('./pages/admin/FretConsole').then(m => (
 const FretTarifs = lazy(() => import('./pages/admin/FretConsole').then(m => ({ default: m.FretTarifs })));
 const FretProfil = lazy(() => import('./pages/admin/FretConsole').then(m => ({ default: m.FretProfil })));
 const AdminAnnonces = lazy(() => import('./pages/admin/Annonces').then(m => ({ default: m.AdminAnnonces })));
+const ModuleSettingsPage = lazy(() => import('./pages/admin/Modules').then(m => ({ default: m.ModuleSettingsPage })));
 
 /* Compte obligatoire : toute page de contenu redirige vers la connexion.
    L’URL demandée est conservée (?next=) : lien partagé > connexion > fiche. */
 /* Niveau d'accès requis : simple connexion, espace équipe, ou administration. */
-function RequireAuth({ need = 'user' }: { need?: 'user' | 'fret' | 'team' | 'admin' }) {
+function RequireAuth({ need = 'user' }: { need?: 'user' | 'fret' | 'team' | 'admin' | 'primary-admin' }) {
   const { tr } = useI18n();
   const { s } = useStore();
   const loc = useLocation();
@@ -85,6 +87,7 @@ function RequireAuth({ need = 'user' }: { need?: 'user' | 'fret' | 'team' | 'adm
   if (need === 'fret' && !isFretRole(s.user.role)) return <Navigate to="/accueil" replace />;
   if (need === 'team' && !isTeamRole(s.user.role)) return <Navigate to="/accueil" replace />;
   if (need === 'admin' && s.user.role !== 'admin') return <Navigate to="/equipe" replace />;
+  if (need === 'primary-admin' && (s.user.role !== 'admin' || s.user.isPrimaryAdmin !== true)) return <Navigate to="/equipe" replace />;
   return <Outlet />;
 }
 
@@ -123,8 +126,10 @@ export default function App() {
         {/* Réinitialisation : le lien reçu par e-mail ouvre une session de
             récupération — cette page doit rester accessible même connecté. */}
         <Route path="/reinitialiser" element={<ResetPassword />} />
-        <Route path="/suivi" element={<SuiviPublic />} />
-        <Route path="/suivi/:code" element={<SuiviPublic />} />
+        <Route element={<ModuleGate module="shipments" />}>
+          <Route path="/suivi" element={<SuiviPublic />} />
+          <Route path="/suivi/:code" element={<SuiviPublic />} />
+        </Route>
 
         <Route element={<RequireAuth />}>
           <Route path="/accueil" element={<Home />} />
@@ -135,18 +140,28 @@ export default function App() {
           <Route path="/adresses/:id/chauffeur" element={<Driver />} />
           <Route path="/adresses/:id/carte" element={<Card />} />
           <Route path="/adresses/:id/contact" element={<Contact />} />
-          <Route path="/adresses/:id/signaler" element={<Report />} />
+          <Route element={<ModuleGate module="contributions" />}>
+            <Route path="/adresses/:id/signaler" element={<Report />} />
+          </Route>
           <Route path="/favoris" element={<Favorites />} />
-          <Route path="/annonces/:id" element={<AnnonceDetail />} />
-          <Route path="/mes-envois" element={<MesEnvois />} />
-          <Route path="/mes-envois/carte" element={<CarteVoyageur />} />
-          <Route path="/facture/:code" element={<FactureView />} />
-          <Route path="/liste-achats" element={<ShoppingLists />} />
-          <Route path="/liste-achats/:id" element={<ShoppingListPage />} />
-          <Route path="/contributions" element={<Contributions />} />
-          <Route path="/contributions/nouvelle/envoyee" element={<Sent />} />
-          <Route path="/contributions/nouvelle/:step" element={<Wizard />} />
-          <Route path="/contributions/:id" element={<ContributionDetail />} />
+          <Route element={<ModuleGate module="announcements" />}>
+            <Route path="/annonces/:id" element={<AnnonceDetail />} />
+          </Route>
+          <Route element={<ModuleGate module="shipments" />}>
+            <Route path="/mes-envois" element={<MesEnvois />} />
+            <Route path="/mes-envois/carte" element={<CarteVoyageur />} />
+            <Route path="/facture/:code" element={<FactureView />} />
+          </Route>
+          <Route element={<ModuleGate module="shopping" />}>
+            <Route path="/liste-achats" element={<ShoppingLists />} />
+            <Route path="/liste-achats/:id" element={<ShoppingListPage />} />
+          </Route>
+          <Route element={<ModuleGate module="contributions" />}>
+            <Route path="/contributions" element={<Contributions />} />
+            <Route path="/contributions/nouvelle/envoyee" element={<Sent />} />
+            <Route path="/contributions/nouvelle/:step" element={<Wizard />} />
+            <Route path="/contributions/:id" element={<ContributionDetail />} />
+          </Route>
           <Route path="/profil" element={<Profile />} />
           <Route path="/profil/modifier" element={<EditProfile />} />
           <Route path="/profil/telechargements" element={<Downloads />} />
@@ -189,6 +204,9 @@ export default function App() {
               <Route path="/equipe/villes" element={<AdminCities />} />
               <Route path="/equipe/categories" element={<AdminCategories />} />
               <Route path="/equipe/produits" element={<AdminProductTags />} />
+            </Route>
+            <Route element={<RequireAuth need="primary-admin" />}>
+              <Route path="/equipe/modules" element={<ModuleSettingsPage />} />
             </Route>
           </Route>
         </Route>

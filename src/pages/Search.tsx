@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { catIcon, catLabel, citiesWithPublicEntries, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
+import { useModules } from '../lib/modules';
 import { Button, Chip, DemoNote, Field, Icon, Screen, Select, Stars, StoredPhoto, useWide } from '../ui';
 import { logSearch } from '../lib/searchLogs';
 import { sansAccent } from '../lib/texte';
@@ -109,6 +110,7 @@ export function Search() {
   const { tr } = useI18n();
   const { q, sp, setSp } = useQuery();
   const { s } = useStore();
+  const { settings } = useModules();
   const nav = useNavigate();
   const wide = useWide();
   const online = useOnline();
@@ -185,7 +187,7 @@ export function Search() {
             <div style={{ fontWeight: 700, fontSize: 18 }}>{tr("Aucune adresse")}{tr(q.q ? ` pour « ${q.q} »` : '')}</div>
             <div className="muted">{tr("Essayez un autre mot, changez de ville ou retirez un filtre.")}</div>
             <Button kind="s" onClick={() => nav('/recherche/filtres?' + key)}>{tr("Modifier la recherche")}</Button>
-            <Button to="/contributions/nouvelle/1" icon="plus">{tr("Proposer une adresse")}</Button>
+            {settings.contributions && <Button to="/contributions/nouvelle/1" icon="plus">{tr("Proposer une adresse")}</Button>}
           </div>
         ) : q.view === 'carte' && !wide ? (
           <MapView list={list} sel={sel} setSel={setSel} />

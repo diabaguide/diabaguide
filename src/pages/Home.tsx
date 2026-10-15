@@ -1,11 +1,12 @@
 import { useI18n } from '../i18n';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { citiesWithPublicEntries, cityName, publicEntryCount, type City } from '../data';
 import { districtPos, requestPosition, setPos } from '../geo';
 import { useStore } from '../store';
+import { useModules, type ModuleKey } from '../lib/modules';
 import { Button, DemoNote, Icon, Logo, RadioCard, Screen, TopBar } from '../ui';
-import { AnnoncesDiaba } from './Annonces';
+const AnnoncesDiaba = lazy(() => import('./Annonces').then((m) => ({ default: m.AnnoncesDiaba })));
 import { PremiereVisite } from './Tour';
 import { ResultCard } from './Search';
 
@@ -53,17 +54,18 @@ function CitySwitch() {
 
 function QuickActions() {
   const { tr } = useI18n();
-  const actions = [
-    { to: '/recherche', icon: 'search' as const, title: 'Trouver une adresse', sub: 'Explorer les fournisseurs' },
-    { to: '/liste-achats', icon: 'list' as const, title: "Préparer mes achats", sub: 'Créer ou retrouver une liste' },
-    { to: '/mes-envois', icon: 'box' as const, title: 'Suivre un envoi', sub: 'Voir mes expéditions' },
-    { to: '/localisation', icon: 'pin' as const, title: 'Près de moi', sub: 'Chercher dans un quartier' },
+  const { settings } = useModules();
+  const actions: { to: string; icon: Parameters<typeof Icon>[0]['name']; title: string; sub: string; module?: ModuleKey }[] = [
+    { to: '/recherche', icon: 'search', title: 'Trouver une adresse', sub: 'Explorer les fournisseurs' },
+    { to: '/liste-achats', icon: 'list', title: "Préparer mes achats", sub: 'Créer ou retrouver une liste', module: 'shopping' },
+    { to: '/mes-envois', icon: 'box', title: 'Suivre un envoi', sub: 'Voir mes expéditions', module: 'shipments' },
+    { to: '/localisation', icon: 'pin', title: 'Près de moi', sub: 'Chercher dans un quartier' },
   ];
   return (
     <section aria-label={tr("Actions rapides")}>
       <h2 className="display" style={{ fontSize: 19, marginBottom: 12 }}>{tr("Que voulez-vous faire ?")}</h2>
       <div className="quick-actions">
-        {actions.map((a) => (
+        {actions.filter((a) => !a.module || settings[a.module]).map((a) => (
           <Link key={a.to} to={a.to} className="quick-action">
             <span className="quick-action-icon"><Icon name={a.icon} size={23} /></span>
             <span className="quick-action-copy"><strong>{tr(a.title)}</strong><small>{tr(a.sub)}</small></span>
@@ -78,6 +80,7 @@ function QuickActions() {
 export function Home() {
   const { tr, t } = useI18n();
   const { s, d } = useStore();
+  const { settings } = useModules();
   const [evt, setEvt] = useState<InstallEvent | null>(null);
   useEffect(() => {
     // Déjà installée (y compris une installation faite hors de ce bouton, ex. iOS) : ne plus proposer.
@@ -115,9 +118,9 @@ export function Home() {
         <div className="home-intro">
           <p className="eyebrow">{tr("Votre guide du voyageur")}</p>
           <h1 className="display">{tr("Trouvez les bonnes adresses, simplement.")}</h1>
-          <p>{tr("Explorez votre ville, préparez vos achats et gardez vos envois sous la main.")}</p>
+          <p>{tr("Marchés, hôtels et restaurants : trouvez les bonnes adresses et leurs services.")}</p>
         </div>
-        <AnnoncesDiaba />
+        {settings.announcements && <Suspense fallback={null}><AnnoncesDiaba /></Suspense>}
         <QuickActions />
         {!s.installDismissed && (
           <div className="install">
@@ -159,7 +162,7 @@ export function Home() {
           <Button to="/localisation" icon="pin">{tr("Activer la recherche à proximité")}</Button>
           <Link className="link center" style={{ justifyContent: 'center' }} to="/localisation">{tr("Choisir un quartier manuellement")}</Link>
         </section>
-        <Button to="/contributions/nouvelle/1" kind="s" icon="plus">{tr("Proposer une adresse")}</Button>
+        {settings.contributions && <Button to="/contributions/nouvelle/1" kind="s" icon="plus">{tr("Proposer une adresse")}</Button>}
         <DemoNote />
       </main>
     </Screen>

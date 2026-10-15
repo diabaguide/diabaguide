@@ -1,13 +1,14 @@
 import { useI18n } from '../i18n';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catIcon, catLabel, category, cityName, tagLabel, type Provider } from '../data';
 import { useProviderById, useStore } from '../store';
 import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, StoredPhoto, Tag, TopBar, Verified } from '../ui';
 import { saveReport } from '../lib/reports';
+import { useModules } from '../lib/modules';
 import { envoyerPosition, positionValide } from '../lib/position';
 import { downloadCard, renderCard, shareCard } from '../lib/card';
-import { AddToListButton } from './Shopping';
+const AddToListButton = lazy(() => import('./Shopping').then((module) => ({ default: module.AddToListButton })));
 import { ReviewsSection } from './Reviews';
 
 async function copy(text: string) {
@@ -59,6 +60,7 @@ export function Fiche() {
   const { tr } = useI18n();
   const p = useProvider();
   const { s, d, api } = useStore();
+  const { settings } = useModules();
   const nav = useNavigate();
   const [msg, setMsg] = useState('');
   const [photoIdx, setPhotoIdx] = useState(0);
@@ -160,8 +162,8 @@ export function Fiche() {
             onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Cette fiche est maintenant disponible hors connexion, sans qu’aucun fichier ne soit enregistré sur l’appareil.'); }}><Icon name={dl ? 'check' : 'download'} size={20} />{tr("Hors-ligne")}</button>
           <button type="button" className="fiche-ibtn" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
           {positionValide(p) && <button type="button" className="fiche-ibtn" onClick={() => void envoyerLaPosition()}><Icon name="pin" size={20} />{tr("Position")}</button>}
-          <AddToListButton providerId={p.id} providerName={p.name} variant="icon" />
-          <Link to={`/adresses/${p.id}/signaler`} className="fiche-ibtn"><Icon name="edit" size={20} />{tr("Corriger")}</Link>
+          {settings.shopping && <Suspense fallback={null}><AddToListButton providerId={p.id} providerName={p.name} variant="icon" /></Suspense>}
+          {settings.contributions && <Link to={`/adresses/${p.id}/signaler`} className="fiche-ibtn"><Icon name="edit" size={20} />{tr("Corriger")}</Link>}
         </div>
         {msg && <div style={{ order: 5 }}><div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(msg)}</span></div></div>}
         <div style={{ order: 9 }}>
@@ -184,7 +186,7 @@ export function Fiche() {
         </div>
         <div style={{ order: 11 }}>
         <div className="row" style={{ justifyContent: 'center' }}>
-          <Link className="link" style={{ color: 'var(--danger)' }} to={`/adresses/${p.id}/signaler`}><Icon name="flag" size={18} />{tr(" Signaler un problème")}</Link>
+          {settings.contributions && <Link className="link" style={{ color: 'var(--danger)' }} to={`/adresses/${p.id}/signaler`}><Icon name="flag" size={18} />{tr(" Signaler un problème")}</Link>}
         </div>
         </div>
         </div>

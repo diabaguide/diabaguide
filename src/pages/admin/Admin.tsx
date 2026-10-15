@@ -43,6 +43,7 @@ export function AdminLayout() {
   const [gq, setGq] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
   const isAdmin = s.user?.role === 'admin';
+  const isPrimaryAdmin = isAdmin && s.user?.isPrimaryAdmin === true;
   const items: [string, string, Parameters<typeof Icon>[0]['name'], boolean][] = [
     ['/equipe', 'Tableau de bord', 'grid', true], ['/equipe/propositions', 'Propositions', 'inbox', false], ['/equipe/fiches', 'Fiches', 'list', false], ['/equipe/recherches', 'Recherches des voyageurs', 'search', false], ['/equipe/historique', 'Historique des décisions', 'history', false], ['/equipe/expeditions', 'Expéditions', 'ship', false],
     // Espace fret : le même que celui du livreur (tableau de bord, voyageurs).
@@ -60,6 +61,7 @@ export function AdminLayout() {
       ['/equipe/categories', 'Catégories', 'grid', false],
       ['/equipe/produits', 'Produits et services', 'list', false],
     ] as [string, string, Parameters<typeof Icon>[0]['name'], boolean][]) : []),
+    ...(isPrimaryAdmin ? ([['/equipe/modules', 'Gestion des modules', 'sliders', false]] as [string, string, Parameters<typeof Icon>[0]['name'], boolean][]) : []),
   ];
   useEffect(() => { setOpen(false); }, [loc.pathname]);
   useEffect(() => {

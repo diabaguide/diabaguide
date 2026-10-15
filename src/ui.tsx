@@ -22,6 +22,7 @@ import { STATUS_STYLE, type Status } from './data';
 import { useStore, type Lang } from './store';
 import { isTeamRole } from './lib/auth';
 import { isSupabaseConfigured } from './lib/supabase';
+import { useModules, type ModuleKey } from './lib/modules';
 
 export function Icon({ name, size = 22, sw = 1.9, fill = 'none' }: { name: IconName; size?: number; sw?: number; fill?: string }) {
   return (
@@ -345,18 +346,20 @@ export function TopBar({ title, back, right }: { title: string; back?: string | 
 /* Navigation voyageur principale : cinq destinations orientées vers les tâches
    fréquentes. Les fonctions secondaires restent accessibles depuis Profil ou
    les écrans concernés, sans encombrer la barre mobile. */
-const NAV: { to: string; label: string; icon: IconName }[] = [
+const NAV: { to: string; label: string; icon: IconName; module?: ModuleKey }[] = [
   { to: '/accueil', label: 'Accueil', icon: 'home' },
   { to: '/recherche', label: 'Explorer', icon: 'compass' },
-  { to: '/liste-achats', label: 'Mes achats', icon: 'list' },
-  { to: '/mes-envois', label: 'Mes envois', icon: 'box' },
+  { to: '/liste-achats', label: 'Mes achats', icon: 'list', module: 'shopping' },
+  { to: '/mes-envois', label: 'Mes envois', icon: 'box', module: 'shipments' },
   { to: '/profil', label: 'Profil', icon: 'user' },
 ];
 export function BottomNav() {
   const { tr } = useI18n();
+  const { settings } = useModules();
+  const nav = NAV.filter((n) => !n.module || settings[n.module]);
   return (
     <nav className="bottomnav" aria-label={tr("Navigation principale")}>
-      {NAV.map((n) => (
+      {nav.map((n) => (
         <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'active' : '')}>
           <Icon name={n.icon} size={24} /><span>{tr(n.label)}</span>
         </NavLink>
@@ -371,12 +374,14 @@ const LANG_OPTIONS: { v: Lang; l: string }[] = [{ v: 'fr', l: 'Français' }, { v
 export function SiteHeader() {
   const { tr } = useI18n();
   const { s, d } = useStore();
+  const { settings } = useModules();
+  const nav = NAV.filter((n) => !n.module || settings[n.module]);
   return (
     <header className="site-header">
       <div className="site-header-in">
         <Link to="/accueil" className="site-logo" aria-label={tr("Accueil")}><Logo height={34} /></Link>
         <nav className="site-nav" aria-label={tr("Navigation principale")}>
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={n.icon} size={20} /><span>{tr(n.label)}</span></NavLink>
           ))}
         </nav>

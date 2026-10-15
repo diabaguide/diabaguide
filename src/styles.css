@@ -674,3 +674,12 @@ tr.clickable:hover { background: var(--surface-2, rgba(0, 0, 0, .04)); }
 .tour-langs button.on { border-color: #153E9F; background: var(--info-bg, #E7EEFC); }
 .tour-actions { display: flex; align-items: center; gap: 8px; }
 .tour-actions .btn-p { min-width: 150px; }
+
+/* Interrupteurs de gestion des modules (cible tactile et focus clavier visibles). */
+.module-toggle { position: relative; flex: none; width: 58px; height: 36px; padding: 4px; border: 0; border-radius: 999px; background: var(--line); cursor: pointer; transition: background .16s ease; }
+.module-toggle[aria-checked="true"] { background: var(--primary); }
+.module-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.module-toggle:disabled { opacity: .55; cursor: not-allowed; }
+.module-toggle-knob { position: absolute; top: 4px; left: 4px; width: 28px; height: 28px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .2); transition: transform .16s ease; }
+.module-toggle[aria-checked="true"] .module-toggle-knob { transform: translateX(22px); }
+.module-setting-card { min-height: 112px; }
