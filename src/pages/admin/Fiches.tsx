@@ -10,7 +10,7 @@ import { FilePick, MAX_PHOTOS } from '../Contribute';
 import { SortTh, compare, useSort } from './tableSort';
 import { BulkBar, BulkReport } from './BulkBar';
 import { logBulk, runBulk, toggleAll, toggleOne, type BulkResult } from '../../lib/bulk';
-import { setProviderCategory, trashProviders } from '../../lib/providers';
+import { publishProviders, setProviderCategory, trashProviders, unpublishProviders } from '../../lib/providers';
 import { AdminCard, AdminSheet, SheetActions } from './mobile';
 
 /* Gestion des fiches par l'équipe : ajout, modification, demande de suppression.
@@ -40,18 +40,27 @@ export function FichesList() {
   const { sort, toggle } = useSort<'name' | 'cat' | 'city' | 'verified'>({ k: 'name', dir: 1 });
   const match = (p: Provider) => (!city || p.city === city) && (!cat || p.cat === cat)
     && contient(`${p.name} ${p.cn} ${p.tel ?? ''} ${p.wechat ?? ''}`, q);
-  const rows = useMemo(() => s.providers.filter(match).sort((a, b) => {
+  const rows = useMemo(() => [...s.providers, ...s.hiddenProviders].filter(match).sort((a, b) => {
     const v = (p: Provider) => (sort.k === 'cat' ? catLabel(p.cat) : sort.k === 'city' ? cityName(p.city) : sort.k === 'verified' ? (p.verified ?? '') : p.name).toLowerCase();
     return compare(v(a), v(b), sort.dir);
-  }), [s.providers, s.categories, s.cities, city, cat, q, sort]); // eslint-disable-line react-hooks/exhaustive-deps
+  }), [s.providers, s.hiddenProviders, s.categories, s.cities, city, cat, q, sort]); // eslint-disable-line react-hooks/exhaustive-deps
   const filtered = !!(city || cat || q);
   const pending = s.pendingDeletion.filter(match);
   const visibleIds = rows.map((p) => p.id);
-  const names = Object.fromEntries(s.providers.map((p) => [p.id, p.name]));
+  const names = Object.fromEntries([...s.providers, ...s.hiddenProviders].map((p) => [p.id, p.name]));
   const finish = async (action: string, result: BulkResult[]) => {
     setBulkBusy(false); setReport(result); setSelected(new Set());
     await logBulk(action, 'fiche', result);
     await api.reloadProviders();
+  };
+  const bulkPublish = async (publish: boolean) => {
+    const ids = [...selected];
+    if (!window.confirm(t(publish ? 'Publier {0} fiche(s) ? Elles redeviennent visibles par les voyageurs.' : 'Dépublier {0} fiche(s) ? Elles seront masquées aux voyageurs.', { 0: ids.length }))) return;
+    setBulkBusy(true);
+    const hidden = new Set(s.hiddenProviders.map((p) => p.id));
+    await finish(publish ? 'fiches.publish' : 'fiches.unpublish', await runBulk(ids, publish ? publishProviders : unpublishProviders, {
+      skip: (id) => (publish === hidden.has(id) ? null : publish ? 'Déjà publiée.' : 'Déjà dépubliée.'),
+    }));
   };
   const bulkTrash = async () => {
     const ids = [...selected];
@@ -88,7 +97,7 @@ export function FichesList() {
               <tr key={p.id}>
                 <td><input type="checkbox" aria-label={t('Sélectionner {0}', { 0: p.name })} checked={selected.has(p.id)} onChange={() => setSelected(toggleOne(selected, p.id))} /></td>
                 <td className="thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={48} w={48} round={8} thumb /></td>
-                <td><strong>{p.name}</strong>{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}<div className="small muted zh">{p.cn}</div></td>
+                <td><strong>{p.name}</strong>{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}{p.unpublishedAt && <span className="tag tag-warn" style={{ marginLeft: 8 }}>{tr("Dépubliée")}</span>}<div className="small muted zh">{p.cn}</div></td>
                 <td>{tr(catLabel(p.cat))}</td><td>{tr(cityName(p.city))}</td><td>{p.verified || '—'}</td>
                 <td><Link className="link" to={`/equipe/fiches/${p.id}`}>{tr("Modifier")}<Icon name="chevR" size={18} sw={2.4} /></Link></td>
               </tr>
@@ -117,6 +126,7 @@ export function FichesList() {
               <input type="checkbox" style={{ width: 24, height: 24, flex: 'none' }} aria-label={t('Sélectionner {0}', { 0: p.name })} checked={selected.has(p.id)} onChange={() => setSelected(toggleOne(selected, p.id))} />
               <div style={{ flex: 1, minWidth: 0 }}><AdminCard toneSeed={undefined}
                 title={<>{p.name}{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}</>}
+                badge={p.unpublishedAt ? <span className="tag tag-warn">{tr("Dépubliée")}</span> : undefined}
                 sub={<>{tr(catLabel(p.cat))} · {tr(cityName(p.city))}{p.verified ? ` · ${tr("vérifiée le")} ${p.verified}` : ''}</>}
                 thumb={<span className="acard-thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={46} w={46} round={12} thumb /></span>}
                 onOpen={() => nav(`/equipe/fiches/${p.id}`)} /></div>
@@ -136,6 +146,8 @@ export function FichesList() {
         {isAdmin && (
           <BulkBar count={selected.size} onClear={() => setSelected(new Set())}>
             <Select id="bc" label={tr("Catégorie")} value={bulkCat} onChange={setBulkCat} options={[{ v: '', l: 'Choisir…' }, ...s.categories.map((c) => ({ v: c.id, l: c.label }))]} />
+            <Button kind="s" icon="check" full={false} disabled={bulkBusy} onClick={() => void bulkPublish(true)}>{tr("Publier")}</Button>
+            <Button kind="s" icon="x" full={false} disabled={bulkBusy} onClick={() => void bulkPublish(false)}>{tr("Dépublier")}</Button>
             <Button kind="s" icon="check" full={false} disabled={bulkBusy || !bulkCat} onClick={() => void bulkCategory()}>{tr("Changer la catégorie")}</Button>
             <Button kind="d" icon="trash" full={false} disabled={bulkBusy} onClick={() => void bulkTrash()}>{tr("Mettre à la corbeille")}</Button>
           </BulkBar>
@@ -155,7 +167,7 @@ export function FicheEdit() {
   const nav = useNavigate();
   const isNew = id === 'nouvelle';
   const isAdmin = s.user?.role === 'admin';
-  const existing = s.providers.find((x) => x.id === id);
+  const existing = [...s.providers, ...s.hiddenProviders].find((x) => x.id === id);
   // Ville proposée pour une nouvelle fiche : celle de l'utilisateur, sinon la
   // première active (les villes sont rangées par ordre alphabétique).
   const firstCity = s.cities.find((c) => c.active && c.id === s.city) ?? s.cities.find((c) => c.active) ?? s.cities[0];

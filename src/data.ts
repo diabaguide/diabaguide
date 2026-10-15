@@ -101,6 +101,7 @@ export interface Provider {
   deletionRequestedAt?: string;  // demande de suppression en attente de l’administrateur
   deletionRequestedBy?: string;
   deletionReason?: string;
+  unpublishedAt?: string;   // dépubliée : masquée aux voyageurs (supabase/610_fiche_publish.sql)
   deletedAt?: string;       // mise à la corbeille (supabase/600_fiche_trash.sql)
 }
 
