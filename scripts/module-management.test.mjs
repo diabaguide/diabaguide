@@ -54,9 +54,9 @@ test('les modules désactivés disparaissent des accès et les routes directes s
   assert.match(fiche, /lazy\(\(\) => import\('\.\/Shopping'\)/);
   assert.match(fiche, /settings\.contributions && <Link/);
   assert.doesNotMatch(fret, /searchParams\.get\('liste'\)/);
-  assert.match(fret, /import\('\.\.\/lib\/shopping'\)/);
+  assert.doesNotMatch(fret, /import\('\.\.\/lib\/shopping'\)/);
   assert.match(search, /settings\.contributions && <Button/);
-  assert.match(shoppingPage, /settings\.shipments && \(/);
+  assert.doesNotMatch(shoppingPage, /settings\.shipments/);
   assert.match(app, /ModuleGate module="contributions"[\s\S]*?path="\/adresses\/:id\/signaler"/);
   assert.match(adminPage, /role="switch"/);
 });
