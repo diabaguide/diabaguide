@@ -55,3 +55,16 @@ export function summarizeBulk(report: readonly BulkResult[]): string {
   ].filter(Boolean);
   return parts.length ? `${parts.join(', ')}.` : 'Aucun élément traité.';
 }
+
+/** Trace l'opération dans le journal d'audit (supabase/570). Un échec du journal ne bloque jamais l'action. */
+export async function logBulk(action: string, targetType: string, report: readonly BulkResult[]): Promise<void> {
+  const { supabase } = await import('./supabase');
+  const ids = report.filter((r) => r.status === 'done').map((r) => r.id);
+  if (!supabase || ids.length === 0) return;
+  try {
+    await supabase.rpc('admin_log_action', {
+      p_action: action, p_target_type: targetType, p_target_ids: ids,
+      p_detail: { skipped: report.filter((r) => r.status === 'skipped').length, failed: report.filter((r) => r.status === 'failed').length },
+    });
+  } catch { /* journal indisponible : sans conséquence pour l'action */ }
+}
