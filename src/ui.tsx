@@ -105,8 +105,16 @@ export function StoredPhoto({ path, label, h, w, round, bucket, eager, thumb }: 
     if (near && path) {
       void (async () => {
         if (wantThumb) {
-          const t = await photoThumbUrl(path, bucket);
-          if (live && t) { setUrl(t); setIsThumb(true); return; }
+          // Signe la vignette et l'original dans le même lot. Si la vignette
+          // manque, l'original est donc prêt sans second aller-retour réseau.
+          const [t, original] = await Promise.all([
+            photoThumbUrl(path, bucket).catch(() => null),
+            photoUrl(path, undefined, bucket).catch(() => null),
+          ]);
+          if (!live) return;
+          if (t) { setUrl(t); setIsThumb(true); return; }
+          if (original) setUrl(original);
+          return;
         }
         const u = await photoUrl(path, undefined, bucket);
         if (live && u) setUrl(u);

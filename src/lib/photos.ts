@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { optimizeImage, toWebp } from './image';
 import { THUMB_MAX_SIDE, isThumbPath, thumbPath } from './photoPaths';
+import { createPhotoUrlBatcher, mapPhotoUrlBatchResults, type PhotoUrlBatchResult } from './photoUrlBatcher';
 
 export type PhotoBucket = 'proposal-photos' | 'fiche-photos' | 'review-photos' | 'fret-photos' | 'avatars' | 'annonces-photos';
 
@@ -79,8 +80,23 @@ export const ttlFor = (bucket: PhotoBucket) => (LONG_TTL.includes(bucket) ? 6048
 type UrlEntry = { url: string; exp: number };
 const MEM = new Map<string, UrlEntry>();
 /* Demandes de lien en cours : deux composants qui veulent la même photo au même
-   instant (carte de la liste et carte de la carte) partagent une seule demande. */
-const PENDING = new Map<string, Promise<string | null>>();
+   instant partagent une demande, et les chemins voisins sont signés ensemble. */
+const PENDING = new Map<string, Promise<PhotoUrlBatchResult>>();
+type UrlBatchRequest = (path: string) => Promise<PhotoUrlBatchResult>;
+const URL_BATCHERS = new Map<string, UrlBatchRequest>();
+function urlBatcher(bucket: PhotoBucket, ttl: number): UrlBatchRequest {
+  const key = `${bucket}|${ttl}`;
+  const cached = URL_BATCHERS.get(key);
+  if (cached) return cached;
+  const request = createPhotoUrlBatcher(async (paths) => {
+    if (!supabase) return new Map<string, PhotoUrlBatchResult>();
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrls(paths, ttl);
+    if (error || !data) return new Map<string, PhotoUrlBatchResult>();
+    return mapPhotoUrlBatchResults(paths, data);
+  });
+  URL_BATCHERS.set(key, request);
+  return request;
+}
 const LS_KEY = 'diaba-photo-urls-v1';
 const MAX_ENTRIES = 400;
 let lsLoaded = false;
@@ -114,25 +130,28 @@ function saveCacheSoon(): void {
 }
 
 /** URL pour afficher une photo privée, mise en cache (voir ttlFor). */
-export async function photoUrl(path: string, seconds?: number, bucket: PhotoBucket = 'proposal-photos'): Promise<string | null> {
-  if (!supabase) return null;
+async function photoUrlResult(path: string, seconds?: number, bucket: PhotoBucket = 'proposal-photos'): Promise<PhotoUrlBatchResult> {
+  if (!supabase) return { url: null, missing: false };
   loadCache();
   const ttl = seconds ?? ttlFor(bucket);
   const key = `${bucket}|${path}`;
   const hit = MEM.get(key);
   // Réutiliser l'URL en cache tant qu'il lui reste plus d'une minute de validité.
-  if (hit && hit.exp > Date.now() + 60_000) return hit.url;
+  if (hit && hit.exp > Date.now() + 60_000) return { url: hit.url, missing: false };
   const enCours = PENDING.get(key);
   if (enCours) return enCours;
-  const demande = (async () => {
-    const { data, error } = await supabase!.storage.from(bucket).createSignedUrl(path, ttl);
-    if (error || !data) return hit?.url ?? null;
-    MEM.set(key, { url: data.signedUrl, exp: Date.now() + ttl * 1000 - 120_000 });
+  const demande = urlBatcher(bucket, ttl)(path).then((result) => {
+    if (!result.url) return { url: hit?.url ?? null, missing: result.missing };
+    MEM.set(key, { url: result.url, exp: Date.now() + ttl * 1000 - 120_000 });
     if (persisted(key)) saveCacheSoon();
-    return data.signedUrl;
-  })();
+    return { url: result.url, missing: false };
+  }).finally(() => PENDING.delete(key));
   PENDING.set(key, demande);
-  try { return await demande; } finally { PENDING.delete(key); }
+  return demande;
+}
+
+export async function photoUrl(path: string, seconds?: number, bucket: PhotoBucket = 'proposal-photos'): Promise<string | null> {
+  return (await photoUrlResult(path, seconds, bucket)).url;
 }
 
 /* ---------- Vignettes (listes) ---------- */
@@ -180,7 +199,7 @@ export async function photoThumbUrl(path: string, bucket: PhotoBucket = 'fiche-p
   loadMiss();
   const miss = MISS.get(`${bucket}|${path}`);
   if (miss && miss > Date.now()) return null;
-  const url = await photoUrl(thumbPath(path), undefined, bucket);
-  if (!url) markThumbMissing(path, bucket);
-  return url;
+  const result = await photoUrlResult(thumbPath(path), undefined, bucket);
+  if (result.missing) markThumbMissing(path, bucket);
+  return result.url;
 }
