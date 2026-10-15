@@ -106,6 +106,7 @@ test('les libellés simplifiés existent dans toutes les langues', () => {
     'Code secret actuel ou ancien mot de passe',
     'Changer le code secret',
     'Le code secret actuel est incorrect.',
+    'Déconnecter tous mes appareils',
     'Vérifiez votre adresse e-mail et votre ancien mot de passe.',
   ];
   for (const key of keys) {

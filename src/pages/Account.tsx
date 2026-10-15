@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { catLabel, type Provider } from '../data';
 import { useOnline, useStore, type LocPref, type Theme } from '../store';
 import { useModules } from '../lib/modules';
-import { changeMyPassword, isTeamRole, signOut, updateMyProfile } from '../lib/auth';
+import { changeMyPassword, isTeamRole, signOut, signOutEverywhere, updateMyProfile } from '../lib/auth';
 import { Avatar, AvatarPicker, Button, DemoNote, Field, Icon, RadioCard, Screen, StoredPhoto, Tag, TopBar } from '../ui';
 import { LangSwitch } from './Access';
 import { PHONE } from '../lib/phone';
@@ -118,6 +118,7 @@ export function Profile() {
         </section>
         <Button kind="t" icon="info" onClick={() => { d({ t: 'tour', v: false }); nav('/accueil'); }}>{tr("Revoir la présentation")}</Button>
         <Button kind="s" icon="logout" onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}>{tr("Se déconnecter")}</Button>
+        <Button kind="t" icon="logout" onClick={async () => { await signOutEverywhere(); d({ t: 'logout' }); nav('/'); }}>{tr("Déconnecter tous mes appareils")}</Button>
         <div className="small muted center">{tr("Diaba Guide · version de démonstration")}</div>
       </div>
     </Screen>

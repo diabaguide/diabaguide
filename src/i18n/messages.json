@@ -4467,6 +4467,7 @@
   "Enregistrer le code secret": {"en": "Save the secret code", "zh": "保存安全码", "ar": "حفظ الرمز السري"},
   "Code secret actuel ou ancien mot de passe": {"en": "Current secret code or old password", "zh": "当前安全码或旧密码", "ar": "الرمز السري الحالي أو كلمة المرور القديمة"},
   "Changer le code secret": {"en": "Change the secret code", "zh": "更改安全码", "ar": "تغيير الرمز السري"},
+  "Déconnecter tous mes appareils": {"en": "Sign out of all my devices", "zh": "退出所有设备", "ar": "تسجيل الخروج من جميع أجهزتي"},
   "Le code secret actuel est incorrect.": {"en": "The current secret code is incorrect.", "zh": "当前安全码不正确。", "ar": "الرمز السري الحالي غير صحيح."},
   "Saisissez votre code secret actuel ou votre ancien mot de passe.": {"en": "Enter your current secret code or old password.", "zh": "请输入当前安全码或旧密码。", "ar": "أدخل رمزك السري الحالي أو كلمة المرور القديمة."},
   "Vérifiez votre numéro de téléphone et votre code secret.": {"en": "Check your phone number and secret code.", "zh": "请检查电话号码和安全码。", "ar": "تحقق من رقم هاتفك ورمزك السري."},
