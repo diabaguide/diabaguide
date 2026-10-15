@@ -226,19 +226,25 @@ export function Button({ kind = 'p', icon, to, href, full = true, children, onCl
 export function Field(p: {
   id: string; label: string; value: string; onChange?: (v: string) => void; type?: string; req?: boolean;
   hint?: string; error?: string | null; placeholder?: string; disabled?: boolean;
+  inputMode?: 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search';
+  maxLength?: number; autoComplete?: string; secret?: boolean;
 }) {
   const { tr } = useI18n();
   const [visible, setVisible] = useState(false);
+  const revealLabel = p.secret
+    ? tr(visible ? 'Masquer le code secret' : 'Afficher le code secret')
+    : tr(visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
   return (
     <div className="field">
       <label htmlFor={p.id}>{tr(p.label)}{p.req && <span className="req" aria-hidden="true"> *</span>}</label>
       <input id={p.id} type={p.type === 'password' ? (visible ? 'text' : 'password') : (p.type ?? 'text')} value={p.value} placeholder={tr(p.placeholder)} disabled={p.disabled} aria-invalid={!!p.error}
+        inputMode={p.inputMode} maxLength={p.maxLength} autoComplete={p.autoComplete}
         aria-describedby={p.error ? p.id + '-err' : undefined} className={p.error ? 'err' : ''} onChange={(e) => p.onChange?.(e.target.value)} />
       {p.type === 'password' && (
         <button type="button" className="linklike"
           aria-controls={p.id}
-          aria-label={tr(visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe')}
-          title={tr(visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe')}
+          aria-label={revealLabel}
+          title={revealLabel}
           style={{ width: 44, height: 44, display: 'grid', placeItems: 'center', padding: 0 }}
           onClick={() => setVisible((v) => !v)}>
           <svg width="22" height="22" viewBox="0 0 24 24"

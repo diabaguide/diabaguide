@@ -5,7 +5,8 @@ import { Button, Field, Icon, Logo, Photo, Screen, TopBar } from '../ui';
 import { useStore, type Lang } from '../store';
 import { supabase } from '../lib/supabase';
 import { homeFor, sendPasswordReset, signIn, signOut, signUp, updatePassword, ACCOUNT_NOTICE_KEY } from '../lib/auth';
-import { DIAL_CODES, EMAIL, PHONE } from '../lib/phone';
+import { DIAL_CODES, EMAIL, PHONE, isValidPhone, joinPhone } from '../lib/phone';
+import { isValidSecretCode, isWeakSecretCode, normalizeSecretCode } from '../lib/secretCode';
 
 export const LANGS: { v: Lang; l: string; flag: string }[] = [{ v: 'fr', l: 'Français', flag: '🇫🇷' }, { v: 'en', l: 'English', flag: '🇬🇧' }, { v: 'zh', l: '中文', flag: '🇨🇳' }, { v: 'ar', l: 'العربية', flag: '🇸🇦' }];
 export function LangSwitch({ dark = false }: { dark?: boolean }) {
@@ -54,19 +55,18 @@ export function Signup() {
   const { tr, t } = useI18n();
   const { d } = useStore();
   const nav = useNavigate();
-  const [f, setF] = useState({ name: '', phone: '', email: '', pw: '', terms: false });
+  const [f, setF] = useState({ name: '', phone: '', pw: '', pw2: '', terms: false });
   const [dial, setDial] = useState('+221');
-  // Numéro complet avec indicatif, sauf si l'utilisateur a déjà saisi un « + ».
-  const fullPhone = f.phone.trim().startsWith('+') ? f.phone.trim() : `${dial} ${f.phone.trim().replace(/^0+/, '')}`;
+  const fullPhone = joinPhone(dial, f.phone);
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [apiErr, setApiErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const errs = {
     name: f.name.trim() ? null : 'Saisissez votre nom.',
-    phone: f.phone.trim() && PHONE.test(fullPhone) ? null : 'Saisissez un numéro de téléphone valide.',
-    email: !f.email.trim() || EMAIL.test(f.email.trim()) ? null : 'Saisissez une adresse e-mail complète, par exemple nom@exemple.com.',
-    pw: f.pw.length >= 8 ? null : 'Le mot de passe doit contenir au moins 8 caractères.',
+    phone: f.phone.trim() && isValidPhone(fullPhone) ? null : 'Saisissez un numéro de téléphone valide.',
+    pw: isValidSecretCode(f.pw) ? null : isWeakSecretCode(f.pw) ? 'Choisissez un code moins facile à deviner.' : 'Le code secret doit contenir entre 3 et 6 chiffres.',
+    pw2: f.pw === f.pw2 ? null : 'Les deux codes secrets ne correspondent pas.',
     terms: f.terms ? null : 'Acceptez les conditions pour créer votre compte.',
   };
   const count = Object.values(errs).filter(Boolean).length;
@@ -77,12 +77,12 @@ export function Signup() {
     setInfo(null);
     if (count) return;
     if (!supabase) {
-      d({ t: 'login', user: { name: f.name, phone: fullPhone, email: f.email || fullPhone, role: 'traveler', status: 'active' } });
+      d({ t: 'login', user: { name: f.name, phone: fullPhone, email: fullPhone, role: 'traveler', status: 'active' } });
       nav('/inscription/confirmation');
       return;
     }
     setBusy(true);
-    const res = await signUp(f.name, fullPhone, f.email, f.pw);
+    const res = await signUp(f.name, fullPhone, '', f.pw);
     setBusy(false);
     if (res.error) { setApiErr(res.error); return; }
     if (res.needsConfirm) {
@@ -115,8 +115,10 @@ export function Signup() {
           {!show('phone') && <div className="hint">{tr("C’est votre identifiant : vous vous connecterez avec ce numéro. L’équipe Diaba peut aussi vous joindre dessus.")}</div>}
           {show('phone') && <div id="tel-err" className="error"><Icon name="alert" size={16} sw={2} /><span>{tr(errs.phone)}</span></div>}
         </div>
-        <Field id="mdp" label={tr("Mot de passe")} type="password" value={f.pw} onChange={(v) => setF({ ...f, pw: v })} req hint={tr("Au moins 8 caractères.")} error={tr(show('pw'))} />
-        <Field id="mail" label={tr("Adresse e-mail (facultatif)")} type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} hint={tr("Utile seulement pour récupérer votre mot de passe si vous l’oubliez.")} error={tr(show('email'))} />
+        <Field id="mdp" label={tr("Code secret")} type="password" secret inputMode="numeric" maxLength={6} autoComplete="new-password"
+          value={f.pw} onChange={(v) => setF({ ...f, pw: normalizeSecretCode(v) })} req hint={tr("De 3 à 6 chiffres.")} error={tr(show('pw'))} />
+        <Field id="mdp2" label={tr("Confirmer le code secret")} type="password" secret inputMode="numeric" maxLength={6} autoComplete="new-password"
+          value={f.pw2} onChange={(v) => setF({ ...f, pw2: normalizeSecretCode(v) })} req error={tr(show('pw2'))} />
         <div>
           <label className="check">
             <input type="checkbox" checked={f.terms} onChange={(e) => setF({ ...f, terms: e.target.checked })} />
@@ -162,8 +164,11 @@ export function Login() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const next = safeNext(params.get('next'));
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [dial, setDial] = useState('+221');
   const [pw, setPw] = useState('');
+  const [legacy, setLegacy] = useState(false);
+  const [legacyEmail, setLegacyEmail] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Motif d'une déconnexion forcée (compte désactivé) : affiché une seule fois.
@@ -177,16 +182,21 @@ export function Login() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setErr(null);
-    if (!PHONE.test(email.trim()) || !pw) { setErr('Vérifiez votre numéro de téléphone et votre mot de passe.'); return; }
+    const fullPhone = joinPhone(dial, phone);
+    const credential = legacy ? pw : normalizeSecretCode(pw);
+    if ((legacy && (!EMAIL.test(legacyEmail.trim()) || !credential)) || (!legacy && (!isValidPhone(fullPhone) || !isValidSecretCode(credential)))) {
+      setErr(legacy ? 'Vérifiez votre adresse e-mail et votre ancien mot de passe.' : 'Vérifiez votre numéro de téléphone et votre code secret.');
+      return;
+    }
     if (!supabase) {
       // Repli démo : tout compte est accepté ; « equipe » ouvre l’espace équipe.
-      const team = email.toLowerCase().includes('equipe');
-      d({ t: 'login', user: { name: team ? 'Agent Diaba' : email.split('@')[0], phone: '', email, role: team ? 'team' : 'traveler', status: 'active' } });
+      const team = phone.toLowerCase().includes('equipe');
+      d({ t: 'login', user: { name: team ? 'Agent Diaba' : fullPhone, phone: fullPhone, email: '', role: team ? 'team' : 'traveler', status: 'active' } });
       nav(next ?? (team ? '/equipe' : '/accueil'), { replace: true });
       return;
     }
     setBusy(true);
-    const res = await signIn(email, pw);
+    const res = await signIn(legacy ? legacyEmail : fullPhone, credential);
     setBusy(false);
     if (res.error || !res.user) { setErr(res.error ?? 'Connexion impossible.'); return; }
     // Le store se synchronise via onAuthStateChange ; on navigue selon le rôle.
@@ -203,13 +213,30 @@ export function Login() {
           <div role="alert" className="notice warn"><Icon name="alert" size={20} sw={2} /><div><strong>{tr("Compte désactivé")}</strong><div className="small">{tr("Votre compte a été désactivé par l’équipe Diaba Guide. Écrivez-nous si vous pensez qu’il s’agit d’une erreur.")}</div></div></div>
         )}
         {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-        <Field id="tel" label={tr("Numéro de téléphone")} type="tel" value={email} onChange={setEmail} placeholder="+221 77 123 45 67" req />
-        <Field id="mdp" label={tr("Mot de passe")} type="password" value={pw} onChange={setPw} />
-        <div style={{ textAlign: 'right' }}><Link className="link" to="/mot-de-passe">{tr("Mot de passe oublié ?")}</Link></div>
+        {!legacy ? <div className="field">
+          <label htmlFor="login-tel">{tr("Numéro de téléphone")}<span className="req" aria-hidden="true"> *</span></label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <select id="login-dial" aria-label={tr("Indicatif du pays")} value={dial} onChange={(e) => setDial(e.target.value)} style={{ flex: '0 0 auto', width: 'auto', maxWidth: '45%' }}>
+              {DIAL_CODES.map((x) => <option key={x.c + x.n} value={x.c}>{x.flag} {x.c} {tr(x.n)}</option>)}
+            </select>
+            <input id="login-tel" type="tel" inputMode="tel" autoComplete="tel-national" value={phone} style={{ flex: 1, minWidth: 0 }}
+              placeholder={tr("77 123 45 67")} onChange={(e) => setPhone(e.target.value)} required />
+          </div>
+        </div> : <Field id="legacy-email" label={tr("Adresse e-mail")} type="email" autoComplete="email"
+          value={legacyEmail} onChange={setLegacyEmail} req />}
+        <Field id="mdp" label={tr(legacy ? "Ancien mot de passe" : "Code secret")} type="password" secret={!legacy}
+          inputMode={legacy ? undefined : "numeric"} maxLength={legacy ? undefined : 6} autoComplete="current-password"
+          value={pw} onChange={(v) => setPw(legacy ? v : normalizeSecretCode(v))} req hint={legacy ? undefined : tr("De 3 à 6 chiffres.")} />
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <button type="button" className="linklike" onClick={() => { setLegacy((v) => !v); setPw(''); setLegacyEmail(''); }}>
+            {tr(legacy ? 'Utiliser mon code secret' : 'J’utilise encore un ancien mot de passe')}
+          </button>
+          <Link className="link" to="/mot-de-passe">{tr("Code secret oublié ?")}</Link>
+        </div>
         <Button type="submit" disabled={busy}>{tr(busy ? 'Connexion…' : (next?.startsWith('/adresses/') ? 'Se connecter et ouvrir la fiche' : 'Se connecter'))}</Button>
         <div className="notice"><Icon name="lock" size={20} /><div>
           <strong>{tr("Vous resterez connecté sur cet appareil")}</strong>
-          <div className="small">{tr("Pas besoin de ressaisir votre mot de passe la prochaine fois. Pour changer d’appareil ou fermer la session, utilisez « Se déconnecter » dans votre profil.")}</div>
+          <div className="small">{tr("Pas besoin de ressaisir votre code secret la prochaine fois. Pour changer d’appareil ou fermer la session, utilisez « Se déconnecter » dans votre profil.")}</div>
         </div></div>
         <p className="center">{tr("Pas encore de compte ? ")}<Link className="link" to="/inscription">{tr("Créer mon compte")}</Link></p>
         {!supabase && <p className="small muted center">{tr("Démo : toute adresse valide est acceptée ; une adresse contenant « equipe » ouvre l’espace équipe.")}</p>}
@@ -238,11 +265,11 @@ export function Forgot() {
   };
   return (
     <Screen nav={false}>
-      <TopBar title={tr("Mot de passe oublié")} back="/connexion" />
+      <TopBar title={tr("Code secret oublié")} back="/connexion" />
       <div className="main" style={{ gap: 18 }}>
         {!sent ? (
           <>
-            <p className="muted">{tr("Saisissez l’adresse e-mail de votre compte — ou votre numéro de téléphone si vous vous êtes inscrit avec lui. Nous vous enverrons un lien pour choisir un nouveau mot de passe.")}</p>
+            <p className="muted">{tr("Saisissez l’adresse e-mail de votre compte — ou votre numéro de téléphone. Si votre compte n’a pas d’e-mail, l’application vous indiquera comment contacter l’équipe Diaba Guide.")}</p>
             <Field id="mail" label={tr("E-mail ou numéro de téléphone")} value={email} onChange={setEmail} placeholder={tr("nom@exemple.com ou 77 123 45 67")} />
             <Button icon="send" onClick={send} disabled={busy || !valide}>{tr(busy ? 'Envoi…' : 'Envoyer le lien')}</Button>
           </>
@@ -270,7 +297,7 @@ export function Forgot() {
 }
 
 /* Page atterrissage du lien de réinitialisation : Supabase ouvre une session
-   de récupération (token dans l'URL) puis on demande le nouveau mot de passe. */
+   de récupération (token dans l'URL) puis on demande le nouveau code secret. */
 export function ResetPassword() {
   const { tr } = useI18n();
   const [pw, setPw] = useState('');
@@ -294,8 +321,8 @@ export function ResetPassword() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setErr(null);
-    if (pw.length < 8) { setErr('Le mot de passe doit contenir au moins 8 caractères.'); return; }
-    if (pw !== pw2) { setErr('Les deux mots de passe ne correspondent pas.'); return; }
+    if (!isValidSecretCode(pw)) { setErr(isWeakSecretCode(pw) ? 'Choisissez un code moins facile à deviner.' : 'Le code secret doit contenir entre 3 et 6 chiffres.'); return; }
+    if (pw !== pw2) { setErr('Les deux codes secrets ne correspondent pas.'); return; }
     setBusy(true);
     const res = await updatePassword(pw);
     setBusy(false);
@@ -306,14 +333,14 @@ export function ResetPassword() {
 
   return (
     <Screen nav={false}>
-      <TopBar title={tr("Nouveau mot de passe")} back="/connexion" />
+      <TopBar title={tr("Nouveau code secret")} back="/connexion" />
       <div className="main" style={{ gap: 18 }}>
         {done ? (
           <>
             <div role="status" className="card center-screen" style={{ borderColor: 'var(--ok)', padding: '28px 20px', flex: 'none' }}>
               <span className="bigcheck" style={{ width: 64, height: 64, border: 0 }}><Icon name="check" size={34} sw={2.6} /></span>
-              <div className="display" style={{ fontSize: 24 }}>{tr("Mot de passe modifié")}</div>
-              <div className="muted">{tr("Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.")}</div>
+              <div className="display" style={{ fontSize: 24 }}>{tr("Code secret modifié")}</div>
+              <div className="muted">{tr("Vous pouvez maintenant vous connecter avec votre nouveau code secret.")}</div>
             </div>
             <Button to="/connexion">{tr("Se connecter")}</Button>
           </>
@@ -326,11 +353,13 @@ export function ResetPassword() {
           <p className="muted" role="status" aria-live="polite">{tr("Vérification du lien…")}</p>
         ) : (
           <form onSubmit={submit} noValidate className="stack" style={{ gap: 18 }}>
-            <p className="muted">{tr("Choisissez un nouveau mot de passe pour votre compte.")}</p>
+            <p className="muted">{tr("Choisissez un nouveau code secret de 3 à 6 chiffres.")}</p>
             {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-            <Field id="np" label={tr("Nouveau mot de passe")} type="password" value={pw} onChange={setPw} req hint={tr("Au moins 8 caractères.")} />
-            <Field id="np2" label={tr("Confirmer le mot de passe")} type="password" value={pw2} onChange={setPw2} req />
-            <Button type="submit" disabled={busy}>{tr(busy ? 'Enregistrement…' : 'Enregistrer le mot de passe')}</Button>
+            <Field id="np" label={tr("Nouveau code secret")} type="password" secret inputMode="numeric" maxLength={6} autoComplete="new-password"
+              value={pw} onChange={(v) => setPw(normalizeSecretCode(v))} req hint={tr("De 3 à 6 chiffres.")} />
+            <Field id="np2" label={tr("Confirmer le code secret")} type="password" secret inputMode="numeric" maxLength={6} autoComplete="new-password"
+              value={pw2} onChange={(v) => setPw2(normalizeSecretCode(v))} req />
+            <Button type="submit" disabled={busy}>{tr(busy ? 'Enregistrement…' : 'Enregistrer le code secret')}</Button>
           </form>
         )}
       </div>

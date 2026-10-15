@@ -12,18 +12,20 @@
     "verify:bundle": "node scripts/verify-bundle.mjs",
     "verify:traveler-ui": "node scripts/verify-traveler-ui.mjs",
     "verify:modules": "node --test scripts/module-management.test.mjs",
+    "verify:auth": "node --experimental-strip-types --test scripts/simple-auth.test.mjs scripts/auth-pin-api.test.mjs",
     "verify:shipsgo": "node --test scripts/shipsgo-core.test.mjs scripts/shipsgo-api.test.mjs scripts/shipsgo-integrity.test.mjs scripts/verify-shipsgo-ui.mjs",
     "verify:import": "node --test scripts/expedition-import.test.mjs",
     "verify:photos": "node --test scripts/photo-paths.test.mjs scripts/photo-url-batcher.test.mjs",
     "verify:carte": "node --test scripts/barcode.test.mjs scripts/carte-data.test.mjs scripts/position.test.mjs scripts/amap.test.mjs",
     "verify:ux": "node --test scripts/erreurs.test.mjs",
-    "verify": "npm run verify:traveler-ui && npm run verify:modules && npm run verify:shipsgo && npm run verify:import && npm run verify:photos && npm run verify:carte && npm run verify:ux",
+    "verify": "npm run verify:traveler-ui && npm run verify:modules && npm run verify:auth && npm run verify:shipsgo && npm run verify:import && npm run verify:photos && npm run verify:carte && npm run verify:ux",
     "preview": "vite preview"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "@fontsource/playfair-display": "^5.3.0",
     "@supabase/supabase-js": "^2.116.0",
+    "libphonenumber-js": "^1.13.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.18.4"
