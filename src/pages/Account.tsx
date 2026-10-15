@@ -9,6 +9,7 @@ import { Avatar, AvatarPicker, Button, DemoNote, Field, Icon, RadioCard, Screen,
 import { LangSwitch } from './Access';
 import { PHONE } from '../lib/phone';
 import { removePhoto } from '../lib/photos';
+import { isValidSecretCode, isWeakSecretCode, normalizeSecretCode } from '../lib/secretCode';
 
 export function Favorites() {
   const { tr } = useI18n();
@@ -123,7 +124,7 @@ export function Profile() {
   );
 }
 
-/** Modification de son propre profil : nom, téléphone et mot de passe. */
+/** Modification de son propre profil : nom, téléphone et code secret. */
 export function EditProfile() {
   const { tr } = useI18n();
   return (
@@ -175,9 +176,9 @@ export function ProfileForms() {
   const savePw = async (e: FormEvent) => {
     e.preventDefault();
     setPwErr(null); setPwOk(false);
-    if (!cur) { setPwErr('Saisissez votre mot de passe actuel.'); return; }
-    if (pw.length < 8) { setPwErr('Le nouveau mot de passe doit contenir au moins 8 caractères.'); return; }
-    if (pw !== pw2) { setPwErr('Les deux mots de passe ne correspondent pas.'); return; }
+    if (!cur) { setPwErr('Saisissez votre code secret actuel ou votre ancien mot de passe.'); return; }
+    if (!isValidSecretCode(pw)) { setPwErr(isWeakSecretCode(pw) ? 'Choisissez un code moins facile à deviner.' : 'Le code secret doit contenir entre 3 et 6 chiffres.'); return; }
+    if (pw !== pw2) { setPwErr('Les deux codes secrets ne correspondent pas.'); return; }
     setPwBusy(true);
     const res = await changeMyPassword(cur, pw);
     setPwBusy(false);
@@ -199,13 +200,15 @@ export function ProfileForms() {
         </form>
 
         <form className="stack" onSubmit={savePw} noValidate>
-          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Mot de passe")}</h2>
+          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Code secret")}</h2>
           {pwErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(pwErr)}</span></div>}
-          {pwOk && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr("Mot de passe modifié.")}</span></div>}
-          <Field id="me-cur" label={tr("Mot de passe actuel")} type="password" value={cur} onChange={setCur} req />
-          <Field id="me-pw" label={tr("Nouveau mot de passe")} type="password" value={pw} onChange={setPw} req hint={tr("Au moins 8 caractères.")} />
-          <Field id="me-pw2" label={tr("Confirmer le nouveau mot de passe")} type="password" value={pw2} onChange={setPw2} req />
-          <Button type="submit" icon="lock" kind="s" disabled={pwBusy}>{tr(pwBusy ? 'Enregistrement…' : 'Changer le mot de passe')}</Button>
+          {pwOk && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr("Code secret modifié.")}</span></div>}
+          <Field id="me-cur" label={tr("Code secret actuel ou ancien mot de passe")} type="password" value={cur} onChange={setCur} req autoComplete="current-password" />
+          <Field id="me-pw" label={tr("Nouveau code secret")} type="password" secret inputMode="numeric" maxLength={6} autoComplete="new-password"
+            value={pw} onChange={(v) => setPw(normalizeSecretCode(v))} req hint={tr("De 3 à 6 chiffres.")} />
+          <Field id="me-pw2" label={tr("Confirmer le code secret")} type="password" secret inputMode="numeric" maxLength={6} autoComplete="new-password"
+            value={pw2} onChange={(v) => setPw2(normalizeSecretCode(v))} req />
+          <Button type="submit" icon="lock" kind="s" disabled={pwBusy}>{tr(pwBusy ? 'Enregistrement…' : 'Changer le code secret')}</Button>
         </form>
     </>
   );

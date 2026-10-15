@@ -1,7 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { convivial, messageReseau } from './erreurs';
 import { supabase } from './supabase';
-import { identifiantEstUnNumero, isInternalEmail, phoneLoginId, phoneOf } from './phone';
+import { identifiantEstUnNumero, isInternalEmail, phoneOf } from './phone';
 
 /** « livreur » : membre de l'équipe limité au module fret (voir supabase/310_livreur.sql). */
 export type Role = 'traveler' | 'livreur' | 'team' | 'admin';
@@ -25,9 +25,9 @@ function translate(msg: string): string {
   const reseau = messageReseau(msg);
   if (reseau) return reseau;
   const m = msg.toLowerCase();
-  if (m.includes('invalid login credentials')) return 'E-mail, téléphone ou mot de passe incorrect.';
+  if (m.includes('invalid login credentials')) return 'Le numéro ou le code secret n’est pas correct.';
   if (m.includes('already registered') || m.includes('already been registered')) return 'Un compte existe déjà pour cet identifiant.';
-  if (m.includes('password should be at least')) return 'Le mot de passe doit contenir au moins 8 caractères.';
+  if (m.includes('password should be at least')) return 'Le code secret doit contenir entre 3 et 6 chiffres.';
   if (m.includes('email not confirmed')) return 'Compte non confirmé. Vérifiez votre boîte de réception.';
   if (m.includes('unable to validate email') || m.includes('invalid email') || m.includes('validate email')) return 'Adresse e-mail invalide.';
   if (m.includes('rate limit') || m.includes('too many')) return 'Trop de tentatives. Réessayez dans quelques minutes.';
@@ -82,53 +82,65 @@ export async function phoneAvailable(phone: string): Promise<boolean | null> {
   return error ? null : data === true;
 }
 
+type PinSession = { access_token: string; refresh_token: string; expires_in?: number };
+
+async function authPinApi(
+  payload: Record<string, unknown>, token?: string,
+): Promise<{ session?: PinSession; ok?: boolean; error?: string }> {
+  try {
+    const response = await fetch('/api/auth-pin', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json().catch(() => ({})) as PinSession & { ok?: boolean; error?: string };
+    if (!response.ok) return { error: data.error ?? 'Service temporairement indisponible.' };
+    if (data.access_token && data.refresh_token) return { session: data };
+    return { ok: data.ok === true };
+  } catch (error) {
+    return { error: convivial(error instanceof Error ? error.message : String(error)) };
+  }
+}
+
+async function installPinSession(session: PinSession): Promise<{ session?: Session; error?: string }> {
+  if (!supabase) return { error: 'Supabase non configuré.' };
+  const { data, error } = await supabase.auth.setSession({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  });
+  return error || !data.session
+    ? { error: error ? translate(error.message) : 'Connexion impossible.' }
+    : { session: data.session };
+}
+
 export async function signUp(
   name: string, phone: string, email: string, password: string,
 ): Promise<{ user?: AuthUser; needsConfirm?: boolean; error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
-  /* Le téléphone suffit : sans adresse, le compte reçoit une adresse interne
-     déduite du numéro (même règle qu'en base, voir src/lib/phone.ts). */
-  const identifiant = email.trim() ? email.trim().toLowerCase() : phoneLoginId(phone);
-  if (!identifiant) return { error: 'Saisissez un numéro de téléphone valide.' };
-  if (!email.trim() && (await phoneAvailable(phone)) === false) {
-    return { error: 'Un compte existe déjà pour ce numéro. Connectez-vous, ou utilisez « Mot de passe oublié ».' };
-  }
-  const { data, error } = await supabase.auth.signUp({ email: identifiant, password, options: { data: { name, phone } } });
-  if (error) return { error: translate(error.message) };
-  // Avec la confirmation par e-mail activée, Supabase ne renvoie pas d'erreur
-  // pour un identifiant déjà utilisé (afin de ne pas révéler les comptes
-  // existants) : `identities` est alors vide au lieu de contenir la nouvelle
-  // identité créée.
-  if (data.user?.identities?.length === 0) return { error: 'Un compte existe déjà pour cet identifiant.' };
-  if (!data.session) return { needsConfirm: true }; // confirmation par e-mail activée
-  return { user: await profileFor(data.user!.id, identifiant, name, phone) };
-}
-
-/** Identifiant de connexion associé à un numéro (voir supabase/210_phone_login.sql). */
-export async function loginForPhone(phone: string): Promise<string | null> {
-  if (!supabase) return null;
-  const { data, error } = await supabase.rpc('login_for_phone', { p_phone: phone });
-  return error ? null : ((data as string | null) ?? null);
+  void email; // conservé dans la signature pour compatibilité des appels existants
+  const result = await authPinApi({ action: 'signup', name, phone, pin: password });
+  if (result.error || !result.session) return { error: result.error ?? 'Création de compte impossible.' };
+  const installed = await installPinSession(result.session);
+  if (installed.error || !installed.session) return { error: installed.error ?? 'Connexion impossible.' };
+  const authUser = installed.session.user;
+  return { user: await profileFor(authUser.id, authUser.email ?? '', name, phone) };
 }
 
 export async function signIn(
   identifiant: string, password: string,
 ): Promise<{ user?: AuthUser; error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
-  /* Connexion par e-mail ou par téléphone. Pour un numéro, la base indique
-     l'identifiant du compte : les comptes créés sans adresse se connectent
-     avec leur numéro, et ceux créés avec une adresse — souvent plus anciens —
-     se connectent tout autant avec leur numéro, maintenant que l'équipe y a
-     ajouté leur téléphone. */
   const saisie = identifiant.trim();
-  const email = identifiantEstUnNumero(saisie)
-    ? (await loginForPhone(saisie)) ?? phoneLoginId(saisie)
-    : saisie.toLowerCase();
-  if (!email) return { error: 'Vérifiez votre numéro de téléphone : il manque des chiffres.' };
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: translate(error.message) };
-  const meta = data.user.user_metadata as { name?: string; phone?: string } | null;
-  const user = await profileFor(data.user.id, email, meta?.name, meta?.phone);
+  const legacyEmail = identifiantEstUnNumero(saisie) ? '' : saisie.toLowerCase();
+  const result = await authPinApi(legacyEmail
+    ? { action: 'login', legacyEmail, legacyPassword: password }
+    : { action: 'login', phone: saisie, pin: password });
+  if (result.error || !result.session) return { error: result.error ?? 'Connexion impossible.' };
+  const installed = await installPinSession(result.session);
+  if (installed.error || !installed.session) return { error: installed.error ?? 'Connexion impossible.' };
+  const authUser = installed.session.user;
+  const meta = authUser.user_metadata as { name?: string; phone?: string } | null;
+  const user = await profileFor(authUser.id, authUser.email ?? '', meta?.name, meta?.phone);
   // Compte désactivé par un administrateur : on ferme la session immédiatement.
   // (La base refuse de toute façon la connexion : voir supabase/150_admin_travelers.sql.)
   if (user.status === 'suspended') {
@@ -172,18 +184,19 @@ export async function updateMyProfile(
  */
 export async function changeMyPassword(current: string, next: string): Promise<{ error?: string }> {
   if (!supabase) return {};
-  const { data } = await supabase.auth.getUser();
-  const login = data.user?.email;
-  if (!login) return { error: 'Session expirée. Reconnectez-vous.' };
-  const check = await supabase.auth.signInWithPassword({ email: login, password: current });
-  if (check.error) return { error: 'Le mot de passe actuel est incorrect.' };
-  const { error } = await supabase.auth.updateUser({ password: next });
-  return { error: error ? translate(error.message) : undefined };
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return { error: 'Session expirée. Reconnectez-vous.' };
+  const result = await authPinApi({ action: 'change', current, pin: next }, token);
+  return { error: result.error };
 }
 
 /** Définit un nouveau mot de passe pour la session courante (récupération). */
 export async function updatePassword(password: string): Promise<{ error?: string }> {
   if (!supabase) return { error: 'Supabase non configuré.' };
-  const { error } = await supabase.auth.updateUser({ password });
-  return { error: error ? translate(error.message) : undefined };
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return { error: 'Session expirée. Reconnectez-vous.' };
+  const result = await authPinApi({ action: 'update', pin: password }, token);
+  return { error: result.error };
 }

@@ -1,3 +1,5 @@
+import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/min';
+
 /**
  * Numéros de téléphone : règle unique de normalisation.
  *
@@ -61,23 +63,42 @@ export function identifiantEstUnNumero(saisie: string): boolean {
 }
 
 /** Indicatifs proposés dans les formulaires (Sénégal par défaut). */
-export const DIAL_CODES: { c: string; flag: string; n: string }[] = [
-  { c: '+221', flag: '🇸🇳', n: 'Sénégal' }, { c: '+86', flag: '🇨🇳', n: 'Chine' }, { c: '+33', flag: '🇫🇷', n: 'France' },
-  { c: '+223', flag: '🇲🇱', n: 'Mali' }, { c: '+224', flag: '🇬🇳', n: 'Guinée' }, { c: '+225', flag: '🇨🇮', n: 'Côte d’Ivoire' },
-  { c: '+220', flag: '🇬🇲', n: 'Gambie' }, { c: '+222', flag: '🇲🇷', n: 'Mauritanie' }, { c: '+226', flag: '🇧🇫', n: 'Burkina Faso' },
-  { c: '+227', flag: '🇳🇪', n: 'Niger' }, { c: '+228', flag: '🇹🇬', n: 'Togo' }, { c: '+229', flag: '🇧🇯', n: 'Bénin' },
-  { c: '+234', flag: '🇳🇬', n: 'Nigeria' }, { c: '+233', flag: '🇬🇭', n: 'Ghana' }, { c: '+237', flag: '🇨🇲', n: 'Cameroun' },
-  { c: '+243', flag: '🇨🇩', n: 'RD Congo' }, { c: '+242', flag: '🇨🇬', n: 'Congo' }, { c: '+241', flag: '🇬🇦', n: 'Gabon' },
-  { c: '+212', flag: '🇲🇦', n: 'Maroc' }, { c: '+213', flag: '🇩🇿', n: 'Algérie' }, { c: '+216', flag: '🇹🇳', n: 'Tunisie' },
-  { c: '+20', flag: '🇪🇬', n: 'Égypte' }, { c: '+27', flag: '🇿🇦', n: 'Afrique du Sud' }, { c: '+32', flag: '🇧🇪', n: 'Belgique' },
-  { c: '+41', flag: '🇨🇭', n: 'Suisse' }, { c: '+44', flag: '🇬🇧', n: 'Royaume-Uni' }, { c: '+49', flag: '🇩🇪', n: 'Allemagne' },
-  { c: '+34', flag: '🇪🇸', n: 'Espagne' }, { c: '+39', flag: '🇮🇹', n: 'Italie' }, { c: '+1', flag: '🇺🇸', n: 'États-Unis / Canada' },
-  { c: '+971', flag: '🇦🇪', n: 'Émirats arabes unis' }, { c: '+90', flag: '🇹🇷', n: 'Turquie' }, { c: '+852', flag: '🇭🇰', n: 'Hong Kong' },
+export const DIAL_CODES: { c: string; iso: CountryCode; flag: string; n: string }[] = [
+  { c: '+221', iso: 'SN', flag: '🇸🇳', n: 'Sénégal' }, { c: '+86', iso: 'CN', flag: '🇨🇳', n: 'Chine' }, { c: '+33', iso: 'FR', flag: '🇫🇷', n: 'France' },
+  { c: '+223', iso: 'ML', flag: '🇲🇱', n: 'Mali' }, { c: '+224', iso: 'GN', flag: '🇬🇳', n: 'Guinée' }, { c: '+225', iso: 'CI', flag: '🇨🇮', n: 'Côte d’Ivoire' },
+  { c: '+220', iso: 'GM', flag: '🇬🇲', n: 'Gambie' }, { c: '+222', iso: 'MR', flag: '🇲🇷', n: 'Mauritanie' }, { c: '+226', iso: 'BF', flag: '🇧🇫', n: 'Burkina Faso' },
+  { c: '+227', iso: 'NE', flag: '🇳🇪', n: 'Niger' }, { c: '+228', iso: 'TG', flag: '🇹🇬', n: 'Togo' }, { c: '+229', iso: 'BJ', flag: '🇧🇯', n: 'Bénin' },
+  { c: '+234', iso: 'NG', flag: '🇳🇬', n: 'Nigeria' }, { c: '+233', iso: 'GH', flag: '🇬🇭', n: 'Ghana' }, { c: '+237', iso: 'CM', flag: '🇨🇲', n: 'Cameroun' },
+  { c: '+243', iso: 'CD', flag: '🇨🇩', n: 'RD Congo' }, { c: '+242', iso: 'CG', flag: '🇨🇬', n: 'Congo' }, { c: '+241', iso: 'GA', flag: '🇬🇦', n: 'Gabon' },
+  { c: '+212', iso: 'MA', flag: '🇲🇦', n: 'Maroc' }, { c: '+213', iso: 'DZ', flag: '🇩🇿', n: 'Algérie' }, { c: '+216', iso: 'TN', flag: '🇹🇳', n: 'Tunisie' },
+  { c: '+20', iso: 'EG', flag: '🇪🇬', n: 'Égypte' }, { c: '+27', iso: 'ZA', flag: '🇿🇦', n: 'Afrique du Sud' }, { c: '+32', iso: 'BE', flag: '🇧🇪', n: 'Belgique' },
+  { c: '+41', iso: 'CH', flag: '🇨🇭', n: 'Suisse' }, { c: '+44', iso: 'GB', flag: '🇬🇧', n: 'Royaume-Uni' }, { c: '+49', iso: 'DE', flag: '🇩🇪', n: 'Allemagne' },
+  { c: '+34', iso: 'ES', flag: '🇪🇸', n: 'Espagne' }, { c: '+39', iso: 'IT', flag: '🇮🇹', n: 'Italie' }, { c: '+1', iso: 'US', flag: '🇺🇸', n: 'États-Unis / Canada' },
+  { c: '+971', iso: 'AE', flag: '🇦🇪', n: 'Émirats arabes unis' }, { c: '+90', iso: 'TR', flag: '🇹🇷', n: 'Turquie' }, { c: '+852', iso: 'HK', flag: '🇭🇰', n: 'Hong Kong' },
 ];
 
-/** Numéro complet : l'indicatif est ajouté sauf si la personne a déjà tapé un « + ». */
+/**
+ * Numéro international à enregistrer : uniquement des chiffres précédés de +.
+ * La personne peut saisir un numéro local, coller le numéro complet, ajouter
+ * des espaces/tirets, ou utiliser le préfixe international 00.
+ */
+export function normalizePhone(raw: string, country?: CountryCode): string {
+  let source = (raw || '').trim();
+  if (!source) return '';
+  if (/^00\d/.test(source.replace(/[\s().-]/g, ''))) source = `+${source.replace(/\D/g, '').slice(2)}`;
+  try {
+    const parsed = parsePhoneNumberFromString(source, country);
+    if (!parsed?.isValid()) return '';
+    const value = parsed.number;
+    return /^\+[1-9]\d{7,14}$/.test(value) ? value : '';
+  } catch {
+    return '';
+  }
+}
+
 export const joinPhone = (dial: string, raw: string) => {
-  const n = raw.trim();
-  if (!n) return '';
-  return n.startsWith('+') ? n : `${dial} ${n.replace(/^0+/, '')}`;
+  const country = DIAL_CODES.find((item) => item.c === dial)?.iso;
+  return normalizePhone(raw, country);
 };
+
+export const isValidPhone = (raw: string) => !!normalizePhone(raw);
