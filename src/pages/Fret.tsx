@@ -1,27 +1,15 @@
 import { useI18n } from '../i18n';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useStore } from '../store';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { cityName } from '../data';
-import { useModules } from '../lib/modules';
-import { Button, Field, Icon, Logo, Screen, Select, TextArea, TopBar } from '../ui';
+import { Button, Icon, Logo, Screen, TopBar } from '../ui';
 import {
-  devisFret, annoncerColis, fetchMesColis, fetchEtapesColis, fetchSuiviPublic, fetchFactures, fetchColisByCode,
-  MODE_LABEL, COLIS_STATUT_LABEL, EXPEDITION_STATUT_LABEL, CARACTERISTIQUES, caracLabel, ETAPE_LABEL, FACTURE_STATUT_LABEL,
-  type FretMode, type Caracteristique, type Colis, type EtapeVue, type Facture, type SuiviPublic,
+  fetchMesColis, fetchEtapesColis, fetchSuiviPublic, fetchFactures, fetchColisByCode,
+  MODE_LABEL, COLIS_STATUT_LABEL, EXPEDITION_STATUT_LABEL, caracLabel, ETAPE_LABEL, FACTURE_STATUT_LABEL,
+  type Colis, type EtapeVue, type Facture, type SuiviPublic,
 } from '../lib/fret';
 
-const MODE_OPTIONS = (Object.keys(MODE_LABEL) as FretMode[]).map((v) => ({ v, l: MODE_LABEL[v] }));
-/** Types de marchandise, par ordre alphabétique. */
-const TYPES = [
-  { v: 'batterie', l: 'Batteries et produits à risque' }, { v: 'cosmetique', l: 'Cosmétiques' },
-  { v: 'electronique', l: 'Électronique et téléphones' }, { v: 'liquide', l: 'Liquides' },
-  { v: 'general', l: 'Marchandise générale' }, { v: 'alimentaire', l: 'Produits alimentaires' },
-  { v: 'textile', l: 'Textile et confection' },
-];
-const isMaritime = (m: FretMode) => m.startsWith('maritime');
 const ETAPES_SUIVI = ['annonce', 'en_transit', 'arrive_dakar', 'dispo_retrait', 'en_livraison', 'remis'] as const;
-const toNum = (s: string): number | null => { const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? null : n; };
 const formatDateCourte = (value: string) => {
   const [year, month, day] = value.split('-').map(Number);
   return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(year, month - 1, day));
@@ -35,18 +23,9 @@ const money = (n: number, d = 'XOF') => `${n.toLocaleString('fr-FR')} ${d === 'X
 
 export function MesEnvois() {
   const { tr } = useI18n();
-  const { settings } = useModules();
   const [colis, setColis] = useState<Colis[]>([]);
   const [factures, setFactures] = useState<Record<string, Facture>>({});
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-  const [linkErr, setLinkErr] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const shoppingListId = settings.shopping ? (searchParams.get('liste')?.trim() ?? '') : '';
-  const [linkedList, setLinkedList] = useState<{ id: string; title: string } | null>(null);
-  const [linkLoading, setLinkLoading] = useState(Boolean(shoppingListId));
-  const linkedDescription = useRef('');
 
   const reload = useCallback(async () => {
     const [cs, f] = await Promise.all([fetchMesColis(), fetchFactures()]);
@@ -54,78 +33,12 @@ export function MesEnvois() {
   }, []);
   useEffect(() => { void reload(); }, [reload]);
 
-  // ---- Devis rapide ----
-  const [dv, setDv] = useState({ mode: 'maritime_groupage' as FretMode, type: 'general', poids: '', volume: '' });
-  const [devis, setDevis] = useState<number | null | 'none'>('none');
-  const [calcBusy, setCalcBusy] = useState(false);
-  const calcDevis = async (e: FormEvent) => {
-    e.preventDefault(); setCalcBusy(true);
-    const m = await devisFret(dv.mode, dv.type, isMaritime(dv.mode) ? null : toNum(dv.poids), isMaritime(dv.mode) ? toNum(dv.volume) : null);
-    setCalcBusy(false); setDevis(m);
-  };
-
-  // ---- Annoncer un colis ----
-  const { s } = useStore();
-  const villes = s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }));
-  const [an, setAn] = useState({ mode: 'maritime_groupage' as FretMode, ville: '', carac: [] as Caracteristique[], type: 'general', description: '', marque: '', poids: '', volume: '' });
-  useEffect(() => {
-    setLinkedList(null);
-    setLinkErr(null);
-    setLinkLoading(Boolean(shoppingListId));
-    setAn((current) => current.description === linkedDescription.current ? { ...current, description: '' } : current);
-    linkedDescription.current = '';
-    if (!shoppingListId) return;
-    let live = true;
-    void import('../lib/shopping').then(({ fetchList }) => fetchList(shoppingListId)).then((result) => {
-      if (!live) return;
-      setLinkLoading(false);
-      if (!result.list || result.error) { setLinkErr(result.error ?? 'Cette liste est introuvable.'); return; }
-      if (result.items.length === 0) { setLinkErr('Ajoutez au moins un produit avant de préparer l’envoi.'); return; }
-      const bought = result.items.filter((item) => item.done);
-      const articles = bought.length > 0 ? bought : result.items;
-      const description = articles.map((item) => `${item.label}${item.qty ? ` (${item.qty})` : ''}`).join(' · ');
-      setLinkedList({ id: result.list.id, title: result.list.title });
-      setAn((current) => {
-        if (current.description) return { ...current, ville: current.ville || result.list?.city || '' };
-        linkedDescription.current = description;
-        return { ...current, ville: current.ville || result.list?.city || '', description };
-      });
-    }).catch(() => {
-      if (!live) return;
-      setLinkLoading(false);
-      setLinkErr('La liste d’achats n’a pas pu être chargée.');
-    });
-    return () => { live = false; };
-  }, [shoppingListId]);
-  const ville = an.ville || s.city;
-  const [busy, setBusy] = useState(false);
-  const annoncer = async (e: FormEvent) => {
-    e.preventDefault(); setErr(null); setOk(null);
-    if (shoppingListId && !linkedList) { setErr('Attendez le chargement de la liste d’achats.'); return; }
-    setBusy(true);
-    const res = await annoncerColis({
-      mode: an.mode, villeDepart: ville, caracteristiques: an.carac, typeMarchandise: an.type, description: an.description, marqueColis: an.marque,
-      poidsKg: isMaritime(an.mode) ? null : toNum(an.poids), volumeM3: isMaritime(an.mode) ? toNum(an.volume) : null,
-      shoppingListId: linkedList?.id ?? null,
-    });
-    setBusy(false);
-    if (res.error) { setErr(res.error); return; }
-    setOk(`Colis annoncé (${res.code}). L’équipe Diaba le confirmera à la réception en Chine.`);
-    setAn({ mode: 'maritime_groupage', ville: '', carac: [], type: 'general', description: '', marque: '', poids: '', volume: '' });
-    setLinkedList(null);
-    const nextParams = new URLSearchParams(searchParams); nextParams.delete('liste'); setSearchParams(nextParams, { replace: true });
-    await reload();
-  };
   const lots = [...new Set(colis.map((c) => c.expeditionCode).filter((code): code is string => Boolean(code)))];
 
   return (
     <Screen>
       <TopBar title={tr("Mes envois")} />
       <div className="main mes-envois-main" style={{ gap: 16 }}>
-        {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
-        {linkErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(linkErr)}</span></div>}
-        {ok && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr(ok)}</span></div>}
-
         <section className="card stack freight-section freight-public-tracking" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Suivre un envoi")}</h2>
           <p className="small muted" style={{ margin: 0 }}>{tr("Saisissez le code du lot pour voir où en est votre marchandise entre la Chine et Dakar.")}</p>
@@ -136,63 +49,6 @@ export function MesEnvois() {
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Ma carte d’expédition")}</h2>
           <p className="small muted" style={{ margin: 0 }}>{tr("La carte à coller sur vos colis pour l’entrepôt en Chine : votre nom, votre numéro de client et un code-barres.")}</p>
           <Button to="/mes-envois/carte" icon="download" kind="s">{tr("Créer ma carte")}</Button>
-        </section>
-
-        {/* ---- Devis rapide ---- */}
-        <section className="card stack freight-section freight-estimate" style={{ gap: 12 }}>
-          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Estimer le prix")}</h2>
-          <p className="small muted" style={{ margin: 0 }}>{tr("Une estimation indicative. Le prix définitif est confirmé par Diaba après pesée et mesure.")}</p>
-          <form onSubmit={calcDevis} className="stack" style={{ gap: 10 }} noValidate>
-            <Select id="dv-mode" label={tr("Mode d’envoi")} value={dv.mode} onChange={(v) => setDv({ ...dv, mode: v as FretMode })} options={MODE_OPTIONS} />
-            <Select id="dv-type" label={tr("Type de marchandise")} value={dv.type} onChange={(v) => setDv({ ...dv, type: v })} options={TYPES} />
-            {isMaritime(dv.mode)
-              ? <Field id="dv-vol" label={tr("Volume (m³)")} value={dv.volume} onChange={(v) => setDv({ ...dv, volume: v })} placeholder="0" />
-              : <Field id="dv-poids" label={tr("Poids (kg)")} value={dv.poids} onChange={(v) => setDv({ ...dv, poids: v })} placeholder="0" />}
-            <Button type="submit" icon="refresh" disabled={calcBusy}>{tr(calcBusy ? 'Calcul…' : 'Estimer')}</Button>
-          </form>
-          {devis !== 'none' && (
-            devis === null
-              ? <div className="notice warn"><Icon name="info" size={20} /><span>{tr("Tarif pas encore disponible pour ce choix. Contactez Diaba sur WhatsApp pour un devis.")}</span></div>
-              : <div className="card" style={{ background: 'var(--info-bg)', textAlign: 'center', padding: 14 }}>
-                  <div className="small muted">{tr("Estimation")}</div>
-                  <div style={{ fontSize: 26, fontWeight: 800 }}>{money(devis)}</div>
-                </div>
-          )}
-        </section>
-
-        {/* ---- Annoncer un colis ---- */}
-        <section className="card stack freight-section freight-announce" style={{ gap: 12 }}>
-          <h2 style={{ fontSize: 17, margin: 0 }}>{tr("Annoncer un colis")}</h2>
-          <p className="small muted" style={{ margin: 0 }}>{tr("Prévenez Diaba d’un colis en route vers l’entrepôt en Chine. Vous pourrez ensuite suivre son avancement ici.")}</p>
-          {linkedList && (
-            <div className="notice info"><Icon name="list" size={20} /><span><strong>{tr("Liste d’achats liée")} :</strong> {linkedList.title}</span></div>
-          )}
-          <form onSubmit={annoncer} className="stack" style={{ gap: 10 }} noValidate>
-            <Select id="an-mode" label={tr("Mode d’envoi")} value={an.mode} onChange={(v) => setAn({ ...an, mode: v as FretMode })} options={MODE_OPTIONS} />
-            <Select id="an-ville" label={tr("Ville de départ")} value={ville} onChange={(v) => setAn({ ...an, ville: v })} options={villes} />
-            <Select id="an-type" label={tr("Type de marchandise")} value={an.type} onChange={(v) => setAn({ ...an, type: v })} options={TYPES} />
-            <fieldset className="stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
-              <legend style={{ fontWeight: 600, marginBottom: 8 }}>{tr("Caractéristiques particulières (cochez si applicable)")}</legend>
-              <div className="carac">
-                {CARACTERISTIQUES.map((c) => {
-                  const on = an.carac.includes(c.v);
-                  return (
-                    <label key={c.v} className={`carac-item ${on ? 'on' : ''}`}>
-                      <input type="checkbox" checked={on} onChange={(e) => setAn({ ...an, carac: e.target.checked ? [...an.carac, c.v] : an.carac.filter((x) => x !== c.v) })} />
-                      <span className="carac-emoji" aria-hidden="true">{c.emoji}</span>
-                      <span>{tr(c.l)}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
-            <Field id="an-marque" label={tr("Marquage / fournisseur")} value={an.marque} onChange={(v) => setAn({ ...an, marque: v })} placeholder={tr("Nom du fournisseur ou marquage")} />
-            <TextArea id="an-desc" label={tr("Description")} value={an.description} onChange={(v) => setAn({ ...an, description: v })} rows={2} placeholder={tr("Ce que contient le colis")} />
-            {isMaritime(an.mode)
-              ? <Field id="an-vol" label={tr("Volume estimé (m³)")} value={an.volume} onChange={(v) => setAn({ ...an, volume: v })} placeholder="0" />
-              : <Field id="an-poids" label={tr("Poids estimé (kg)")} value={an.poids} onChange={(v) => setAn({ ...an, poids: v })} placeholder="0" />}
-            <Button type="submit" icon="box" disabled={busy || linkLoading || Boolean(shoppingListId && !linkedList)}>{tr(linkLoading ? 'Chargement…' : busy ? 'Envoi…' : 'Annoncer le colis')}</Button>
-          </form>
         </section>
 
         {lots.length > 0 && (
@@ -206,7 +62,7 @@ export function MesEnvois() {
         <section className="card stack freight-section freight-packages" style={{ gap: 12 }}>
           <h2 style={{ fontSize: 17, margin: 0 }}>{tr(`Mes colis (${colis.length})`)}</h2>
           {loading ? <p className="muted" role="status">{tr("Chargement…")}</p>
-            : colis.length === 0 ? <p className="muted">{tr("Aucun colis pour l’instant. Annoncez votre premier colis ci-dessus.")}</p>
+            : colis.length === 0 ? <p className="muted">{tr("Aucun colis pour l’instant.")}</p>
             : colis.map((c) => <ColisCard key={c.code} c={c} facture={factures[c.code]} />)}
         </section>
       </div>
