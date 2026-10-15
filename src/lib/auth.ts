@@ -155,6 +155,12 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+/** Révoque les sessions de tous les appareils (scope global de Supabase Auth). */
+export async function signOutEverywhere(): Promise<void> {
+  if (!supabase) return;
+  await supabase.auth.signOut({ scope: 'global' });
+}
+
 export async function sendPasswordReset(identifiant: string): Promise<{ error?: string; sansEmail?: boolean }> {
   if (!supabase) return {};
   /* Un compte créé avec son seul numéro n'a pas d'adresse : aucun lien ne peut
