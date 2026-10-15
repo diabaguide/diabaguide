@@ -2,6 +2,8 @@ import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import { Button, DemoNote, Field, Icon, NotProvided, useWide } from '../../ui';
 import { SortTh, compare, useSort } from './tableSort';
+import { BulkBar, BulkReport } from './BulkBar';
+import { logBulk, runBulk, toggleAll, toggleOne, type BulkResult } from '../../lib/bulk';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { AccountStatus } from '../../lib/auth';
 import { contient } from '../../lib/texte';
@@ -154,6 +156,9 @@ export function Travelers() {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [open, setOpen] = useState<Member | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [report, setReport] = useState<BulkResult[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const { sort, toggle } = useSort<'name' | 'createdAt'>({ k: 'createdAt', dir: -1 });
 
   const reload = useCallback(async () => {
@@ -168,6 +173,25 @@ export function Travelers() {
     .filter((m) => (!state || m.status === state)
       && contient(`${m.name ?? ''} ${m.email}`, pq))
     .sort((a, b) => compare(sort.k === 'createdAt' ? a.createdAt : (a.name ?? a.email).toLowerCase(), sort.k === 'createdAt' ? b.createdAt : (b.name ?? b.email).toLowerCase(), sort.dir));
+
+  const visibleIds = rows.map((m) => m.id);
+  const names = Object.fromEntries(travelers.map((m) => [m.id, m.name ?? m.email]));
+  const bulkStatus = async (status: AccountStatus) => {
+    const ids = [...selected];
+    const verb = status === 'suspended' ? 'désactiver' : 'réactiver';
+    if (!window.confirm(t('Voulez-vous {0} {1} compte(s) ?', { 0: verb, 1: ids.length }))) return;
+    setBulkBusy(true); setErr(null); setOk(null);
+    const result = await runBulk(ids, (id) => setTravelerStatus(id, status, status === 'suspended' ? 'Désactivé par l’équipe' : ''), {
+      skip: (id) => {
+        const m = travelers.find((x) => x.id === id);
+        if (!m) return 'Compte introuvable.';
+        return m.status === status ? (status === 'suspended' ? 'Déjà désactivé.' : 'Déjà actif.') : null;
+      },
+    });
+    setBulkBusy(false); setReport(result); setSelected(new Set());
+    await logBulk(status === 'suspended' ? 'travelers.suspend' : 'travelers.reactivate', 'traveler', result);
+    await reload();
+  };
 
   const suspended = travelers.filter((m) => m.status === 'suspended').length;
 
@@ -208,10 +232,11 @@ export function Travelers() {
             : rows.length === 0 ? <p className="muted">{tr(pq || state ? 'Aucun voyageur ne correspond à la recherche.' : 'Aucun voyageur inscrit pour le moment.')}</p>
             : wide ? (
             <div className="table dense"><table>
-              <thead><tr><SortTh k="name" label="Voyageur" sort={sort} onSort={toggle} /><th>{tr("Téléphone")}</th><th>{tr("Statut")}</th><SortTh k="createdAt" label="Inscrit le" sort={sort} onSort={toggle} /><th>{tr("Actions")}</th></tr></thead>
+              <thead><tr><th style={{ width: 36 }}><input type="checkbox" aria-label={tr("Tout sélectionner")} checked={visibleIds.length > 0 && visibleIds.every((id) => selected.has(id))} onChange={() => setSelected(toggleAll(selected, visibleIds))} /></th><SortTh k="name" label="Voyageur" sort={sort} onSort={toggle} /><th>{tr("Téléphone")}</th><th>{tr("Statut")}</th><SortTh k="createdAt" label="Inscrit le" sort={sort} onSort={toggle} /><th>{tr("Actions")}</th></tr></thead>
               <tbody>
                 {rows.map((m) => (
                   <tr key={m.id} style={m.status === 'suspended' ? { opacity: 0.85 } : undefined}>
+                    <td><input type="checkbox" aria-label={t('Sélectionner {0}', { 0: m.name ?? m.email })} checked={selected.has(m.id)} onChange={() => setSelected(toggleOne(selected, m.id))} /></td>
                     <td>
                       <button type="button" className="linklike" onClick={() => setOpen(m)}><strong>{tr(m.name ?? '—')}</strong></button>
                       <div className="small muted">{m.email}</div>
@@ -228,14 +253,27 @@ export function Travelers() {
             </table></div>
           ) : (
             <div className="acards">
+              <label className="row small" style={{ gap: 8 }}>
+                <input type="checkbox" checked={visibleIds.length > 0 && visibleIds.every((id) => selected.has(id))} onChange={() => setSelected(toggleAll(selected, visibleIds))} />
+                {tr("Tout sélectionner")}
+              </label>
               {rows.map((m) => (
-                <AdminCard key={m.id} toneSeed={m.name ?? m.email} title={tr(m.name ?? '—')}
+                <div key={m.id} className="row" style={{ gap: 8, alignItems: 'center' }}>
+                <input type="checkbox" style={{ width: 24, height: 24, flex: 'none' }} aria-label={t('Sélectionner {0}', { 0: m.name ?? m.email })} checked={selected.has(m.id)} onChange={() => setSelected(toggleOne(selected, m.id))} />
+                <div style={{ flex: 1, minWidth: 0 }}><AdminCard toneSeed={m.name ?? m.email} title={tr(m.name ?? '—')}
                   sub={m.phone ?? <NotProvided />} badge={m.status === 'suspended' ? <StatusTag status={m.status} /> : undefined}
-                  onOpen={() => setOpen(m)} ariaLabel={t('Ouvrir la fiche de {0}', { 0: m.name ?? m.email })} />
+                  onOpen={() => setOpen(m)} ariaLabel={t('Ouvrir la fiche de {0}', { 0: m.name ?? m.email })} /></div>
+                </div>
               ))}
             </div>
           )}
         </section>
+
+        <BulkReport report={report} names={names} />
+        <BulkBar count={selected.size} onClear={() => setSelected(new Set())}>
+          <Button kind="s" icon="x" full={false} disabled={bulkBusy} onClick={() => void bulkStatus('suspended')}>{tr("Désactiver")}</Button>
+          <Button kind="s" icon="check" full={false} disabled={bulkBusy} onClick={() => void bulkStatus('active')}>{tr("Réactiver")}</Button>
+        </BulkBar>
 
         {open && <TravelerSheet m={open} onClose={() => setOpen(null)} onSaved={saved} />}
 
