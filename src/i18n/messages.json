@@ -4471,6 +4471,7 @@
   "Mes colis reçus": {"en": "My received parcels", "zh": "已收到的包裹", "ar": "طرودي المستلمة"},
   "Consultez les colis déjà arrivés à destination.": {"en": "See the parcels that have already arrived.", "zh": "查看已到达目的地的包裹。", "ar": "اطلع على الطرود التي وصلت بالفعل."},
   "Aucun colis pour l’instant.": {"en": "No parcels yet.", "zh": "暂无包裹。", "ar": "لا توجد طرود حتى الآن."},
+  "Photo du colis": {"en": "Parcel photo", "zh": "包裹照片", "ar": "صورة الطرد"},  "Supprimer cette photo": {"en": "Delete this photo", "zh": "删除此照片", "ar": "حذف هذه الصورة"},  "Supprimer cette photo ?": {"en": "Delete this photo?", "zh": "删除此照片？", "ar": "حذف هذه الصورة؟"},
   "Changer le code secret": {"en": "Change the secret code", "zh": "更改安全码", "ar": "تغيير الرمز السري"},
   "Déconnecter tous mes appareils": {"en": "Sign out of all my devices", "zh": "退出所有设备", "ar": "تسجيل الخروج من جميع أجهزتي"},
   "Le code secret actuel est incorrect.": {"en": "The current secret code is incorrect.", "zh": "当前安全码不正确。", "ar": "الرمز السري الحالي غير صحيح."},

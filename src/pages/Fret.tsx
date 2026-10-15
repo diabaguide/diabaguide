@@ -2,9 +2,9 @@ import { useI18n } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { cityName } from '../data';
-import { Button, Icon, Logo, Screen, TopBar } from '../ui';
+import { Button, Icon, Logo, Screen, StoredPhoto, TopBar } from '../ui';
 import {
-  fetchMesColis, fetchEtapesColis, fetchSuiviPublic, fetchFactures, fetchColisByCode,
+  fetchColisPhotos, fetchMesColis, fetchEtapesColis, fetchSuiviPublic, fetchFactures, fetchColisByCode,
   MODE_LABEL, COLIS_STATUT_LABEL, EXPEDITION_STATUT_LABEL, caracLabel, ETAPE_LABEL, FACTURE_STATUT_LABEL,
   type Colis, type EtapeVue, type Facture, type SuiviPublic,
 } from '../lib/fret';
@@ -82,7 +82,10 @@ export function MesColisListe() {
   const { groupe } = useParams();
   const recus = groupe === 'recus';
   const [colis, setColis] = useState<Colis[] | null>(null);
-  useEffect(() => { void fetchMesColis().then(setColis); }, []);
+  const [photos, setPhotos] = useState<Record<string, { id: string; path: string }[]>>({});
+  useEffect(() => {
+    void fetchMesColis().then(async (liste) => { setColis(liste); setPhotos(await fetchColisPhotos(liste.map((c) => c.code))); });
+  }, []);
   const visibles = (colis ?? []).filter((c) => estRecu(c) === recus);
   return (
     <Screen>
@@ -98,6 +101,11 @@ export function MesColisListe() {
                   <strong>{c.code}</strong>
                   <span className="small muted">{c.description || c.marqueColis || tr(MODE_LABEL[c.mode])}</span>
                   <span className="small">{tr(COLIS_STATUT_LABEL[c.statut])}</span>
+                  {(photos[c.code]?.length ?? 0) > 0 && (
+                    <span className="row" style={{ gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                      {photos[c.code].map((p) => <StoredPhoto key={p.id} path={p.path} bucket="fret-photos" label={tr("Photo du colis")} h={64} w={64} round={8} />)}
+                    </span>
+                  )}
                 </span>
                 {c.expeditionCode && <Icon name="chevR" size={20} />}
               </>

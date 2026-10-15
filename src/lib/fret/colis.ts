@@ -159,3 +159,32 @@ export async function fetchEtapesColis(colisCode: string): Promise<EtapeVue[]> {
   }
   return etapes.sort((x, y) => x.au.localeCompare(y.au));
 }
+
+/** Photos d'un ou plusieurs colis (RLS : l'équipe voit tout, le voyageur les siennes). */
+export interface ColisPhoto { id: string; colisCode: string; path: string }
+export async function fetchColisPhotos(codes?: string[]): Promise<Record<string, ColisPhoto[]>> {
+  if (!supabase || (codes && codes.length === 0)) return {};
+  let q = supabase.from('colis_photos').select('id, colis_code, path').order('created_at', { ascending: true });
+  if (codes) q = q.in('colis_code', codes);
+  const { data, error } = await q;
+  if (error) { warn('chargement des photos de colis', error); return {}; }
+  const out: Record<string, ColisPhoto[]> = {};
+  for (const r of data as Row[]) {
+    const p = { id: String(r.id), colisCode: String(r.colis_code), path: String(r.path) };
+    (out[p.colisCode] ??= []).push(p);
+  }
+  return out;
+}
+
+export async function addColisPhoto(colisCode: string, path: string): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { data: { session } } = await supabase.auth.getSession();
+  const { error } = await supabase.from('colis_photos').insert({ colis_code: colisCode, path, created_by: session?.user.id ?? null });
+  return error ? { error: humanize(error.message) } : {};
+}
+
+export async function deleteColisPhoto(id: string): Promise<{ error?: string }> {
+  if (!supabase) return {};
+  const { error } = await supabase.from('colis_photos').delete().eq('id', id);
+  return error ? { error: humanize(error.message) } : {};
+}

@@ -1,8 +1,11 @@
 import { useI18n } from '../../../i18n';
-import { useEffect, useState, type FormEvent } from 'react';
-import { Button, Field, Icon, Select } from '../../../ui';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { compressImage } from '../../../lib/image';
+import { removePhoto, uploadPhoto } from '../../../lib/photos';
+import { Button, Field, Icon, Select, StoredPhoto } from '../../../ui';
 import { AdminSheet } from '../mobile';
 import {
+  addColisPhoto, deleteColisPhoto, fetchColisPhotos, type ColisPhoto,
   affecterColis, createColis, creerVoyageurFret, emettreFacture, marquerFacturePayee, rechercherClients, suggestColisCode,
   MODE_LABEL, COLIS_STATUT_LABEL, FACTURE_STATUT_LABEL, caracLabel,
   type ClientLite, type Colis, type Expedition, type Facture,
@@ -16,6 +19,30 @@ export function ColisSection({ colis, factures, peutFacturer, setErr, setOk, rel
 } & Notifier) {
   const { tr } = useI18n();
   const base = useBase();
+  const [photos, setPhotos] = useState<Record<string, ColisPhoto[]>>({});
+  const codesColis = colis.map((c) => c.code).join('|');
+  const rechargerPhotos = async () => setPhotos(await fetchColisPhotos(colis.map((c) => c.code)));
+  useEffect(() => { void rechargerPhotos(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [codesColis]);
+  const ajouterPhoto = async (colisCode: string, event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]; event.target.value = '';
+    if (!file) return;
+    setErr(null); setOk(null);
+    try {
+      const image = await compressImage(file, 1600, 0.82);
+      const upload = await uploadPhoto(image, 'fret-photos');
+      if (upload.error || !upload.path) { setErr(upload.error ?? 'L’envoi de la photo a échoué.'); return; }
+      const res = await addColisPhoto(colisCode, upload.path);
+      if (res.error) { await removePhoto(upload.path, 'fret-photos'); setErr(res.error); return; }
+      setOk(`Photo ajoutée au colis ${colisCode}.`); await rechargerPhotos();
+    } catch (error) { setErr((error as Error).message); }
+  };
+  const retirerPhoto = async (p: ColisPhoto) => {
+    if (!window.confirm(tr('Supprimer cette photo ?'))) return;
+    setErr(null); setOk(null);
+    const res = await deleteColisPhoto(p.id);
+    if (res.error) { setErr(res.error); return; }
+    await removePhoto(p.path, 'fret-photos'); await rechargerPhotos();
+  };
   const facturer = async (colisCode: string) => {
     setErr(null); setOk(null);
     const res = await emettreFacture(colisCode);
@@ -38,7 +65,19 @@ export function ColisSection({ colis, factures, peutFacturer, setErr, setOk, rel
           <tbody>
             {colis.map((c) => (
               <tr key={c.code}>
-                <td><strong>{c.code}</strong>{c.marqueColis && <div className="small muted">{c.marqueColis}</div>}{c.caracteristiques.length > 0 && <div className="small">{c.caracteristiques.map((v) => tr(caracLabel(v))).join(' · ')}</div>}</td>
+                <td><strong>{c.code}</strong>{c.marqueColis && <div className="small muted">{c.marqueColis}</div>}{c.caracteristiques.length > 0 && <div className="small">{c.caracteristiques.map((v) => tr(caracLabel(v))).join(' · ')}</div>}
+                  <div className="row" style={{ gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                    {(photos[c.code] ?? []).map((p) => (
+                      <span key={p.id} style={{ position: 'relative' }}>
+                        <StoredPhoto path={p.path} bucket="fret-photos" label={tr("Photo du colis")} h={56} w={56} round={8} />
+                        <button type="button" className="linklike" aria-label={tr("Supprimer cette photo")} style={{ position: 'absolute', top: -6, right: -6 }} onClick={() => void retirerPhoto(p)}>×</button>
+                      </span>
+                    ))}
+                    <label className="button secondary" style={{ cursor: 'pointer' }}>
+                      {tr("Ajouter une photo")}
+                      <input type="file" accept="image/jpeg,image/webp,image/png" className="sr" onChange={(e) => void ajouterPhoto(c.code, e)} />
+                    </label>
+                  </div></td>
                 <td>{c.clientNom ?? <span className="np">—</span>}{c.clientTel && <div className="small muted">{c.clientTel}</div>}{c.profileId && <div className="small"><Link className="link" to={`${base}/clients/${c.profileId}/carte`}>{tr("Carte d’expédition")}</Link></div>}</td>
                 <td className="small">{c.poidsKg != null ? `${c.poidsKg} kg` : '—'}{c.volumeM3 != null ? ` · ${c.volumeM3} m³` : ''}</td>
                 <td><span className="small">{tr(COLIS_STATUT_LABEL[c.statut])}</span></td>
