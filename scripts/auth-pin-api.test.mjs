@@ -112,3 +112,68 @@ test('la connexion historique exige explicitement l’e-mail et l’ancien mot d
   assert.equal(res.body.access_token, 'legacy-access');
   assert.equal(calls.some((call) => call.url.includes('/profiles?')), false);
 });
+
+const adminFetch = (role, store = {}) => async (url, init = {}) => {
+  const u = String(url);
+  if (u.endsWith('/auth/v1/user')) return response(200, { id: 'admin-1', email: 'admin@example.com' });
+  if (u.includes('/rest/v1/profiles?select=role')) return response(200, [{ role }]);
+  if (u.includes('select=is_primary_admin')) return response(200, [{ is_primary_admin: store.primary === true }]);
+  if (u.includes('/rest/v1/profiles?select=id')) return response(200, store.existing ?? []);
+  if (u.endsWith('/auth/v1/admin/users') && init.method === 'POST') { store.created = JSON.parse(init.body); return response(200, { id: 'new-1' }); }
+  if (u.endsWith('/auth/v1/admin/users/user-9') && !init.method) return response(200, { id: 'user-9', email: 'membre@example.com' });
+  if (u.endsWith('/auth/v1/admin/users/user-9') && init.method === 'PUT') { store.updated = JSON.parse(init.body); return response(200, {}); }
+  if (u.includes('/rest/v1/profiles?on_conflict=id')) { store.profile = JSON.parse(init.body); return response(201, null); }
+  throw new Error(`appel inattendu: ${u}`);
+};
+const asAdmin = (body) => request(body, { authorization: 'Bearer admin-token' });
+
+test('un administrateur crée un compte membre avec son code secret, sans jamais le renvoyer', async () => {
+  const store = {};
+  const res = makeRes();
+  await handleAuthPin(asAdmin({ action: 'admin-create', name: 'Awa Diop', email: 'Awa@Example.com', phone: '+221771234567', pin: '274' }), res, { env, fetch: adminFetch('admin', store) });
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.body, { id: 'new-1', email: 'awa@example.com' });
+  assert.equal(store.created.email, 'awa@example.com');
+  assert.equal(store.created.password, deriveTechnicalPassword('274', env.AUTH_PIN_PEPPER, 'awa@example.com'));
+  assert.equal(JSON.stringify(store.created).includes('"274"'), false);
+  assert.equal(store.profile.role, 'traveler');
+});
+
+test('seul un administrateur peut créer un compte avec un code secret ou en changer', async () => {
+  for (const body of [
+    { action: 'admin-create', name: 'Awa', email: 'a@example.com', phone: '+221771234567', pin: '274' },
+    { action: 'admin-set-pin', id: 'user-9', pin: '274' },
+  ]) {
+    const res = makeRes();
+    await handleAuthPin(asAdmin(body), res, { env, fetch: adminFetch('team') });
+    assert.equal(res.statusCode, 403);
+  }
+  const anonymous = makeRes();
+  await handleAuthPin(request({ action: 'admin-set-pin', id: 'user-9', pin: '274' }), anonymous, { env, fetch: adminFetch('admin') });
+  assert.equal(anonymous.statusCode, 401);
+});
+
+test('le code secret imposé par un administrateur respecte la règle 3 à 6 chiffres', async () => {
+  const res = makeRes();
+  await handleAuthPin(asAdmin({ action: 'admin-create', name: 'Awa', email: 'a@example.com', phone: '+221771234567', pin: '12' }), res, { env, fetch: adminFetch('admin') });
+  assert.equal(res.statusCode, 400);
+});
+
+test('un administrateur définit le code d’un autre compte, mais pas celui de l’administrateur principal', async () => {
+  const store = {};
+  const ok = makeRes();
+  await handleAuthPin(asAdmin({ action: 'admin-set-pin', id: 'user-9', pin: '274' }), ok, { env, fetch: adminFetch('admin', store) });
+  assert.equal(ok.statusCode, 200);
+  assert.equal(store.updated.password, deriveTechnicalPassword('274', env.AUTH_PIN_PEPPER, 'membre@example.com'));
+  const protectedRes = makeRes();
+  await handleAuthPin(asAdmin({ action: 'admin-set-pin', id: 'user-9', pin: '274' }), protectedRes, { env, fetch: adminFetch('admin', { primary: true }) });
+  assert.equal(protectedRes.statusCode, 403);
+});
+
+test('un numéro déjà utilisé est refusé avant toute création', async () => {
+  const store = { existing: [{ id: 'x' }] };
+  const res = makeRes();
+  await handleAuthPin(asAdmin({ action: 'admin-create', name: 'Awa', email: 'a@example.com', phone: '+221771234567', pin: '274' }), res, { env, fetch: adminFetch('admin', store) });
+  assert.equal(res.statusCode, 409);
+  assert.equal(store.created, undefined);
+});

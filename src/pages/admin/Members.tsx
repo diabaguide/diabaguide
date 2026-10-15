@@ -7,11 +7,12 @@ import { SortTh, compare, useSort } from './tableSort';
 import { AdminCard, AdminSheet, SheetActions, SheetDanger } from './mobile';
 import type { Role } from '../../lib/auth';
 import {
-  fetchInvitations, fetchMembers, inviteMember, resetPasswordFor, revokeInvitation, setMemberRole, updateMember,
+  creerMembreAvecCode, definirCodeSecret, fetchInvitations, fetchMembers, inviteMember, resetPasswordFor, revokeInvitation, setMemberRole, updateMember,
   ROLE_LABEL, type Invitation, type Member,
 } from '../../lib/members';
 import { DIAL_CODES, PHONE, formatPhone, joinPhone, phoneKey } from '../../lib/phone';
 import { removePhoto } from '../../lib/photos';
+import { isValidSecretCode, isWeakSecretCode, normalizeSecretCode } from '../../lib/secretCode';
 import { whatsappUrl } from '../../lib/shopping';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -89,9 +90,9 @@ export function Members() {
   const [nouveauOk, setNouveauOk] = useState(false);
   const definir = async (m: Member) => {
     setMdpErr(null); setMdp(null); setNouveauOk(false);
-    if (nouveau.length < 8) { setMdpErr('Le mot de passe doit contenir au moins 8 caractères.'); return; }
+    if (!isValidSecretCode(nouveau)) { setMdpErr(isWeakSecretCode(nouveau) ? 'Choisissez un code moins facile à deviner.' : 'Le code secret doit contenir entre 3 et 6 chiffres.'); return; }
     setMdpBusy(true);
-    const res = await resetPasswordFor(m.id, nouveau);
+    const res = await definirCodeSecret(m.id, nouveau);
     setMdpBusy(false);
     if (res.error) { setMdpErr(res.error); return; }
     setNouveau(''); setNouveauOk(true);
@@ -110,6 +111,7 @@ export function Members() {
   const [dial, setDial] = useState('+221');
   const [tel, setTel] = useState('');
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [pin, setPin] = useState('');
   const [role, setRole] = useState<'livreur' | 'team' | 'admin'>('team');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -135,7 +137,17 @@ export function Members() {
     if (nom.trim().length < 2) { setErr('Saisissez le nom complet.'); return; }
     const phone = joinPhone(dial, tel);
     if (!PHONE.test(phone)) { setErr('Saisissez un numéro de téléphone valide.'); return; }
+    if (pin && !isValidSecretCode(pin)) { setErr(isWeakSecretCode(pin) ? 'Choisissez un code moins facile à deviner.' : 'Le code secret doit contenir entre 3 et 6 chiffres.'); return; }
     setBusy(true);
+    if (pin) {
+      const created = await creerMembreAvecCode({ name: nom.trim(), phone, email, pin, role });
+      setBusy(false);
+      if (created.error) { setErr(created.error); return; }
+      setOk(`Compte créé pour ${nom.trim()} avec son code secret. Transmettez-le-lui vous-même.`);
+      setEmail(''); setNom(''); setTel(''); setAvatar(null); setPin('');
+      await reload();
+      return;
+    }
     const res = await inviteMember(email, role, { name: nom.trim(), phone, avatarPath: avatar ?? undefined });
     setBusy(false);
     if (res.error) { setErr(res.error); return; }
@@ -199,6 +211,8 @@ export function Members() {
                   <input id="inv-tel" type="tel" inputMode="tel" autoComplete="off" value={tel} style={{ flex: 1, minWidth: 0 }} onChange={(e) => setTel(e.target.value)} />
                 </div>
               </div>
+              <div className="grow"><Field id="inv-pin" label={tr("Code secret (facultatif)")} type="text" inputMode="numeric" maxLength={6} autoComplete="off" value={pin} onChange={(v) => setPin(normalizeSecretCode(v))}
+                hint={tr("De 3 à 6 chiffres. Si vous le renseignez, le compte est créé tout de suite.")} /></div>
               <Select id="inv-role" label={tr("Rôle")} value={role} onChange={(v) => setRole(v as 'livreur' | 'team' | 'admin')}
                 options={[{ v: 'team', l: 'Équipe' }, { v: 'livreur', l: 'Livreur (fret uniquement)' }, { v: 'admin', l: 'Administrateur' }]} />
               <Button type="submit" icon="plus" full={false} disabled={busy}>{tr(busy ? 'Ajout…' : 'Ajouter')}</Button>
@@ -379,12 +393,12 @@ export function Members() {
                     </div>
                   </div>
                 )}
-                <Field id="mb-newpw" label={tr("Définir un mot de passe")} type="password" value={nouveau} onChange={setNouveau}
-                  hint={tr("Au moins 8 caractères. À transmettre vous-même à la personne.")} />
+                <Field id="mb-newpw" label={tr("Définir le code secret")} type="text" inputMode="numeric" maxLength={6} autoComplete="off" value={nouveau} onChange={(v) => setNouveau(normalizeSecretCode(v))}
+                  hint={tr("De 3 à 6 chiffres. À transmettre vous-même à la personne.")} />
                 <Button kind="s" icon="check" full={false} disabled={mdpBusy || !nouveau} onClick={() => void definir(openMember)}>
-                  {tr(mdpBusy ? 'Enregistrement…' : 'Enregistrer le mot de passe')}
+                  {tr(mdpBusy ? 'Enregistrement…' : 'Enregistrer le code secret')}
                 </Button>
-                {nouveauOk && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr("Mot de passe modifié.")}</span></div>}
+                {nouveauOk && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.2} /><span>{tr("Code secret modifié.")}</span></div>}
                 {mdpErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(mdpErr)}</span></div>}
               </div>
             )}
