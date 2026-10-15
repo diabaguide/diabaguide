@@ -409,7 +409,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   const { tr } = useI18n();
   return (
-    <footer className="site-footer"><div className="site-footer-in"><span>{tr("Diaba Guide · version de démonstration")}</span><span>{tr("Données de démonstration : noms, adresses et numéros fictifs.")}</span></div></footer>
+    <footer className="site-footer"><div className="site-footer-in"><span>{tr("Diaba Guide")}</span></div></footer>
   );
 }
 

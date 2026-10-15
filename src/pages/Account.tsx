@@ -119,7 +119,6 @@ export function Profile() {
         <Button kind="t" icon="info" onClick={() => { d({ t: 'tour', v: false }); nav('/accueil'); }}>{tr("Revoir la présentation")}</Button>
         <Button kind="s" icon="logout" onClick={async () => { await signOut(); d({ t: 'logout' }); nav('/'); }}>{tr("Se déconnecter")}</Button>
         <Button kind="t" icon="logout" onClick={async () => { await signOutEverywhere(); d({ t: 'logout' }); nav('/'); }}>{tr("Déconnecter tous mes appareils")}</Button>
-        <div className="small muted center">{tr("Diaba Guide · version de démonstration")}</div>
       </div>
     </Screen>
   );
