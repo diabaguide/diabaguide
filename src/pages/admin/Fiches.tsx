@@ -1,10 +1,14 @@
 import { useI18n } from '../../i18n';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { catLabel, cityName, type Cat, type City, type Freight, type Proposal, type Provider } from '../../data';
 import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
-import { newProviderId, validateProvider } from '../../lib/providers';
+import { fetchProviderNote, newProviderId, saveProviderNote, validateProvider } from '../../lib/providers';
+import { aRever, completude, manquantsPourStatut, STATUTS, type Statut } from '../../lib/completude';
+import { evaluerPosition, lirePositionGps } from '../../lib/positionSaisie';
+import { etiquetteFiche, formatTelChine, lienTel } from '../../lib/contact';
+import { libelleHalal, niveauPrix, statutHalal, statutOuverture, symbolesPrix } from '../../lib/filtresFiche';
 import { Button, DemoNote, Field, Icon, Section, Select, StoredPhoto, TextArea, useWide } from '../../ui';
 import { FilePick, MAX_PHOTOS } from '../Contribute';
 import { SortTh, compare, useSort } from './tableSort';
@@ -36,15 +40,17 @@ export function FichesList() {
   const [q, setQ] = useState('');
   const [city, setCity] = useState<'' | City>('');
   const [cat, setCat] = useState<'' | Cat>('');
+  const [incompletes, setIncompletes] = useState(false);
   const isAdmin = s.user?.role === 'admin';
   const { sort, toggle } = useSort<'name' | 'cat' | 'city' | 'verified'>({ k: 'name', dir: 1 });
   const match = (p: Provider) => (!city || p.city === city) && (!cat || p.cat === cat)
+    && (!incompletes || completude(p).manquants.length > 0)
     && contient(`${p.name} ${p.cn} ${p.tel ?? ''} ${p.wechat ?? ''}`, q);
   const rows = useMemo(() => [...s.providers, ...s.hiddenProviders].filter(match).sort((a, b) => {
     const v = (p: Provider) => (sort.k === 'cat' ? catLabel(p.cat) : sort.k === 'city' ? cityName(p.city) : sort.k === 'verified' ? (p.verified ?? '') : p.name).toLowerCase();
     return compare(v(a), v(b), sort.dir);
-  }), [s.providers, s.hiddenProviders, s.categories, s.cities, city, cat, q, sort]); // eslint-disable-line react-hooks/exhaustive-deps
-  const filtered = !!(city || cat || q);
+  }), [s.providers, s.hiddenProviders, s.categories, s.cities, city, cat, q, sort, incompletes]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filtered = !!(city || cat || q || incompletes);
   const pending = s.pendingDeletion.filter(match);
   const visibleIds = rows.map((p) => p.id);
   const names = Object.fromEntries([...s.providers, ...s.hiddenProviders].map((p) => [p.id, p.name]));
@@ -86,7 +92,8 @@ export function FichesList() {
           <Select id="fv" label={tr("Ville")} value={city} onChange={setCity} options={[{ v: '', l: 'Toutes' }, ...s.cities.map((c) => ({ v: c.id as City, l: c.name }))]} />
           <Select id="fc" label={tr("Catégorie")} value={cat} onChange={setCat} options={[{ v: '', l: 'Toutes' }, ...s.categories.map((c) => ({ v: c.id as Cat, l: c.label }))]} />
           <div className="grow"><Field id="fq" label={tr("Recherche")} type="search" value={q} onChange={setQ} placeholder={tr("Nom, téléphone, WeChat…")} /></div>
-          {filtered && <Button kind="s" icon="x" full={false} onClick={() => { setCity(''); setCat(''); setQ(''); }}>{tr("Réinitialiser")}</Button>}
+          <label className="check"><input type="checkbox" checked={incompletes} onChange={(e) => setIncompletes(e.target.checked)} /><span>{tr("Fiches incomplètes")}</span></label>
+          {filtered && <Button kind="s" icon="x" full={false} onClick={() => { setCity(''); setCat(''); setQ(''); setIncompletes(false); }}>{tr("Réinitialiser")}</Button>}
         </div>
         {wide ? (
         <div className="table dense"><table>
@@ -97,7 +104,7 @@ export function FichesList() {
               <tr key={p.id}>
                 <td><input type="checkbox" aria-label={t('Sélectionner {0}', { 0: p.name })} checked={selected.has(p.id)} onChange={() => setSelected(toggleOne(selected, p.id))} /></td>
                 <td className="thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={48} w={48} round={8} thumb /></td>
-                <td><strong>{p.name}</strong>{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}{p.unpublishedAt && <span className="tag tag-warn" style={{ marginLeft: 8 }}>{tr("Dépubliée")}</span>}<div className="small muted zh">{p.cn}</div></td>
+                <td><strong>{p.name}</strong>{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}{p.unpublishedAt && <span className="tag tag-warn" style={{ marginLeft: 8 }}>{tr("Dépubliée")}</span>}{p.reviewStatus && p.reviewStatus !== 'published' && <span className="tag tag-warn" style={{ marginLeft: 8 }}>{tr(STATUTS.find((x) => x.id === p.reviewStatus)?.label ?? '')}</span>}<span className="small muted" style={{ marginLeft: 8 }}>{(() => { const c = completude(p); return `${c.ok}/${c.total}`; })()}{aRever(p.verified) ? ` · ${tr('À revérifier')}` : ''}</span><div className="small muted zh">{p.cn}</div></td>
                 <td>{tr(catLabel(p.cat))}</td><td>{tr(cityName(p.city))}</td><td>{p.verified || '—'}</td>
                 <td><Link className="link" to={`/equipe/fiches/${p.id}`}>{tr("Modifier")}<Icon name="chevR" size={18} sw={2.4} /></Link></td>
               </tr>
@@ -126,8 +133,8 @@ export function FichesList() {
               <input type="checkbox" style={{ width: 24, height: 24, flex: 'none' }} aria-label={t('Sélectionner {0}', { 0: p.name })} checked={selected.has(p.id)} onChange={() => setSelected(toggleOne(selected, p.id))} />
               <div style={{ flex: 1, minWidth: 0 }}><AdminCard toneSeed={undefined}
                 title={<>{p.name}{p.featured && <Icon name="star" size={15} fill="var(--gold-fill)" sw={0} />}</>}
-                badge={p.unpublishedAt ? <span className="tag tag-warn">{tr("Dépubliée")}</span> : undefined}
-                sub={<>{tr(catLabel(p.cat))} · {tr(cityName(p.city))}{p.verified ? ` · ${tr("vérifiée le")} ${p.verified}` : ''}</>}
+                badge={p.unpublishedAt ? <span className="tag tag-warn">{tr("Dépubliée")}</span> : p.reviewStatus && p.reviewStatus !== 'published' ? <span className="tag tag-warn">{tr(STATUTS.find((x) => x.id === p.reviewStatus)?.label ?? '')}</span> : undefined}
+                sub={<>{tr(catLabel(p.cat))} · {tr(cityName(p.city))}{p.verified ? ` · ${tr("vérifiée le")} ${p.verified}` : ''} · {completude(p).ok}/{completude(p).total}{aRever(p.verified) ? ` · ${tr('À revérifier')}` : ''}</>}
                 thumb={<span className="acard-thumb"><StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={46} w={46} round={12} thumb /></span>}
                 onOpen={() => nav(`/equipe/fiches/${p.id}`)} /></div>
               </div>
@@ -188,6 +195,17 @@ export function FicheEdit() {
   const [saved, setSaved] = useState(false);
   const [dlg, setDlg] = useState<Dlg>(null);
   const [reason, setReason] = useState('');
+  const [note, setNote] = useState('');
+  const [noteLue, setNoteLue] = useState(false);
+  const [gps, setGps] = useState<{ busy: boolean; msg: string; ok?: boolean }>({ busy: false, msg: '' });
+  const [apercu, setApercu] = useState(false);
+  const noteId = existing?.id;
+  useEffect(() => {
+    if (!noteId) return;
+    let vivant = true;
+    void fetchProviderNote(noteId).then((n) => { if (vivant && n !== null) { setNote(n); setNoteLue(true); } });
+    return () => { vivant = false; };
+  }, [noteId]);
   if (!p) return <Navigate to="/equipe/fiches" replace />;
 
   const set = (patch: Partial<Provider>) => { setP({ ...p, ...patch }); setSaved(false); };
@@ -200,8 +218,18 @@ export function FicheEdit() {
   const save = async () => {
     setTried(true);
     if (vErr) return;
+    // Un statut « À vérifier » ou « Publié » (choisi explicitement) exige une fiche complète ; le brouillon passe toujours.
+    if (p.reviewStatus === 'review' || p.reviewStatus === 'published') {
+      const manque = manquantsPourStatut(p, p.reviewStatus);
+      if (manque.length) {
+        setErr(`Pour le statut « ${STATUTS.find((x) => x.id === p.reviewStatus)?.label} », il manque : ${manque.join(', ')}. Choisissez « Brouillon » pour enregistrer quand même.`);
+        return;
+      }
+    }
     setBusy(true); setErr(null);
-    const e = await api.saveProvider(isNew ? { ...p, id: newProviderId(p.name) } : p);
+    const idFinal = isNew ? newProviderId(p.name) : p.id;
+    const e = await api.saveProvider(isNew ? { ...p, id: idFinal } : p);
+    if (!e && (noteLue || note.trim())) { const en = await saveProviderNote(idFinal, note); if (en.error) { setBusy(false); setErr(`Fiche enregistrée, mais pas la note : ${en.error}`); return; } }
     setBusy(false);
     if (e) { setErr(e); return; }
     if (isNew) nav('/equipe/fiches'); else setSaved(true);
@@ -213,6 +241,16 @@ export function FicheEdit() {
     if (e) { setErr(e); setDlg(null); return; }
     nav('/equipe/fiches');
   };
+  const capturer = async () => {
+    setGps({ busy: true, msg: '' });
+    try {
+      const r = evaluerPosition(await lirePositionGps());
+      if (!r.ok) { setGps({ busy: false, msg: r.raison, ok: false }); return; }
+      set({ lat: r.lat, lng: r.lng, coordsVerified: true });
+      setGps({ busy: false, msg: `Position enregistrée (précision ${r.precision} m). Pensez à enregistrer la fiche.`, ok: true });
+    } catch (e) { setGps({ busy: false, msg: (e as Error).message, ok: false }); }
+  };
+  const compl = completude(p);
   const txt = (k: keyof Provider, label: string, extra?: { req?: boolean; hint?: string }) => (
     <Field id={k} label={tr(label)} value={(p[k] as string | undefined) ?? ''} onChange={(v) => set({ [k]: v } as Partial<Provider>)} req={extra?.req} hint={extra?.hint ? tr(extra.hint) : undefined} />
   );
@@ -295,14 +333,44 @@ export function FicheEdit() {
             <div className="small muted">{tr("Les photos sont enregistrées avec la fiche : cliquez sur Enregistrer.")}</div>
           </Section>
           <Section title="Position et vérification" icon="pin">
+            <Button kind="g" icon="pin" disabled={gps.busy} onClick={() => void capturer()}>{tr(gps.busy ? 'Recherche de la position…' : 'Enregistrer ma position ici')}</Button>
+            <div className="small muted">{tr("À faire sur place, devant l’entrée, à l’extérieur.")}</div>
+            {gps.msg && <div role={gps.ok ? 'status' : 'alert'} className={`notice ${gps.ok ? 'ok' : 'err'}`}><Icon name={gps.ok ? 'check' : 'alert'} size={20} sw={2} /><span>{tr(gps.msg)}</span></div>}
+            {p.coordsVerified && <div className="small" style={{ fontWeight: 600 }}>{tr("Position vérifiée sur place.")}</div>}
             <div className="form2">
-              <Field id="lat" label={tr("Latitude")} type="number" value={String(p.lat)} onChange={(v) => set({ lat: Number(v) })} />
-              <Field id="lng" label={tr("Longitude")} type="number" value={String(p.lng)} onChange={(v) => set({ lng: Number(v) })} />
+              <Field id="lat" label={tr("Latitude")} type="number" value={String(p.lat)} onChange={(v) => set({ lat: Number(v), coordsVerified: false })} />
+              <Field id="lng" label={tr("Longitude")} type="number" value={String(p.lng)} onChange={(v) => set({ lng: Number(v), coordsVerified: false })} />
             </div>
             {txt('verified', 'Dernière vérification', { hint: 'Date affichée telle quelle, par exemple 21 sept. 2026.' })}
           </Section>
         </div>
         <div className="stack edit-side" style={{ gap: 20 }}>
+          <Section title="Complétude" icon="list">
+            <div style={{ fontWeight: 700 }}>{compl.ok} {tr("champs sur")} {compl.total}</div>
+            <div role="progressbar" aria-valuemin={0} aria-valuemax={compl.total} aria-valuenow={compl.ok} style={{ height: 10, borderRadius: 6, background: 'var(--line)', overflow: 'hidden' }}>
+              <div style={{ width: `${compl.total ? (compl.ok / compl.total) * 100 : 0}%`, height: '100%', background: compl.ok === compl.total ? 'var(--ok, #1a7f4b)' : 'var(--gold-fill)' }} />
+            </div>
+            {compl.manquants.length > 0 && <ul className="small" style={{ margin: 0, paddingInlineStart: 18 }}>{compl.manquants.map((m) => <li key={m}>{tr(m)}</li>)}</ul>}
+            {aRever(p.verified) && <div className="small" style={{ color: '#8A4310', fontWeight: 600 }}>{tr("À revérifier : dernière vérification il y a plus de 6 mois.")}</div>}
+          </Section>
+          <Section title="Statut" icon="check">
+            <Select id="reviewStatus" label={tr("Statut de la fiche")} value={p.reviewStatus ?? 'published'}
+              onChange={(v) => set({ reviewStatus: v as Statut })}
+              options={STATUTS.filter((x) => isAdmin || x.id !== 'published' || (existing?.reviewStatus ?? 'published') === 'published').map((x) => ({ v: x.id, l: x.label }))} />
+            <div className="small muted">{tr("Seul un administrateur peut publier. Une fiche en brouillon ou à vérifier reste invisible des voyageurs.")}</div>
+            {isAdmin && (
+              <Select id="partnerLabel" label={tr("Étiquette affichée aux voyageurs")} value={p.partnerLabel ?? ''}
+                onChange={(v) => set({ partnerLabel: (v || undefined) as Provider['partnerLabel'] })}
+                options={[{ v: '', l: 'Automatique' }, { v: 'service_diaba', l: 'Service Diaba' }, { v: 'partenaire', l: 'Partenaire' }]} />
+            )}
+          </Section>
+          <Section title="Note pour l’équipe" icon="edit">
+            <TextArea id="note" label={tr("Note pour l’équipe (jamais publiée)")} rows={3} value={note} onChange={(v) => { setNote(v); setSaved(false); }}
+              hint={tr("Visible de l’équipe seulement, jamais des voyageurs.")} />
+          </Section>
+          <Section title="Aperçu" icon="eye">
+            <Button kind="s" icon="eye" onClick={() => setApercu(true)}>{tr("Aperçu voyageur")}</Button>
+          </Section>
           <Section title="Actions" icon="check">
             {err && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(err)}</span></div>}
             {saved && <div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr("Fiche enregistrée.")}</span></div>}
@@ -319,6 +387,14 @@ export function FicheEdit() {
           </Section>
         </div>
       </div>
+      {apercu && (
+        <div className="overlay" onClick={() => setApercu(false)}>
+          <div className="dialog" role="dialog" aria-modal="true" aria-label={tr("Aperçu voyageur")} onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, maxHeight: '85vh', overflowY: 'auto' }}>
+            <Apercu p={p} />
+            <div className="actions"><Button kind="s" full={false} onClick={() => setApercu(false)}>{tr("Fermer")}</Button></div>
+          </div>
+        </div>
+      )}
       {dlg && (
         <div className="overlay" onClick={() => setDlg(null)}>
           <div className="dialog" role="dialog" aria-modal="true" aria-label={tr(dlg === 'delete' ? 'Supprimer cette fiche ?' : 'Demander la suppression ?')} onClick={(e) => e.stopPropagation()}>
@@ -337,6 +413,36 @@ export function FicheEdit() {
         </div>
       )}
     </>
+  );
+}
+
+/** Aperçu simplifié de la fiche telle qu'un voyageur la voit sur mobile (mêmes règles de masquage). */
+function Apercu({ p }: { p: Provider }) {
+  const { tr } = useI18n();
+  const prix = niveauPrix(p);
+  const ouv = statutOuverture(p.hours);
+  const etiquette = etiquetteFiche(p);
+  const halal = libelleHalal(statutHalal(p));
+  const contact = !!(p.tel?.trim() || p.wechat?.trim());
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <StoredPhoto bucket="fiche-photos" path={p.photoPaths?.[0]} label={tr("Photo")} h={150} w={340} round={12} />
+      <div className="row wrap" style={{ gap: 8 }}><span className="small muted">{tr(catLabel(p.cat))} · {p.district}</span>{etiquette && <span className="tag tag-warn">{tr(etiquette)}</span>}</div>
+      <h2 style={{ fontSize: 22 }}>{p.name}</h2>
+      <div className="zh" style={{ fontSize: 17 }}>{p.cn}</div>
+      {(prix || ouv || p.metro) && <div className="row wrap" style={{ gap: 12, fontWeight: 600 }}>
+        {prix && <span>{symbolesPrix(prix)}{p.cat === 'hotel' && p.priceNight ? ` · ${p.priceNight} ¥` : ''}</span>}
+        {ouv && <span>{tr(ouv.texte)}</span>}{p.metro && <span>{p.metro}</span>}
+      </div>}
+      {halal && <div>{tr(halal)}</div>}
+      {p.desc && <p>{p.desc}</p>}
+      {p.addrCn && <div className="zhaddr" lang="zh-Hans">{p.addrCn}</div>}
+      <div className="stack" style={{ gap: 8 }}>
+        <span className="btn btn-g btn-full"><span>{tr("Montrer au chauffeur")}</span></span>
+        {p.tel?.trim() && <a className="btn btn-p btn-full" href={lienTel(p.tel)}><span>{tr("Appeler")} · {formatTelChine(p.tel)}</span></a>}
+        {!contact && <div className="small muted">{tr("Contact non disponible — montrez l’adresse au chauffeur.")}</div>}
+      </div>
+    </div>
   );
 }
 
