@@ -135,7 +135,7 @@ export function Home() {
     <Screen className="sceau" wide>
       <PremiereVisite />
       <header className="hero">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
+        <div className="row home-hero-brand" style={{ justifyContent: 'space-between' }}>
           <Logo height={30} tail="GUIDE" />
           <span className="seal seal-sm" aria-hidden="true"><span>指</span><span>南</span></span>
         </div>
