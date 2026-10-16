@@ -2079,6 +2079,41 @@
     "zh": "由团队补充",
     "ar": "يستكملها الفريق"
   },
+  "À compléter en priorité": {
+    "en": "Priority items to complete",
+    "zh": "优先补充项目",
+    "ar": "معلومات يجب استكمالها أولاً"
+  },
+  "Choisissez un manque pour retrouver rapidement les fiches concernées.": {
+    "en": "Choose a missing item to quickly find the affected listings.",
+    "zh": "选择缺失项以快速查找相关地点条目。",
+    "ar": "اختاروا معلومة ناقصة للعثور بسرعة على العناوين المعنية."
+  },
+  "Sans photo": {
+    "en": "No photo",
+    "zh": "无照片",
+    "ar": "بدون صورة"
+  },
+  "Sans contact": {
+    "en": "No contact",
+    "zh": "无联系方式",
+    "ar": "بدون جهة اتصال"
+  },
+  "Sans adresse chinoise": {
+    "en": "No Chinese address",
+    "zh": "无中文地址",
+    "ar": "بدون عنوان صيني"
+  },
+  "Sans position vérifiée": {
+    "en": "No verified location",
+    "zh": "位置未验证",
+    "ar": "بدون موقع مؤكد"
+  },
+  "Sans horaires": {
+    "en": "No opening hours",
+    "zh": "无营业时间",
+    "ar": "بدون أوقات الدوام"
+  },
   "Photos et carte de visite": {
     "en": "Photos and business card",
     "zh": "照片和名片",

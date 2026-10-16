@@ -7,7 +7,7 @@ import { contient } from '../../lib/texte';
 import { fetchProviderNote, newProviderId, saveProviderNote, validateProvider } from '../../lib/providers';
 import { aRever, completude, manquantsPourStatut, STATUTS, type Statut } from '../../lib/completude';
 import { evaluerPosition, lirePositionGps } from '../../lib/positionSaisie';
-import { etiquetteFiche, formatTelChine, lienTel } from '../../lib/contact';
+import { coordsFiables, etiquetteFiche, formatTelChine, lienTel } from '../../lib/contact';
 import { libelleHalal, niveauPrix, statutHalal, statutOuverture, symbolesPrix } from '../../lib/filtresFiche';
 import { Button, DemoNote, Field, Icon, Section, Select, StoredPhoto, TextArea, useWide } from '../../ui';
 import { FilePick, MAX_PHOTOS } from '../Contribute';
@@ -28,6 +28,20 @@ const Head = ({ title, sub, right }: { title: string; sub: string; right?: React
 const today = () => new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 const shown = (iso?: string) => (iso ? new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
+type MissingFilter = '' | 'photo' | 'contact' | 'address' | 'position' | 'hours';
+const hasMissing = (p: Provider, missing: Exclude<MissingFilter, ''>) => {
+  if (missing === 'photo') return (p.photoPaths?.length ?? 0) === 0;
+  if (missing === 'contact') return !p.tel?.trim() && !p.wechat?.trim();
+  if (missing === 'address') return !p.addrCn?.trim();
+  if (missing === 'position') return !coordsFiables(p);
+  return (p.cat === 'gros' || p.cat === 'resto') && !p.hours?.trim();
+};
+const MISSING_FILTERS: { id: Exclude<MissingFilter, ''>; label: string }[] = [
+  { id: 'photo', label: 'Sans photo' }, { id: 'contact', label: 'Sans contact' },
+  { id: 'address', label: 'Sans adresse chinoise' }, { id: 'position', label: 'Sans position vérifiée' },
+  { id: 'hours', label: 'Sans horaires' },
+];
+
 export function FichesList() {
   const { tr, t } = useI18n();
   const { s, api } = useStore();
@@ -42,17 +56,21 @@ export function FichesList() {
   const [city, setCity] = useState<'' | City>('');
   const [cat, setCat] = useState<'' | Cat>('');
   const [incompletes, setIncompletes] = useState(false);
+  const [missing, setMissing] = useState<MissingFilter>('');
   const isAdmin = s.user?.role === 'admin';
   useEffect(() => { setQ(params.get('q') ?? ''); }, [params]);
   const { sort, toggle } = useSort<'name' | 'cat' | 'city' | 'verified'>({ k: 'name', dir: 1 });
   const match = (p: Provider) => isPublicDirectoryProvider(p) && (!city || p.city === city) && (!cat || p.cat === cat)
     && (!incompletes || completude(p).manquants.length > 0)
+    && (!missing || hasMissing(p, missing))
     && contient(`${p.name} ${p.cn} ${p.tel ?? ''} ${p.wechat ?? ''}`, q);
   const rows = useMemo(() => [...s.providers, ...s.hiddenProviders].filter(match).sort((a, b) => {
     const v = (p: Provider) => (sort.k === 'cat' ? catLabel(p.cat) : sort.k === 'city' ? cityName(p.city) : sort.k === 'verified' ? (p.verified ?? '') : p.name).toLowerCase();
     return compare(v(a), v(b), sort.dir);
   }), [s.providers, s.hiddenProviders, s.categories, s.cities, city, cat, q, sort, incompletes]); // eslint-disable-line react-hooks/exhaustive-deps
-  const filtered = !!(city || cat || q || incompletes);
+  const filtered = !!(city || cat || q || incompletes || missing);
+  const qualityRows = [...s.providers, ...s.hiddenProviders].filter(isPublicDirectoryProvider);
+  const missingCounts = Object.fromEntries(MISSING_FILTERS.map(({ id }) => [id, qualityRows.filter((p) => hasMissing(p, id)).length])) as Record<Exclude<MissingFilter, ''>, number>;
   const pending = s.pendingDeletion.filter(match);
   const visibleIds = rows.map((p) => p.id);
   const names = Object.fromEntries([...s.providers, ...s.hiddenProviders].map((p) => [p.id, p.name]));
@@ -90,12 +108,23 @@ export function FichesList() {
       <Head title={tr("Fiches")} sub={t(rows.length > 1 ? '{0} fiches publiées. Ajoutez, modifiez ou demandez la suppression d’une fiche.' : '{0} fiche publiée. Ajoutez, modifiez ou demandez la suppression d’une fiche.', { 0: rows.length })}
         right={<Button to="/equipe/fiches/nouvelle" icon="plus" full={false}>{tr("Nouvelle fiche")}</Button>} />
       <div className="admin-body">
+        <section className="card stack" style={{ gap: 10 }} aria-label={tr("À compléter en priorité")}>
+          <div className="row" style={{ justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+            <div><h2 style={{ fontSize: 17, margin: 0 }}>{tr("À compléter en priorité")}</h2><p className="small muted" style={{ margin: '3px 0 0' }}>{tr("Choisissez un manque pour retrouver rapidement les fiches concernées.")}</p></div>
+            {incompletes && <span className="tag tag-warn">{tr("Fiches incomplètes")}</span>}
+          </div>
+          <div className="chips">
+            {MISSING_FILTERS.map(({ id, label }) => <button type="button" key={id} className={`chip${missing === id ? ' on' : ''}`} onClick={() => setMissing((current) => current === id ? '' : id)}>
+              <Icon name={id === 'contact' ? 'chat' : id === 'position' ? 'pin' : id === 'photo' ? 'image' : 'alert'} size={17} />{tr(label)} <strong>{missingCounts[id]}</strong>
+            </button>)}
+          </div>
+        </section>
         <div className="filters sticky">
           <Select id="fv" label={tr("Ville")} value={city} onChange={setCity} options={[{ v: '', l: 'Toutes' }, ...s.cities.map((c) => ({ v: c.id as City, l: c.name }))]} />
           <Select id="fc" label={tr("Catégorie")} value={cat} onChange={setCat} options={[{ v: '', l: 'Toutes' }, ...directoryCategories(s.categories).map((c) => ({ v: c.id as Cat, l: c.label }))]} />
           <div className="grow"><Field id="fq" label={tr("Recherche")} type="search" value={q} onChange={setQ} placeholder={tr("Nom, téléphone, WeChat…")} /></div>
           <label className="check"><input type="checkbox" checked={incompletes} onChange={(e) => setIncompletes(e.target.checked)} /><span>{tr("Fiches incomplètes")}</span></label>
-          {filtered && <Button kind="s" icon="x" full={false} onClick={() => { setCity(''); setCat(''); setQ(''); setIncompletes(false); }}>{tr("Réinitialiser")}</Button>}
+          {filtered && <Button kind="s" icon="x" full={false} onClick={() => { setCity(''); setCat(''); setQ(''); setIncompletes(false); setMissing(''); }}>{tr("Réinitialiser")}</Button>}
         </div>
         {wide ? (
         <div className="table dense"><table>
