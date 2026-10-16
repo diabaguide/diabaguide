@@ -6,6 +6,7 @@ import {
   type Provider, type Proposal, type Status,
 } from './data';
 import { fetchTaxonomies } from './lib/taxonomies';
+import { mergeOfflineProviders } from './lib/offlineProviders';
 import { cancelProviderDeletion, deleteProvider, fetchProviders, requestProviderDeletion, saveProvider as saveProviderRow } from './lib/providers';
 import { fetchMyRating, rateProvider } from './lib/ratings';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -200,7 +201,9 @@ function load(): State {
       const parsed = { ...initial, ...stored } as State;
       // Une personne qui a déjà utilisé l'application n'a pas besoin de la visite guidée.
       parsed.tourDone = stored.tourDone ?? true;
-      if (!stored.providers || stored.providers.length === 0) parsed.providers = PROVIDERS;
+      // Les copies de fiches présentes avant le redémarrage restent la source
+      // hors connexion. Elles priment sur le petit repli livré avec l'application.
+      parsed.providers = mergeOfflineProviders(PROVIDERS, stored.providers ?? []);
       parsed.categories = categoriesParNom(!stored.categories || stored.categories.length === 0 ? STATIC_CATEGORIES : parsed.categories);
       parsed.cities = villesParNom(!stored.cities || stored.cities.length === 0 ? STATIC_CITIES : parsed.cities);
       parsed.districts = quartiersParNom(!stored.districts || stored.districts.length === 0 ? STATIC_DISTRICTS : parsed.districts);
@@ -276,7 +279,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Chargement des adresses depuis Supabase au démarrage (repli statique interne).
   useEffect(() => {
     let alive = true;
-    fetchProviders().then((list) => { if (alive) d({ t: 'setProviders', v: list }); });
+    fetchProviders()
+      .then((list) => { if (alive) d({ t: 'setProviders', v: list }); })
+      // Sans réseau, on conserve les fiches restaurées depuis le stockage local.
+      .catch(() => { /* repli hors connexion déjà chargé par load() */ });
     return () => { alive = false; };
   }, []);
 
