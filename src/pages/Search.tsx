@@ -1,13 +1,14 @@
 import { useI18n } from '../i18n';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { catIcon, catLabel, citiesWithPublicEntries, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
 import { useModules } from '../lib/modules';
-import { Button, Chip, DemoNote, Field, Icon, Screen, Select, Stars, StoredPhoto, useWide } from '../ui';
+import { Button, Chip, DemoNote, Field, FicheLabel, Icon, Screen, Select, Stars, StoredPhoto, useWide } from '../ui';
 import { logSearch } from '../lib/searchLogs';
 import { sansAccent } from '../lib/texte';
+import { afficherTriNotes, aUnContact, coordsFiables, etiquetteFiche, lienTel } from '../lib/contact';
 
 /* Termes déjà signalés pendant cette visite : on n'enregistre pas deux fois la
    même recherche quand le voyageur va et vient entre les résultats. */
@@ -36,7 +37,7 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
             </button>
           </span>
           <span className="small muted rcard-line"><span className="zh">{p.cn}</span>{p.district ? <> · {tr(p.district)}</> : null}</span>
-          <span className="small row rcard-cat"><Icon name={catIcon(p.cat)} size={15} sw={2} />{tr(catLabel(p.cat))}</span>
+          <span className="small row rcard-cat"><Icon name={catIcon(p.cat)} size={15} sw={2} />{tr(catLabel(p.cat))}<FicheLabel label={etiquetteFiche(p)} /></span>
           <span className="small rcard-meta">
             <Stars avg={p.ratingAvg} count={p.ratingCount} size={13} />
             {/* Distance et date de vérification ; rien quand la fiche n'a pas
@@ -49,9 +50,12 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
         <Link className="rcard-driver" to={`/adresses/${p.id}/chauffeur`}>
           <Icon name="route" size={16} sw={2} />{tr("Montrer au chauffeur")}
         </Link>
-        <Link className="rcard-contact" to={`/adresses/${p.id}/contact`}>
-          <Icon name="chat" size={16} sw={2} />{tr("Contacter")}
-        </Link>
+        {/* Aucun bouton de contact quand le lieu n'a ni téléphone ni WeChat. */}
+        {!aUnContact(p) ? null : p.tel ? (
+          <a className="rcard-contact" href={lienTel(p.tel)}><Icon name="phone" size={16} sw={2} />{tr("Appeler")}</a>
+        ) : (
+          <Link className="rcard-contact" to={`/adresses/${p.id}/contact`}><Icon name="chat" size={16} sw={2} />{tr("WeChat")}</Link>
+        )}
       </div>
     </article>
   );
@@ -91,7 +95,7 @@ const dateVerif = (v: string): number => {
 function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provider[]) {
   const pos = getPos();
   const term = sansAccent(q.q.trim());
-  let list = providers.filter((p) => p.city === q.city).map((p) => ({ p, km: pos ? distanceKm(pos, p) : null }));
+  let list = providers.filter((p) => p.city === q.city).map((p) => ({ p, km: pos && coordsFiables(p) ? distanceKm(pos, p) : null }));
   if (q.cat) list = list.filter((x) => x.p.cat === q.cat);
   if (term) {
     list = list.filter(({ p }) =>
@@ -99,10 +103,12 @@ function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provide
         ...(p.productTags ?? []).map(tagLabel), p.cuisine ?? '', p.goods ?? ''].join(' ')).includes(term));
   }
   if (q.fret && q.fret !== 'both') list = list.filter((x) => x.p.freight?.includes(q.fret as Freight));
-  if (q.prox && Number(q.prox) > 0) list = list.filter((x) => x.km === null || x.km <= Number(q.prox));
+  // Le rayon ne s'applique qu'aux fiches dont la position est fiable, et seulement si
+  // au moins une l'est : sinon il viderait la liste alors que les positions sont à saisir.
+  if (q.prox && Number(q.prox) > 0 && list.some((x) => x.km !== null)) list = list.filter((x) => x.km !== null && x.km <= Number(q.prox));
   if (q.tri === 'note') list.sort((a, b) => (b.p.ratingAvg ?? 0) - (a.p.ratingAvg ?? 0) || (b.p.ratingCount ?? 0) - (a.p.ratingCount ?? 0));
   else if (q.tri === 'verif') list.sort((a, b) => dateVerif(b.p.verified) - dateVerif(a.p.verified));
-  else if (pos) list.sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
+  else if (pos) list.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
   return list;
 }
 
@@ -114,10 +120,19 @@ export function Search() {
   const nav = useNavigate();
   const wide = useWide();
   const online = useOnline();
-  const [loading, setLoading] = useState(true);
+  const loading = false;
   const [sel, setSel] = useState(0);
+  // La saisie vit dans un état local ; l'URL n'est mise à jour qu'après une courte pause.
+  // Piloter le champ directement par l'URL faisait perdre des lettres en frappe rapide.
+  const [text, setText] = useState(q.q);
+  const lastSent = useRef(q.q);
+  useEffect(() => { if (q.q !== lastSent.current) { lastSent.current = q.q; setText(q.q); } }, [q.q]);
+  useEffect(() => {
+    if (text === lastSent.current) return;
+    const t = setTimeout(() => { lastSent.current = text; set('q', text || null); }, 250);
+    return () => clearTimeout(t);
+  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
   const key = sp.toString();
-  useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 350); return () => clearTimeout(t); }, [key]);
   const list = useMemo(() => filterProviders(q, s.providers), [key, s.providers]);
 
   /* Journal des recherches (supabase/190_search_logs.sql) : on enregistre le terme
@@ -175,8 +190,8 @@ export function Search() {
           <div role="status" className="small muted grow">{tr(list.length)} {tr(" adresse")}{tr(list.length > 1 ? 's' : '')}{tr(q.q ? ` pour « ${q.q} »` : '')}<span className="d-only"> · {tr(cityLabel)}</span></div>
           {list.length > 1 && (
             <select className="sort-select" aria-label={tr("Trier par")} value={q.tri ?? ''} onChange={(e) => set('tri', e.target.value || null)}>
-              <option value="">{tr(getPos() ? 'Plus proches' : 'Recommandées')}</option>
-              <option value="note">{tr("Mieux notées")}</option>
+              <option value="">{tr(getPos() && list.some((x) => x.km !== null) ? 'Plus proches' : 'Pertinence')}</option>
+              {(afficherTriNotes(list.map((x) => x.p)) || q.tri === 'note') && <option value="note">{tr("Mieux notées")}</option>}
               <option value="verif">{tr("Vérifiées récemment")}</option>
             </select>
           )}
@@ -189,8 +204,6 @@ export function Search() {
             <Button kind="s" onClick={() => nav('/recherche/filtres?' + key)}>{tr("Modifier la recherche")}</Button>
             {settings.contributions && <Button to="/contributions/nouvelle/1" icon="plus">{tr("Proposer une adresse")}</Button>}
           </div>
-        ) : q.view === 'carte' && !wide ? (
-          <MapView list={list} sel={sel} setSel={setSel} />
         ) : (
           list.map(({ p, km }) => (
             <ResultCard key={p.id} p={p}
@@ -198,15 +211,6 @@ export function Search() {
           ))
         )}
         <DemoNote />
-        {/* Liste ⇄ carte (mobile) : un bouton flottant au-dessus de la barre de
-            navigation, à la place de l'ancienne bascule qui prenait une ligne. */}
-        {!wide && list.length > 0 && (
-          <div className="map-fab-wrap">
-            <button type="button" className="map-fab" onClick={() => set('view', q.view === 'carte' ? null : 'carte')}>
-              <Icon name={q.view === 'carte' ? 'list' : 'map'} size={18} sw={2} />{tr(q.view === 'carte' ? 'Liste' : 'Carte')}
-            </button>
-          </div>
-        )}
       </>
     );
   };
@@ -219,7 +223,7 @@ export function Search() {
           <label htmlFor="q" className="sr">{tr("Recherche")}</label>
           <span className="search-box grow">
             <Icon name="search" size={18} sw={2} />
-            <input id="q" type="search" value={q.q} placeholder={tr("Quel produit ou service cherchez-vous ?")} onChange={(e) => set('q', e.target.value || null)} />
+            <input id="q" type="search" value={text} placeholder={tr("Quel produit ou service cherchez-vous ?")} onChange={(e) => setText(e.target.value)} />
           </span>
         </div>
         <div className="row search-tools m-only">
@@ -249,7 +253,7 @@ export function Search() {
       <div className="search-layout">
         <aside className="search-filters" aria-label={tr("Filtres")}><FilterPanel q={q} patch={patch} onReset={() => setSp(new URLSearchParams(), { replace: true })} /></aside>
         <main className="main">{tr(body())}</main>
-        <aside className="search-map">{online && !loading && list.length > 0 && <MapView list={list} sel={sel} setSel={setSel} />}</aside>
+        <aside className="search-map">{online && !loading && list.some((x) => coordsFiables(x.p)) && <MapView list={list.filter((x) => coordsFiables(x.p))} sel={sel} setSel={setSel} />}</aside>
       </div>
     </Screen>
   );
@@ -323,7 +327,7 @@ function MapView({ list, sel, setSel }: { list: { p: Provider; km: number | null
         <div className="stack grow" style={{ gap: 2 }}>
           <span className="small" style={{ fontWeight: 700, color: 'var(--gold-text)' }}>{tr("Adresse ")}{tr(Math.min(sel, list.length - 1) + 1)} {tr(" sur ")}{tr(list.length)}</span>
           <span style={{ fontWeight: 700, fontSize: 17 }}>{tr(cur.p.name)}</span>
-          <span className="small muted">{tr(cur.p.district)}{tr(cur.km !== null ? ` · ${fmtKm(cur.km)}` : '')} {tr(" · Vérifiée le ")}{tr(cur.p.verified)}</span>
+          <span className="small muted">{tr(cur.p.district)}{tr(cur.km !== null ? ` · ${fmtKm(cur.km)}` : '')} {cur.p.verified ? tr(` · Vérifiée le ${cur.p.verified}`) : ''}</span>
           <Link className="link" to={`/adresses/${cur.p.id}`}>{tr("Ouvrir la fiche")}</Link>
         </div>
       </div>

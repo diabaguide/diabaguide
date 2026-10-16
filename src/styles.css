@@ -166,12 +166,12 @@ h1, h2, h3, p { margin: 0; }
 .rcard-line { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rcard-cat { gap: 6px; color: var(--muted); }
 .rcard-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
-.rcard-fav { position: relative; z-index: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: -6px -4px 0 0; border-radius: 999px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.rcard-fav { position: relative; z-index: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: -12px -10px 0 0; border-radius: 999px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
 .rcard-fav:hover { background: var(--danger-bg); color: var(--danger); }
 .rcard-fav[aria-pressed="true"] { color: var(--danger); }
 /* Deux actions en pied de carte, au-dessus du lien étendu (z-index). */
 .rcard-actions { position: relative; z-index: 1; display: flex; gap: 8px; padding: 0 12px 12px; }
-.rcard-driver, .rcard-contact { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 12px; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.rcard-driver, .rcard-contact { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 12px; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .rcard-driver { flex: 1; background: var(--info-bg); color: var(--accent); }
 .rcard-contact { border: 1.5px solid var(--chip-border); color: var(--accent); }
 .rcard-verified { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-weight: 600; }
@@ -358,6 +358,7 @@ body { -webkit-font-smoothing: antialiased; }
 .logo-pill { box-shadow: 0 4px 14px rgba(0,0,0,.14); }
 .searchfake { min-height: 58px; border-radius: 18px; box-shadow: 0 10px 24px rgba(8,25,80,.22); transition: transform .2s, box-shadow .2s; }
 .searchfake:active { transform: scale(.985); }
+.searchfake input::placeholder { color: var(--muted); }
 
 /* Cartes */
 .card, .rcard, .cattile { border-radius: var(--radius); box-shadow: var(--shadow-sm); }

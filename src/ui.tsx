@@ -310,9 +310,16 @@ export function StatusBadge({ status, big }: { status: Status; big?: boolean }) 
   return <span className={`status ${big ? 'big' : ''}`} style={{ background: st.bg, color: st.fg }}><Icon name={st.icon} size={16} sw={2.2} />{tr(status)}</span>;
 }
 export const NotProvided = () => { const { tr } = useI18n(); return (<span className="np">{tr("Non renseigné")}</span>); };
+/** Une ligne sans valeur n'est pas affichée : jamais de « Non renseigné » côté voyageur. */
 export function KV({ k, children }: { k: string; children?: ReactNode }) {
   const { tr } = useI18n();
-  return <div className="kv"><span>{tr(k)}</span><div>{children ?? <NotProvided />}</div></div>;
+  if (children === undefined || children === null || children === false || (typeof children === 'string' && !children.trim())) return null;
+  return <div className="kv"><span>{tr(k)}</span><div>{children}</div></div>;
+}
+/** « Service Diaba » ou « Partenaire » : transparence sur les fiches mises en avant. */
+export function FicheLabel({ label }: { label: string | null }) {
+  const { tr } = useI18n();
+  return label ? <span className="tag tag-warn" style={{ fontSize: 12 }}>{tr(label)}</span> : null;
 }
 export function Section({ title, icon, children, collapsible, defaultOpen, note }: { title: string; icon?: IconName; children: ReactNode; collapsible?: boolean; defaultOpen?: boolean; note?: string }) {
   const { tr } = useI18n();

@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { citiesWithPublicEntries, cityName, publicEntryCount, type City } from '../data';
+import { citiesWithPublicEntries, cityName, type City } from '../data';
 import { districtPos, requestPosition, setPos } from '../geo';
 import { useStore } from '../store';
 import { useModules, type ModuleKey } from '../lib/modules';
@@ -25,7 +25,8 @@ function CitySwitch() {
   const { tr } = useI18n();
   const { s, d } = useStore();
   const active = citiesWithPublicEntries(s.cities, s.providers);
-  const count = (id: string) => publicEntryCount(id, s.providers);
+  // Même base que la page Explorer : toutes les adresses de la ville.
+  const count = (id: string) => s.providers.filter((p) => p.city === id).length;
   useEffect(() => {
     if (active.length > 0 && !active.some((c) => c.id === s.city)) d({ t: 'city', v: active[0].id });
   }, [active, s.city, d]);
@@ -58,7 +59,6 @@ function QuickActions() {
   const actions: { to: string; icon: Parameters<typeof Icon>[0]['name']; title: string; sub: string; module?: ModuleKey }[] = [
     { to: '/recherche', icon: 'search', title: 'Trouver une adresse', sub: 'Explorer les fournisseurs' },
     { to: '/liste-achats', icon: 'list', title: "Préparer mes achats", sub: 'Créer ou retrouver une liste', module: 'shopping' },
-    { to: '/mes-envois', icon: 'box', title: 'Suivre un envoi', sub: 'Voir mes expéditions', module: 'shipments' },
     { to: '/localisation', icon: 'pin', title: 'Près de moi', sub: 'Chercher dans un quartier' },
   ];
   return (
@@ -79,6 +79,7 @@ function QuickActions() {
 
 export function Home() {
   const { tr, t } = useI18n();
+  const nav = useNavigate();
   const { s, d } = useStore();
   const { settings } = useModules();
   const [evt, setEvt] = useState<InstallEvent | null>(null);
@@ -109,9 +110,18 @@ export function Home() {
           <span className="seal seal-sm" aria-hidden="true"><span>指</span><span>南</span></span>
         </div>
         {/* Recherche d'abord, en pastille pleine largeur ; les villes ensuite, en pastilles. */}
-        <Link to={`/recherche?ville=${s.city}`} className="searchfake" aria-label={tr("Rechercher un produit ou un service")}>
-          <Icon name="search" /><span>{tr("Produit ou service ?")}</span>
-        </Link>
+        <form className="searchfake" role="search" onSubmit={(e) => {
+          e.preventDefault();
+          const terme = new FormData(e.currentTarget).get('q');
+          const n = new URLSearchParams({ ville: s.city });
+          if (typeof terme === 'string' && terme.trim()) n.set('q', terme.trim());
+          nav('/recherche?' + n.toString());
+        }}>
+          <Icon name="search" />
+          <input name="q" type="search" defaultValue="" enterKeyHint="search" autoComplete="off"
+            aria-label={tr("Rechercher un produit ou un service")} placeholder={tr("Un produit, un hôtel, un plat…")}
+            style={{ flex: 1, minWidth: 0, minHeight: 44, border: 0, background: 'transparent', font: 'inherit', color: 'inherit', outline: 'none' }} />
+        </form>
         <CitySwitch />
       </header>
       <main className="main" style={{ gap: 22, paddingTop: 20 }}>
