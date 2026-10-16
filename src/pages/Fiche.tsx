@@ -4,6 +4,8 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catIcon, catLabel, category, cityName, tagLabel, type Provider } from '../data';
 import { useProviderById, useStore } from '../store';
 import { Button, DemoNote, FicheLabel, Icon, KV, Photo, RadioCard, Screen, Section, StoredPhoto, Tag, TopBar, Verified } from '../ui';
+import { APPS_ITINERAIRE, lienItineraire, lireAppItineraire, memoriserAppItineraire, type AppItineraire } from '../lib/itineraire';
+import { logUsage } from '../lib/usage';
 import { aUnContact, coordsFiables, etiquetteFiche, formatTelChine, lienTel } from '../lib/contact';
 import { saveReport } from '../lib/reports';
 import { useModules } from '../lib/modules';
@@ -151,14 +153,14 @@ export function Fiche() {
           <div className="fiche-primary">
             {/* Pas de bouton de contact qui mène à une page vide : sans téléphone ni WeChat,
                 « Montrer au chauffeur » devient l'action principale. */}
-            <Button to={`/adresses/${p.id}/chauffeur`} kind="g" icon="truck">{tr("Montrer au chauffeur")}</Button>
+            <Button to={`/adresses/${p.id}/chauffeur`} kind="g" icon="truck" onClick={() => logUsage('chauffeur', p.id)}>{tr("Montrer au chauffeur")}</Button>
             {p.tel
-              ? <Button href={tel(p)} icon="phone">{tr("Appeler")}</Button>
-              : p.wechat ? <Button to={`/adresses/${p.id}/contact`} icon="chat">{tr("WeChat")}</Button> : null}
+              ? <Button href={tel(p)} icon="phone" onClick={() => logUsage('appel', p.id)}>{tr("Appeler")}</Button>
+              : p.wechat ? <Button to={`/adresses/${p.id}/contact`} icon="chat" onClick={() => logUsage('wechat', p.id)}>{tr("WeChat")}</Button> : null}
           </div>
           {!aUnContact(p) && <p className="small muted" role="status">{tr("Contact non disponible — montrez l’adresse au chauffeur.")}</p>}
           {/* Itinéraire : seulement si les coordonnées sont fiables (jamais les valeurs par défaut). */}
-          {coordsFiables(p) && <Button kind="s" icon="route" href={`https://www.openstreetmap.org/directions?to=${p.lat}%2C${p.lng}`}>{tr("Ouvrir l’itinéraire")}</Button>}
+          {coordsFiables(p) && <Itineraire p={p} />}
         </div>
         {/* Actions secondaires : une rangée d'icônes compactes. */}
         <div className="fiche-actions" style={{ order: 4 }}>
@@ -201,6 +203,39 @@ export function Fiche() {
   );
 }
 
+/** Itinéraire : Amap par défaut (le plus utilisé en Chine), au choix Baidu, Apple Plans ou OpenStreetMap. Le choix est mémorisé. */
+function Itineraire({ p }: { p: Provider }) {
+  const { tr } = useI18n();
+  const [app, setApp] = useState<AppItineraire>(lireAppItineraire);
+  const choisie = APPS_ITINERAIRE.find((a) => a.id === app)!;
+  return (
+    <div className="stack">
+      <Button kind="s" icon="route" href={lienItineraire(app, p)} onClick={() => logUsage('itineraire', `${p.id} ${app}`)}>
+        {tr("Ouvrir l’itinéraire")} · {choisie.label}
+      </Button>
+      <label className="small muted row" style={{ gap: 8 }}>
+        {tr("Application de cartes")}
+        <select className="sort-select" value={app} aria-label={tr("Application de cartes")}
+          onChange={(e) => { const v = e.target.value as AppItineraire; setApp(v); memoriserAppItineraire(v); }}>
+          {APPS_ITINERAIRE.map((a) => <option key={a.id} value={a.id}>{a.label}{a.cn ? ` · ${a.cn}` : ''}</option>)}
+        </select>
+      </label>
+    </div>
+  );
+}
+
+/** Lecture de l'adresse en mandarin par la voix du téléphone (aucune donnée envoyée) ; masqué si indisponible. */
+function lireEnChinois(texte: string): boolean {
+  try {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texte);
+    u.lang = 'zh-CN'; u.rate = 0.8;
+    window.speechSynthesis.speak(u);
+    return true;
+  } catch { return false; }
+}
+
 export function Driver() {
   const { tr } = useI18n();
   const p = useProvider();
@@ -221,6 +256,9 @@ export function Driver() {
         <div className="stack">
           <Button to={`/adresses/${p.id}`} kind="g">{tr("Retour à la fiche")}</Button>
           <Button kind="s" icon="copy" onClick={async () => setOk(await copy(p.addrCn))}>{tr(ok ? 'Adresse copiée' : 'Copier l’adresse')}</Button>
+          {typeof window !== 'undefined' && 'speechSynthesis' in window && !!p.addrCn && (
+            <Button kind="s" icon="speaker" onClick={() => { logUsage('audio_chauffeur', p.id); lireEnChinois(`${p.cn}。${p.addrCn}`); }}>{tr("Écouter en chinois")}</Button>
+          )}
         </div>
       </div>
     </div>

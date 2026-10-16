@@ -8,6 +8,8 @@ import { useModules } from '../lib/modules';
 import { Button, Chip, DemoNote, Field, FicheLabel, Icon, Screen, Select, Stars, StoredPhoto, useWide } from '../ui';
 import { logSearch } from '../lib/searchLogs';
 import { sansAccent } from '../lib/texte';
+import { rankProviders, suggestAlternatives, type ScoreCtx } from '../lib/searchScore';
+import { logUsage } from '../lib/usage';
 import { afficherTriNotes, aUnContact, coordsFiables, etiquetteFiche, lienTel } from '../lib/contact';
 
 /* Termes déjà signalés pendant cette visite : on n'enregistre pas deux fois la
@@ -47,7 +49,7 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
         </div>
       </div>
       <div className="rcard-actions">
-        <Link className="rcard-driver" to={`/adresses/${p.id}/chauffeur`}>
+        <Link className="rcard-driver" to={`/adresses/${p.id}/chauffeur`} onClick={() => logUsage('chauffeur', p.id)}>
           <Icon name="route" size={16} sw={2} />{tr("Montrer au chauffeur")}
         </Link>
         {/* Aucun bouton de contact quand le lieu n'a ni téléphone ni WeChat. */}
@@ -92,15 +94,15 @@ const dateVerif = (v: string): number => {
   return m && mois ? Number(m[3]) * 10000 + mois * 100 + Number(m[1]) : 0;
 };
 
-function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provider[]) {
+function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provider[], ctx: ScoreCtx) {
   const pos = getPos();
-  const term = sansAccent(q.q.trim());
+  const term = q.q.trim();
   let list = providers.filter((p) => p.city === q.city).map((p) => ({ p, km: pos && coordsFiables(p) ? distanceKm(pos, p) : null }));
   if (q.cat) list = list.filter((x) => x.p.cat === q.cat);
+  // Pertinence : catégorie > produits > nom > description, mots entiers, synonymes (supprime les faux positifs).
   if (term) {
-    list = list.filter(({ p }) =>
-      sansAccent([p.name, p.cn, p.district, p.desc, ...(p.products ?? []), ...(p.services ?? []),
-        ...(p.productTags ?? []).map(tagLabel), p.cuisine ?? '', p.goods ?? ''].join(' ')).includes(term));
+    const rang = new Map(rankProviders(list.map((x) => x.p), term, ctx).map((p, i) => [p.id, i]));
+    list = list.filter((x) => rang.has(x.p.id)).sort((a, b) => rang.get(a.p.id)! - rang.get(b.p.id)!);
   }
   if (q.fret && q.fret !== 'both') list = list.filter((x) => x.p.freight?.includes(q.fret as Freight));
   // Le rayon ne s'applique qu'aux fiches dont la position est fiable, et seulement si
@@ -108,7 +110,7 @@ function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provide
   if (q.prox && Number(q.prox) > 0 && list.some((x) => x.km !== null)) list = list.filter((x) => x.km !== null && x.km <= Number(q.prox));
   if (q.tri === 'note') list.sort((a, b) => (b.p.ratingAvg ?? 0) - (a.p.ratingAvg ?? 0) || (b.p.ratingCount ?? 0) - (a.p.ratingCount ?? 0));
   else if (q.tri === 'verif') list.sort((a, b) => dateVerif(b.p.verified) - dateVerif(a.p.verified));
-  else if (pos) list.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
+  else if (pos && !term) list.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
   return list;
 }
 
@@ -133,7 +135,11 @@ export function Search() {
     return () => clearTimeout(t);
   }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
   const key = sp.toString();
-  const list = useMemo(() => filterProviders(q, s.providers), [key, s.providers]);
+  const scoreCtx = useMemo<ScoreCtx>(() => ({
+    categories: s.categories.map((c) => ({ id: c.id, label: c.label, labelCn: c.labelCn })),
+    tags: s.productTags.map((t) => ({ id: t.id, label: t.label, labelCn: t.labelCn })),
+  }), [s.categories, s.productTags]);
+  const list = useMemo(() => filterProviders(q, s.providers, scoreCtx), [key, s.providers, scoreCtx]);
 
   /* Journal des recherches (supabase/190_search_logs.sql) : on enregistre le terme
      et le nombre d'adresses trouvées, une fois qu'il s'est stabilisé — assez
@@ -149,6 +155,7 @@ export function Search() {
     const t = setTimeout(() => {
       DEJA_LOGGES.add(cle);
       void logSearch(terme, q.city, q.cat, list.length);
+        if (list.length === 0) logUsage('recherche_vide', terme);
     }, 700);
     return () => clearTimeout(t);
   }, [loading, q.q, q.city, q.cat, list.length]);
@@ -201,6 +208,16 @@ export function Search() {
             <span className="bigcheck" style={{ width: 56, height: 56, background: 'var(--info-bg)', border: 0, color: 'var(--primary)' }}><Icon name="search" size={28} /></span>
             <div style={{ fontWeight: 700, fontSize: 18 }}>{tr("Aucune adresse")}{tr(q.q ? ` pour « ${q.q} »` : '')}</div>
             <div className="muted">{tr("Essayez un autre mot, changez de ville ou retirez un filtre.")}</div>
+            {!!q.q.trim() && suggestAlternatives(q.q, scoreCtx).length > 0 && (
+              <div className="stack" style={{ width: '100%' }}>
+                <div className="small muted">{tr("Essayez :")}</div>
+                <div className="row wrap" style={{ justifyContent: 'center' }}>
+                  {suggestAlternatives(q.q, scoreCtx).map((x) => (
+                    <Chip key={x.kind + x.id} on={false} onClick={() => { setText(x.label); set('q', x.label); }}>{x.label}</Chip>
+                  ))}
+                </div>
+              </div>
+            )}
             <Button kind="s" onClick={() => nav('/recherche/filtres?' + key)}>{tr("Modifier la recherche")}</Button>
             {settings.contributions && <Button to="/contributions/nouvelle/1" icon="plus">{tr("Proposer une adresse")}</Button>}
           </div>

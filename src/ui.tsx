@@ -219,7 +219,7 @@ export function Button({ kind = 'p', icon, to, href, full = true, children, onCl
   const cls = `btn btn-${kind} ${full ? 'btn-full' : ''} ${className}`;
   const inner = <>{icon && <Icon name={icon} size={20} />}<span>{children}</span></>;
   if (to) return <Link to={to} className={cls} onClick={onClick}>{inner}</Link>;
-  if (href) return <a href={href} className={cls} target={href.startsWith('http') ? '_blank' : undefined} rel="noreferrer">{inner}</a>;
+  if (href) return <a href={href} className={cls} onClick={onClick} target={href.startsWith('http') ? '_blank' : undefined} rel="noreferrer">{inner}</a>;
   return <button type={type} className={cls} onClick={onClick} disabled={disabled} aria-expanded={ariaExpanded} aria-controls={ariaControls}>{inner}</button>;
 }
 
