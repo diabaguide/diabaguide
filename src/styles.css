@@ -316,6 +316,7 @@ details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 
 .admin-search { position: relative; display: flex; align-items: center; gap: 8px; flex: 1; max-width: 520px; height: 44px; padding: 0 14px; border: 1.5px solid var(--input-border); border-radius: 12px; background: var(--surface); color: var(--muted); }
 .admin-search:focus-within { border-color: var(--accent); }
 .admin-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; height: 100%; }
+.admin-global-search select { flex: 0 0 auto; max-width: 148px; min-width: 0; height: 30px; padding: 0 20px 0 4px; border: 0; border-inline-end: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--ink); font: inherit; font-size: 13px; }
 .admin-search kbd { font: inherit; font-size: 12px; font-weight: 700; padding: 2px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--th); }
 .admin-backdrop { display: none; }
 .filters.sticky { position: sticky; top: 69px; z-index: 6; background: var(--bg); padding-block: 8px; }
