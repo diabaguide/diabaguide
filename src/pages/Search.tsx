@@ -8,6 +8,7 @@ import { useModules } from '../lib/modules';
 import { Button, Chip, DemoNote, Field, FicheLabel, Icon, Screen, Select, Stars, StoredPhoto, useWide } from '../ui';
 import { logSearch } from '../lib/searchLogs';
 import { sansAccent } from '../lib/texte';
+import { appliquerFiltres, niveauPrix, optionsFiltres, symbolesPrix } from '../lib/filtresFiche';
 import { rankProviders, suggestAlternatives, type ScoreCtx } from '../lib/searchScore';
 import { logUsage } from '../lib/usage';
 import { afficherTriNotes, aUnContact, coordsFiables, etiquetteFiche, lienTel } from '../lib/contact';
@@ -39,7 +40,7 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
             </button>
           </span>
           <span className="small muted rcard-line"><span className="zh">{p.cn}</span>{p.district ? <> · {tr(p.district)}</> : null}</span>
-          <span className="small row rcard-cat"><Icon name={catIcon(p.cat)} size={15} sw={2} />{tr(catLabel(p.cat))}<FicheLabel label={etiquetteFiche(p)} /></span>
+          <span className="small row rcard-cat"><Icon name={catIcon(p.cat)} size={15} sw={2} />{tr(catLabel(p.cat))}<FicheLabel label={etiquetteFiche(p)} />{niveauPrix(p) ? <strong aria-label={tr("Gamme de prix")} style={{ marginInlineStart: 6 }}>{symbolesPrix(niveauPrix(p))}</strong> : null}</span>
           <span className="small rcard-meta">
             <Stars avg={p.ratingAvg} count={p.ratingCount} size={13} />
             {/* Distance et date de vérification ; rien quand la fiche n'a pas
@@ -75,6 +76,11 @@ export function useQuery() {
     prox: sp.get('prox') || null, // rayon en km, ou « 0 » = toute la ville
     view: sp.get('view') === 'carte' ? 'carte' : 'liste',
     geo: sp.get('geo'),
+    prix: ['1', '2', '3'].includes(sp.get('prix') ?? '') ? sp.get('prix') : null,
+    metro: sp.get('metro') === '1',
+    halal: sp.get('halal') === '1',
+    cuisine: sp.get('cuisine') || null,
+    prod: sp.get('prod') || null,
     tri: (['note', 'verif'].includes(sp.get('tri') ?? '') ? sp.get('tri') : null) as Tri | null,
   };
   return { q, sp, setSp };
@@ -104,6 +110,8 @@ function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provide
     const rang = new Map(rankProviders(list.map((x) => x.p), term, ctx).map((p, i) => [p.id, i]));
     list = list.filter((x) => rang.has(x.p.id)).sort((a, b) => rang.get(a.p.id)! - rang.get(b.p.id)!);
   }
+  const gardes = new Set(appliquerFiltres(list.map((x) => x.p), q).map((p) => p.id));
+  list = list.filter((x) => gardes.has(x.p.id));
   if (q.fret && q.fret !== 'both') list = list.filter((x) => x.p.freight?.includes(q.fret as Freight));
   // Le rayon ne s'applique qu'aux fiches dont la position est fiable, et seulement si
   // au moins une l'est : sinon il viderait la liste alors que les positions sont à saisir.
@@ -161,7 +169,7 @@ export function Search() {
   }, [loading, q.q, q.city, q.cat, list.length]);
   /* La catégorie et la ville se règlent dans l'en-tête : le compteur du bouton
      Filtres ne compte que ce qui ne s'y voit pas (proximité, mode de fret). */
-  const nFilters = [q.fret, q.prox].filter(Boolean).length;
+  const nFilters = [q.fret, q.prox, q.prix, q.metro, q.halal, q.cuisine, q.prod].filter(Boolean).length;
   const cityOptions = citiesWithPublicEntries(s.cities, s.providers);
   const cityValue = cityOptions.some((c) => c.id === q.city) ? q.city : (cityOptions[0]?.id ?? q.city);
   const cityLabel = s.cities.find((c) => c.id === q.city)?.name ?? q.city;
@@ -266,6 +274,7 @@ export function Search() {
             </button>
           ))}
         </div>
+        <ContextFilters q={q} patch={patch} base={s.providers.filter((p) => p.city === q.city && p.cat === q.cat)} />
       </header>
       <div className="search-layout">
         <aside className="search-filters" aria-label={tr("Filtres")}><FilterPanel q={q} patch={patch} onReset={() => setSp(new URLSearchParams(), { replace: true })} /></aside>
@@ -312,6 +321,42 @@ function FilterPanel({ q, patch, onReset }: { q: ReturnType<typeof useQuery>['q'
           {radios('pfret', q.fret ?? 'both', [{ v: 'air', l: 'Aérien' }, { v: 'sea', l: 'Maritime' }, { v: 'both', l: 'Les deux' }], (v) => patch({ fret: v === 'both' ? null : v }))}
         </section>
       )}
+    </div>
+  );
+}
+
+/* Filtres contextuels : une rangée de puces selon la catégorie choisie. Seules les valeurs qui existent
+   vraiment dans la ville sont proposées (avec leur effectif) : jamais de filtre qui donne zéro résultat. */
+function ContextFilters({ q, patch, base }: { q: ReturnType<typeof useQuery>['q']; patch: (o: Record<string, string | null>) => void; base: Provider[] }) {
+  const { tr } = useI18n();
+  const { s } = useStore();
+  if (!q.cat) return null;
+  const o = optionsFiltres(base);
+  const bascule = (cle: string, valeur: string, actuel: string | boolean | null) => patch({ [cle]: actuel === valeur || actuel === true ? null : valeur });
+  const puces: { cle: string; valeur: string; actif: boolean; label: string }[] = [];
+  if (q.cat === 'gros') {
+    for (const t of s.productTags.filter((x) => o.produits[x.id] && x.categoryId === 'gros'))
+      puces.push({ cle: 'prod', valeur: t.id, actif: q.prod === t.id, label: `${t.label} (${o.produits[t.id]})` });
+  }
+  if (q.cat === 'hotel' || q.cat === 'resto') {
+    const noms: Record<number, string> = { 1: q.cat === 'hotel' ? 'Moins de 200 ¥' : '¥ économique', 2: q.cat === 'hotel' ? '200 – 400 ¥' : '¥¥ moyen', 3: q.cat === 'hotel' ? 'Plus de 400 ¥' : '¥¥¥ élevé' };
+    for (const n of [1, 2, 3]) if (o.prix[n]) puces.push({ cle: 'prix', valeur: String(n), actif: q.prix === String(n), label: `${symbolesPrix(n as 1 | 2 | 3)} ${noms[n]} (${o.prix[n]})` });
+  }
+  if (q.cat === 'hotel' && o.metro) puces.push({ cle: 'metro', valeur: '1', actif: q.metro, label: `Près du métro (${o.metro})` });
+  if (q.cat === 'resto') {
+    if (o.halal) puces.push({ cle: 'halal', valeur: '1', actif: q.halal, label: `Halal confirmé (${o.halal})` });
+    const nom: Record<string, string> = { africaine: 'Africaine', chinoise: 'Chinoise', arabe: 'Arabe', autre: 'Autre cuisine' };
+    for (const [k, n] of Object.entries(o.cuisines)) puces.push({ cle: 'cuisine', valeur: k, actif: q.cuisine === k, label: `${nom[k] ?? k} (${n})` });
+  }
+  if (!puces.length) return null;
+  return (
+    <div className="chips context-filters" role="group" aria-label={tr("Affiner")} style={{ overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4 }}>
+      {puces.map((c) => (
+        <button key={c.cle + c.valeur} type="button" className={`chip ${c.actif ? 'on' : ''}`} aria-pressed={c.actif} style={{ flexShrink: 0 }}
+          onClick={() => bascule(c.cle, c.valeur, c.actif ? c.valeur : null)}>
+          {c.actif && <Icon name="check" size={16} sw={2.4} />}{tr(c.label)}
+        </button>
+      ))}
     </div>
   );
 }

@@ -241,6 +241,25 @@ export function FicheEdit() {
             {has('hours') && txt('hours', 'Horaires')}
             {has('cuisine') && txt('cuisine', 'Cuisine')}
             {has('halal') && txt('halal', 'Halal')}
+            {(p.cat === 'hotel' || p.cat === 'resto') && (
+              <div className="form2">
+                <Select id="priceLevel" label={tr("Gamme de prix")} value={String(p.priceLevel ?? '')}
+                  onChange={(v) => set({ priceLevel: v ? Number(v) : undefined })}
+                  options={[{ v: '', l: 'Non précisé' }, { v: '1', l: '¥ · économique' }, { v: '2', l: '¥¥ · moyen' }, { v: '3', l: '¥¥¥ · élevé' }]} />
+                {p.cat === 'hotel' && <Field id="priceNight" label={tr("Prix indicatif d’une nuit (¥)")} type="number" inputMode="numeric"
+                  value={p.priceNight ? String(p.priceNight) : ''} onChange={(v) => set({ priceNight: v && Number(v) > 0 ? Math.round(Number(v)) : undefined })} />}
+              </div>
+            )}
+            {p.cat === 'resto' && (
+              <div className="form2">
+                <Select id="halalStatus" label={tr("Statut halal")} value={p.halalStatus ?? ''}
+                  onChange={(v) => set({ halalStatus: (v || undefined) as Provider['halalStatus'] })}
+                  options={[{ v: '', l: 'Non précisé' }, { v: 'confirmed', l: 'Halal confirmé par Diaba' }, { v: 'unverified', l: 'Non vérifié' }, { v: 'no', l: 'Non halal' }]} />
+                <Select id="cuisineType" label={tr("Type de cuisine")} value={p.cuisineType ?? ''}
+                  onChange={(v) => set({ cuisineType: (v || undefined) as Provider['cuisineType'] })}
+                  options={[{ v: '', l: 'Non précisé' }, { v: 'africaine', l: 'Africaine' }, { v: 'chinoise', l: 'Chinoise' }, { v: 'arabe', l: 'Arabe' }, { v: 'autre', l: 'Autre' }]} />
+              </div>
+            )}
             {has('freight') && <Select id="freight" label={tr("Type de fret")} value={freight} onChange={(v) => set({ freight: (v ? v.split('+') : []) as Freight[] })}
               options={[{ v: '', l: 'Non précisé' }, { v: 'air', l: 'Aérien' }, { v: 'sea', l: 'Maritime' }, { v: 'air+sea', l: 'Aérien et maritime' }]} />}
             {has('goods') && txt('goods', 'Marchandises acceptées')}
