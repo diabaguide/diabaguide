@@ -136,7 +136,7 @@ export function Home() {
       <PremiereVisite />
       <header className="hero">
         <div className="row home-hero-brand" style={{ justifyContent: 'space-between' }}>
-          <Logo height={30} tail="GUIDE" />
+          <Logo height={34} />
           <span className="seal seal-sm" aria-hidden="true"><span>指</span><span>南</span></span>
         </div>
         {/* Recherche d'abord, en pastille pleine largeur ; les villes ensuite, en pastilles. */}
