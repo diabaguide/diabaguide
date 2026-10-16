@@ -122,9 +122,9 @@ export async function fetchProviders(): Promise<Provider[]> {
   } catch (e) {
     if (import.meta.env.DEV) {
       // eslint-disable-next-line no-console
-      console.warn('[Diaba Guide] Échec du chargement des adresses depuis Supabase, repli sur les données statiques.', e);
+      console.warn('[Diaba Guide] Échec du chargement des adresses : conservation des fiches mémorisées.', e);
     }
-    return PROVIDERS;
+    throw e;
   }
 }
 
