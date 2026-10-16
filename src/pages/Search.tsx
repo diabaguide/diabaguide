@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { catIcon, catLabel, citiesWithPublicEntries, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
+import { catIcon, catLabel, citiesWithPublicEntries, directoryCategories, isFreight, isPublicDirectoryProvider, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
 import { useModules } from '../lib/modules';
@@ -162,7 +162,7 @@ export function Search() {
   };
   const key = sp.toString();
   const scoreCtx = useMemo<ScoreCtx>(() => ({
-    categories: s.categories.map((c) => ({ id: c.id, label: c.label, labelCn: c.labelCn })),
+    categories: directoryCategories(s.categories).map((c) => ({ id: c.id, label: c.label, labelCn: c.labelCn })),
     tags: s.productTags.map((t) => ({ id: t.id, label: t.label, labelCn: t.labelCn })),
   }), [s.categories, s.productTags]);
   const list = useMemo(() => filterProviders(q, s.providers, scoreCtx), [key, s.providers, scoreCtx]);
@@ -289,7 +289,7 @@ export function Search() {
           <button type="button" className={`chip ${!q.cat ? 'on' : ''}`} aria-pressed={!q.cat} onClick={() => patch({ cat: null, fret: null })}>
             <Icon name="grid" size={16} sw={2} />{tr("Tout")}
           </button>
-          {s.categories.filter((c) => c.active).map((c) => (
+          {directoryCategories(s.categories).filter((c) => c.active).map((c) => (
             <button key={c.id} type="button" className={`chip ${q.cat === c.id ? 'on' : ''}`} aria-pressed={q.cat === c.id}
               onClick={() => patch({ cat: q.cat === c.id ? null : c.id, fret: null })}>
               <Icon name={catIcon(c.id)} size={16} sw={2} />{tr(c.label)}
@@ -329,7 +329,7 @@ function FilterPanel({ q, patch, onReset }: { q: ReturnType<typeof useQuery>['q'
         <button type="button" className="link" onClick={onReset}>{tr("Réinitialiser")}</button>
       </div>
       <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Catégorie")}</h3>
-        {radios('pcat', q.cat ?? '', [{ v: '', l: 'Toutes' }, ...s.categories.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => patch({ cat: v || null, fret: null }))}
+        {radios('pcat', q.cat ?? '', [{ v: '', l: 'Toutes' }, ...directoryCategories(s.categories).filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => patch({ cat: v || null, fret: null }))}
       </section>
       <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Ville")}</h3>
         {radios('pville', cityValue, cityOptions.map((c) => ({ v: c.id as string, l: c.name })), (v) => patch({ ville: v }))}
@@ -458,7 +458,7 @@ export function Filters() {
       <div className="main" style={{ gap: 20 }}>
         <Field id="prod" label={tr("Produit ou service")} value={f.q} onChange={(v) => setF({ ...f, q: v })} />
         <section className="stack"><h2 style={{ fontSize: 17 }}>{tr("Catégorie")}</h2>
-          {tr(radios<string>('cat', f.cat ?? '', [{ v: '', l: 'Toutes' }, ...s.categories.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => setF({ ...f, cat: (v || null) as Cat | null })))}
+          {tr(radios<string>('cat', f.cat ?? '', [{ v: '', l: 'Toutes' }, ...directoryCategories(s.categories).filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => setF({ ...f, cat: (v || null) as Cat | null })))}
         </section>
         <section className="stack">{wide && <h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>}
           {wide

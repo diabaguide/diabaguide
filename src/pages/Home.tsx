@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { citiesWithPublicEntries, cityName, type City } from '../data';
+import { citiesWithPublicEntries, cityName, directoryCategories, type City } from '../data';
 import { districtPos, requestPosition, setPos } from '../geo';
 import { useStore } from '../store';
 import { useModules, type ModuleKey } from '../lib/modules';
@@ -62,7 +62,7 @@ function NeedsTiles() {
     { cat: 'hotel', label: 'Dormir', cn: '酒店', img: '/sleep.svg', alt: 'Lit' },
     { cat: 'resto', label: 'Manger', cn: '餐厅', img: '/eat.svg', alt: 'Assiette' },
   ];
-  const other = s.categories.filter((c) => c.active && !needs.some((n) => n.cat === c.id));
+  const other = directoryCategories(s.categories).filter((c) => c.active && !needs.some((n) => n.cat === c.id));
   return (
     <section aria-label={tr('Trois besoins principaux')}>
       <h2 className="display" style={{ fontSize: 21, marginBottom: 12 }}>{tr('Que cherchez-vous ?')}</h2>

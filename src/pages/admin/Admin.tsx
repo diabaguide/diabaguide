@@ -1,7 +1,7 @@
 import { useI18n } from '../../i18n';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { STATUSES, catLabel, cityName, type Cat, type City, type Provider, type Proposal, type Status } from '../../data';
+import { STATUSES, catLabel, cityName, directoryCategories, type Cat, type City, type Provider, type Proposal, type Status } from '../../data';
 import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
 import { lienAmap } from '../../lib/amap';
@@ -271,7 +271,7 @@ export function AdminList() {
       <div className="admin-body">
         <div className="filters sticky">
           <Select id="fv" label={tr("Ville")} value={city} onChange={setCity} options={[{ v: '', l: 'Toutes' }, ...s.cities.map((c) => ({ v: c.id as City, l: c.name }))]} />
-          <Select id="fc" label={tr("Catégorie")} value={cat} onChange={setCat} options={[{ v: '', l: 'Toutes' }, ...s.categories.map((c) => ({ v: c.id as Cat, l: c.label }))]} />
+          <Select id="fc" label={tr("Catégorie")} value={cat} onChange={setCat} options={[{ v: '', l: 'Toutes' }, ...directoryCategories(s.categories).map((c) => ({ v: c.id as Cat, l: c.label }))]} />
           <Select id="fs" label={tr("Statut")} value={st} onChange={setSt} options={[{ v: '', l: 'Tous' }, ...STATUSES.filter((x) => x !== 'Brouillon').map((x) => ({ v: x, l: x }))]} />
           <div className="grow"><Field id="fq" label={tr("Recherche")} type="search" value={q} onChange={setQ} placeholder={tr("Nom, téléphone, WeChat…")} /></div>
           {filtered && <Button kind="s" icon="x" full={false} onClick={reset}>{tr("Réinitialiser")}</Button>}
@@ -439,7 +439,7 @@ function VerifyBody() {
           <div className="stack" style={{ gap: 20 }}>
             <Section title={tr("Informations proposées")} icon="edit">
               <div className="form2">
-                <Select id="c" label={tr("Catégorie")} req value={p.cat} onChange={(v) => set({ cat: v })} options={s.categories.map((c) => ({ v: c.id as Cat, l: c.label }))} />
+                <Select id="c" label={tr("Catégorie")} req value={p.cat} onChange={(v) => set({ cat: v })} options={directoryCategories(s.categories).map((c) => ({ v: c.id as Cat, l: c.label }))} />
                 <Select id="v" label={tr("Ville")} req value={p.city} onChange={(v) => set({ city: v })} options={s.cities.map((c) => ({ v: c.id as City, l: c.name }))} />
                 <Field id="n" label={tr("Nom commercial")} req value={p.name} onChange={(v) => set({ name: v })} />
                 <Field id="ncn" label={tr("Nom en chinois")} value={p.cn} onChange={(v) => set({ cn: v })} />
