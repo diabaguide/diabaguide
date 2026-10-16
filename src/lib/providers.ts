@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { PROVIDERS, type Cat, type City, type Provider } from '../data';
+import { isMissingFicheFilterColumn, withoutFicheFilterColumns } from './providerSchema';
 
 /** Ligne telle que renvoyée par la table Supabase `providers` (snake_case). */
 interface ProviderRow {
@@ -134,7 +135,7 @@ export async function fetchProviders(): Promise<Provider[]> {
 const nul = (v: string | undefined) => (v && v.trim() ? v.trim() : null);
 const arr = (v: string[] | undefined) => (v && v.length ? v : null);
 
-function providerToRow(p: Provider) {
+export function providerToRow(p: Provider, includeFicheFilters = true) {
   return {
     id: p.id, name: p.name.trim(), cn: p.cn.trim(), cat: p.cat, city: p.city, district: p.district.trim(),
     lat: p.lat, lng: p.lng, featured: p.featured ?? false, verified: nul(p.verified), description: nul(p.desc),
@@ -145,10 +146,10 @@ function providerToRow(p: Provider) {
     photo_paths: p.photoPaths ?? [],
     // Colonnes ajoutées par supabase/620_fiche_filters.sql : envoyées seulement si renseignées,
     // pour que l'enregistrement d'une fiche reste possible tant que la migration n'est pas exécutée.
-    ...(p.priceLevel ? { price_level: p.priceLevel } : {}),
-    ...(p.priceNight ? { price_night: p.priceNight } : {}),
-    ...(p.halalStatus ? { halal_status: p.halalStatus } : {}),
-    ...(p.cuisineType ? { cuisine_type: p.cuisineType } : {}),
+    ...(includeFicheFilters && p.priceLevel ? { price_level: p.priceLevel } : {}),
+    ...(includeFicheFilters && p.priceNight ? { price_night: p.priceNight } : {}),
+    ...(includeFicheFilters && p.halalStatus ? { halal_status: p.halalStatus } : {}),
+    ...(includeFicheFilters && p.cuisineType ? { cuisine_type: p.cuisineType } : {}),
     // supabase/630 : idem, seulement si la colonne existe (valeur connue).
     ...(p.reviewStatus ? { review_status: p.reviewStatus } : {}),
     ...(p.coordsVerified !== undefined ? { coords_verified: p.coordsVerified } : {}),
@@ -196,12 +197,18 @@ export async function creerTransitaire(f: {
   return error ? { error: error.message } : { id };
 }
 
-/** Crée ou met à jour une fiche (équipe). */
+/** Crée ou met à jour une fiche (équipe).
+ * Si la migration 620 n'est pas encore présente, une seconde écriture retire
+ * uniquement ses champs optionnels : la création du marché/restaurant reste possible.
+ */
 export async function saveProvider(p: Provider): Promise<{ error?: string }> {
   const vErr = validateProvider(p);
   if (vErr) return { error: vErr };
   if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
-  const { error } = await supabase.from('providers').upsert(providerToRow(p));
+  let { error } = await supabase.from('providers').upsert(providerToRow(p));
+  if (error && isMissingFicheFilterColumn(error.message)) {
+    ({ error } = await supabase.from('providers').upsert(withoutFicheFilterColumns(providerToRow(p))));
+  }
   return error ? { error: error.message } : {};
 }
 
