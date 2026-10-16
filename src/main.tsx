@@ -8,6 +8,12 @@ import { ModuleProvider } from './lib/modules';
 import '@fontsource-variable/plus-jakarta-sans';
 import '@fontsource/playfair-display/400.css';
 import '@fontsource/playfair-display/600.css';
+// Polices chinoise et arabe servies par le site (Google Fonts est bloqué en Chine continentale).
+// La police chinoise est découpée par plages de caractères : seuls les morceaux utilisés sont téléchargés.
+import '@fontsource/noto-sans-sc/400.css';
+import '@fontsource/noto-sans-sc/700.css';
+import '@fontsource/noto-sans-arabic/400.css';
+import '@fontsource/noto-sans-arabic/700.css';
 import './styles.css';
 import './sceau.css';
 
