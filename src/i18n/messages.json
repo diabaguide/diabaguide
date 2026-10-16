@@ -374,6 +374,16 @@
     "zh": "城市",
     "ar": "المدينة"
   },
+  "Guide": {
+    "en": "Guide",
+    "zh": "指南",
+    "ar": "الدليل"
+  },
+  "Choisissez votre ville": {
+    "en": "Choose your city",
+    "zh": "请选择城市",
+    "ar": "اختر مدينتك"
+  },
   "Rechercher un produit ou un service": {
     "en": "Search for a product or service",
     "zh": "搜索产品或服务",

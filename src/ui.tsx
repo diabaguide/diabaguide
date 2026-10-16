@@ -392,7 +392,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header-in">
-        <Link to="/accueil" className="site-logo" aria-label={tr("Accueil")}><Logo height={34} /></Link>
+        <Link to="/accueil" className="site-logo" aria-label={tr("Accueil")}><Logo height={34} tail="Guide" /></Link>
         <nav className="site-nav" aria-label={tr("Navigation principale")}>
           {nav.map((n) => (
             <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={n.icon} size={20} /><span>{tr(n.label)}</span></NavLink>
