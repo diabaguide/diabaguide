@@ -58,6 +58,7 @@ h1, h2, h3, p { margin: 0; }
 .quick-action-copy strong { font-size: 14px; line-height: 1.2; }
 .quick-action-copy small { color: var(--muted); font-size: 12px; line-height: 1.2; }
 @media (max-width: 360px) { .quick-actions { grid-template-columns: 1fr; } }
+.home-overview { display: flex; flex-direction: column; gap: 22px; }
 .home-intro { display: flex; flex-direction: column; gap: 7px; padding: 2px 2px 0; }
 .home-intro .eyebrow { color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .home-intro h1 { font-size: clamp(25px, 7vw, 34px); max-width: 15ch; }
@@ -534,8 +535,25 @@ body { -webkit-font-smoothing: antialiased; }
 @media (min-width: 1024px) {
   .m-only { display: none !important; }
   .d-only { display: inline; }
-  .phone.has-nav .screen.wide .main { padding-inline: 40px; }
+  .phone.has-nav .screen.wide .main { padding-inline: 40px; gap: 32px !important; }
   .phone.has-nav .screen.wide .hero { padding: 36px 40px 60px; }
+  .phone.has-nav .screen.wide .home-overview { display: grid; grid-template-columns: minmax(300px, .78fr) minmax(0, 1.45fr); gap: 48px; align-items: end; padding: 12px 0 4px; }
+  .phone.has-nav .screen.wide .home-intro { gap: 12px; padding-bottom: 4px; }
+  .phone.has-nav .screen.wide .home-intro h1 { max-width: 12ch; font-size: clamp(38px, 3.4vw, 52px); line-height: 1.03; }
+  .phone.has-nav .screen.wide .home-overview section { min-width: 0; }
+  .phone.has-nav .screen.wide .home-overview h2 { font-size: 25px !important; margin-bottom: 16px !important; }
+  .phone.has-nav .screen.wide .needtiles { gap: 16px; }
+  .phone.has-nav .screen.wide .needtile { min-height: 208px; border-radius: 20px; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  .phone.has-nav .screen.wide .needtile img { height: 128px; }
+  .phone.has-nav .screen.wide .needtile-copy { padding: 12px 14px 14px; gap: 3px; }
+  .phone.has-nav .screen.wide .needtile-copy strong { font-size: 17px; }
+  .phone.has-nav .screen.wide .needtile-copy small { font-size: 13px; }
+  .phone.has-nav .screen.wide .needtile:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--primary-light); }
+  .phone.has-nav .screen.wide .quick-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .phone.has-nav .screen.wide .quick-action { min-height: 108px; padding: 16px; border-radius: 18px; }
+  .phone.has-nav .screen.wide .quick-action-icon { width: 48px; height: 48px; flex-basis: 48px; }
+  .phone.has-nav .screen.wide .quick-action-copy strong { font-size: 15px; }
+  .phone.has-nav .screen.wide .quick-action-copy small { font-size: 13px; }
   .phone.has-nav .screen.wide .hero .searchfake { max-width: 760px; }
   .phone.has-nav .screen.wide .hero .seg { max-width: 440px; }
   .phone.has-nav .screen.wide .hero .city-seg { max-width: none; }

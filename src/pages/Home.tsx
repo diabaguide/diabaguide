@@ -155,11 +155,13 @@ export function Home() {
         <CitySwitch />
       </header>
       <main className="main" style={{ gap: 22, paddingTop: 20 }}>
-        <div className="home-intro">
-          <p className="eyebrow">{tr("Votre guide du voyageur")}</p>
-          <h1 className="display">{tr("Marchés de gros, hôtels et restaurants vérifiés en Chine. Montrez l’adresse au chauffeur en un geste.")}</h1>
+        <div className="home-overview">
+          <div className="home-intro">
+            <p className="eyebrow">{tr("Votre guide du voyageur")}</p>
+            <h1 className="display">{tr("Marchés de gros, hôtels et restaurants vérifiés en Chine. Montrez l’adresse au chauffeur en un geste.")}</h1>
+          </div>
+          <NeedsTiles />
         </div>
-        <NeedsTiles />
         {settings.announcements && <Suspense fallback={null}><AnnoncesDiaba /></Suspense>}
         <QuickActions />
         {!s.installDismissed && (
