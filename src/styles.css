@@ -123,8 +123,11 @@ h1, h2, h3, p { margin: 0; }
 .city-seg { flex-wrap: wrap; }
 .city-seg button { flex: none; padding: 0 14px; }
 .citycount { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; padding: 0 6px; border-radius: 999px; font-size: 11px; font-weight: 700; background: color-mix(in srgb, currentColor 16%, transparent); }
+.city-switch-field { display: flex; flex-direction: column; gap: 7px; }
+.city-switch-label { font-size: 14px; font-weight: 700; color: var(--muted); }
 .city-switch { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; color: var(--accent); }
 .city-switch select { flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.hero .city-switch-label { color: rgba(255, 255, 255, .88); }
 .hero .city-switch { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .28); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; }
 .hero .city-switch select option { color: #000; }
 

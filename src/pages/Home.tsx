@@ -33,13 +33,16 @@ function CitySwitch() {
   if (active.length === 0) return null;
   if (active.length > CITY_BUTTONS_MAX) {
     return (
-      <label className="city-switch">
-        <span className="sr">{tr("Ville")}</span>
-        <Icon name="pin" size={18} />
-        <select value={s.city} onChange={(e) => d({ t: 'city', v: e.target.value })}>
-          {active.map((c) => <option key={c.id} value={c.id}>{c.name} ({count(c.id)})</option>)}
-        </select>
-      </label>
+      <div className="city-switch-field">
+        <span className="city-switch-label">{tr("Choisissez votre ville")}</span>
+        <label className="city-switch">
+          <span className="sr">{tr("Ville")}</span>
+          <Icon name="pin" size={18} />
+          <select value={s.city} onChange={(e) => d({ t: 'city', v: e.target.value })}>
+            {active.map((c) => <option key={c.id} value={c.id}>{c.name} ({count(c.id)})</option>)}
+          </select>
+        </label>
+      </div>
     );
   }
   return (
