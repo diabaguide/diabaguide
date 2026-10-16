@@ -6,6 +6,7 @@ import { useProviderById, useStore } from '../store';
 import { Button, DemoNote, FicheLabel, Icon, KV, Photo, RadioCard, Screen, Section, StoredPhoto, Tag, TopBar, Verified } from '../ui';
 import { APPS_ITINERAIRE, lienItineraire, lireAppItineraire, memoriserAppItineraire, type AppItineraire } from '../lib/itineraire';
 import { logUsage } from '../lib/usage';
+import { libelleHalal, niveauPrix, statutHalal, statutOuverture, symbolesPrix } from '../lib/filtresFiche';
 import { aUnContact, coordsFiables, etiquetteFiche, formatTelChine, lienTel } from '../lib/contact';
 import { saveReport } from '../lib/reports';
 import { useModules } from '../lib/modules';
@@ -36,7 +37,7 @@ function Specific({ p }: { p: Provider }) {
     .sort((x, y) => x.localeCompare(y, 'fr', { sensitivity: 'base' }));
   const has = (f: string) => fields.includes(f as never);
   const rien = !listed.length && !(has('moq') && p.moq) && !(has('cuisine') && p.cuisine) && !(has('hours') && p.hours)
-    && !(has('halal') && p.halal) && !(has('freight') && p.freight?.length) && !(has('goods') && p.goods) && !(has('senegal') && p.senegal);
+    && !(has('halal') && statutHalal(p)) && !(has('freight') && p.freight?.length) && !(has('goods') && p.goods) && !(has('senegal') && p.senegal);
   if (rien) return null;
 
   return (
@@ -47,7 +48,7 @@ function Specific({ p }: { p: Provider }) {
       {has('moq') && <KV k={tr("Minimum de commande")}>{p.moq}</KV>}
       {has('cuisine') && <KV k={tr("Type de cuisine")}>{p.cuisine}</KV>}
       {has('hours') && <KV k={tr("Horaires")}>{p.hours}</KV>}
-      {has('halal') && <KV k={tr("Halal")}>{p.halal ? tr(p.halal) : undefined}</KV>}
+      {has('halal') && <KV k={tr("Halal")}>{libelleHalal(statutHalal(p)) ? tr(libelleHalal(statutHalal(p))) : undefined}</KV>}
       {has('freight') && !!p.freight?.length && (
         <div className="row wrap">
           {p.freight?.includes('air') && <Tag tone="ok" icon="plane">{tr("Fret aérien")}</Tag>}
@@ -91,7 +92,7 @@ export function Fiche() {
         <div className="back"><button type="button" className="iconbtn" aria-label={tr("Retour aux résultats")} onClick={() => nav(-1)}><Icon name="chevL" size={24} sw={2.2} /></button></div>
         {photos.length > 0 && <div className="count">{photoIdx + 1} / {photos.length}</div>}
       </div>
-      <main className="main fiche-main" style={{ gap: 18, paddingTop: 14 }}>
+      <main className="main fiche-main fiche-page-pad" style={{ gap: 18, paddingTop: 14 }}>
         {/* Colonne principale (ordinateur). Sur mobile, les deux colonnes sont
             aplaties et l'ordre global (order 1→11) donne l'enchaînement voulu :
             en-tête, actions, adresse, infos, accès, coordonnées, avis. */}
@@ -117,6 +118,7 @@ export function Fiche() {
           <h1 className="display" style={{ fontSize: 31, lineHeight: 1.1 }}>{p.name}</h1>
           <FicheLabel label={etiquetteFiche(p)} />
           <div className="zh" style={{ fontSize: 19, fontWeight: 500 }}>{p.cn}</div>
+          <InfosCles p={p} />
           <p>{p.desc}</p>
           <DemoNote />
         </div>
@@ -149,7 +151,7 @@ export function Fiche() {
         </div>
         <div className="fiche-col fiche-side">
         {/* Deux actions principales (appeler / montrer au chauffeur) + itinéraire. */}
-        <div className="stack" style={{ order: 3 }}>
+        <div className="stack fiche-actionbar" style={{ order: 3 }}>
           <div className="fiche-primary">
             {/* Pas de bouton de contact qui mène à une page vide : sans téléphone ni WeChat,
                 « Montrer au chauffeur » devient l'action principale. */}
@@ -169,7 +171,7 @@ export function Fiche() {
           <button type="button" className={`fiche-ibtn ${dl ? 'on' : ''}`} aria-pressed={dl} aria-label={tr(dl ? 'Disponible hors connexion' : 'Rendre disponible hors connexion')}
             onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Cette fiche est maintenant disponible hors connexion, sans qu’aucun fichier ne soit enregistré sur l’appareil.'); }}><Icon name={dl ? 'check' : 'download'} size={20} />{tr("Hors-ligne")}</button>
           <button type="button" className="fiche-ibtn" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
-          {positionValide(p) && coordsFiables(p) && <button type="button" className="fiche-ibtn" onClick={() => void envoyerLaPosition()}><Icon name="pin" size={20} />{tr("Position")}</button>}
+          {positionValide(p) && coordsFiables(p) && <button type="button" className="fiche-ibtn" onClick={() => void envoyerLaPosition()}><Icon name="pin" size={20} />{tr("Voir sur la carte")}</button>}
           {settings.shopping && <Suspense fallback={null}><AddToListButton providerId={p.id} providerName={p.name} variant="icon" /></Suspense>}
           {settings.contributions && <Link to={`/adresses/${p.id}/signaler`} className="fiche-ibtn"><Icon name="edit" size={20} />{tr("Corriger")}</Link>}
         </div>
@@ -194,12 +196,28 @@ export function Fiche() {
         </div> }
         <div style={{ order: 11 }}>
         <div className="row" style={{ justifyContent: 'center' }}>
-          {settings.contributions && <Link className="link" style={{ color: 'var(--danger)' }} to={`/adresses/${p.id}/signaler`}><Icon name="flag" size={18} />{tr(" Signaler un problème")}</Link>}
+          {settings.contributions && <Link className="link" style={{ color: 'var(--danger)' }} to={`/adresses/${p.id}/signaler`}><Icon name="flag" size={18} />{tr("Signaler une erreur")}</Link>}
         </div>
         </div>
         </div>
       </main>
     </Screen>
+  );
+}
+
+/** Ligne d'infos clés : gamme de prix, ouvert/fermé (calculé sur les horaires), métro. Rien si aucune donnée. */
+function InfosCles({ p }: { p: Provider }) {
+  const { tr } = useI18n();
+  const prix = niveauPrix(p);
+  const ouv = statutOuverture(p.hours);
+  const nuit = p.cat === 'hotel' && p.priceNight ? ` · ${p.priceNight} ¥` : '';
+  if (!prix && !ouv && !p.metro) return null;
+  return (
+    <div className="row wrap fiche-infos" style={{ gap: 14, fontWeight: 600 }}>
+      {prix && <span aria-label={tr("Gamme de prix")}>{symbolesPrix(prix)}{nuit}</span>}
+      {ouv && <span style={{ color: ouv.ouvert ? 'var(--ok, #1a7f4b)' : 'var(--muted)' }}>{tr(ouv.texte)}</span>}
+      {p.metro && <span className="row" style={{ gap: 4 }}><Icon name="train" size={16} sw={2} />{p.metro}</span>}
+    </div>
   );
 }
 

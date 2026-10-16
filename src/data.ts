@@ -94,6 +94,10 @@ export interface Provider {
   cuisine?: string;
   hours?: string;
   halal?: string;
+  priceLevel?: number;      // 1 à 3 (¥, ¥¥, ¥¥¥) — supabase/620_fiche_filters.sql
+  priceNight?: number;      // prix indicatif d'une nuit, en ¥
+  halalStatus?: 'confirmed' | 'unverified' | 'no';
+  cuisineType?: 'africaine' | 'chinoise' | 'arabe' | 'autre';
   freight?: Freight[];
   goods?: string;
   senegal?: string;

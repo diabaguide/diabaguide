@@ -39,6 +39,10 @@ interface ProviderRow {
   deletion_reason: string | null;
   deleted_at?: string | null;
   unpublished_at?: string | null;
+  price_level?: number | null;
+  price_night?: number | null;
+  halal_status?: Provider['halalStatus'] | null;
+  cuisine_type?: Provider['cuisineType'] | null;
 }
 
 const undef = <T,>(v: T | null | undefined): T | undefined => (v == null ? undefined : v);
@@ -82,6 +86,10 @@ function rowToProvider(r: ProviderRow): Provider {
     deletionReason: undef(r.deletion_reason),
     deletedAt: undef(r.deleted_at),
     unpublishedAt: undef(r.unpublished_at),
+    priceLevel: undef(r.price_level),
+    priceNight: undef(r.price_night),
+    halalStatus: undef(r.halal_status),
+    cuisineType: undef(r.cuisine_type),
   };
 }
 
@@ -129,6 +137,12 @@ function providerToRow(p: Provider) {
     services: arr(p.services), cuisine: nul(p.cuisine), hours: nul(p.hours), halal: nul(p.halal),
     freight: arr(p.freight), goods: nul(p.goods), senegal: nul(p.senegal),
     photo_paths: p.photoPaths ?? [],
+    // Colonnes ajoutées par supabase/620_fiche_filters.sql : envoyées seulement si renseignées,
+    // pour que l'enregistrement d'une fiche reste possible tant que la migration n'est pas exécutée.
+    ...(p.priceLevel ? { price_level: p.priceLevel } : {}),
+    ...(p.priceNight ? { price_night: p.priceNight } : {}),
+    ...(p.halalStatus ? { halal_status: p.halalStatus } : {}),
+    ...(p.cuisineType ? { cuisine_type: p.cuisineType } : {}),
   };
 }
 

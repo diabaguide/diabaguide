@@ -684,3 +684,11 @@ tr.clickable:hover { background: var(--surface-2, rgba(0, 0, 0, .04)); }
 .module-toggle[aria-checked="true"] .module-toggle-knob { transform: translateX(22px); }
 .module-setting-card { min-height: 112px; }
 .bulk-bar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; background: var(--card, #fff); border: 1px solid var(--border, #cfd6e4); border-radius: 12px; box-shadow: 0 -4px 16px rgba(0,0,0,.12); }
+
+/* Barre d'actions de la fiche : fixe en bas sur mobile (au-dessus de la navigation), jamais masquée par le défilement. */
+.fiche-infos { font-size: 15px; }
+@media (max-width: 899px) {
+  .fiche-actionbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 64px; width: min(100%, 480px); z-index: 7; padding: 10px 14px; gap: 8px; background: var(--nav-bg, var(--surface)); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); box-shadow: 0 -6px 18px rgba(21, 62, 159, .12); }
+  .fiche-actionbar .select, .fiche-actionbar label { margin: 0; }
+  .fiche-page-pad { padding-bottom: 150px; }
+}
