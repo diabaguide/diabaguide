@@ -44,26 +44,30 @@ export function AdminLayout() {
   const searchRef = useRef<HTMLInputElement>(null);
   const isAdmin = s.user?.role === 'admin';
   const isPrimaryAdmin = isAdmin && s.user?.isPrimaryAdmin === true;
-  const items: [string, string, Parameters<typeof Icon>[0]['name'], boolean][] = [
-    ['/equipe', 'Tableau de bord', 'grid', true], ['/equipe/propositions', 'Propositions', 'inbox', false], ['/equipe/fiches', 'Fiches', 'list', false], ['/equipe/recherches', 'Recherches des voyageurs', 'search', false], ['/equipe/historique', 'Historique des décisions', 'history', false], ['/equipe/expeditions', 'Expéditions', 'ship', false],
-    // Espace fret : le même que celui du livreur (tableau de bord, voyageurs).
-    ['/fret', 'Espace fret', 'truck', false],
-    // Annonces de services : l'équipe consulte, l'administration rédige.
-    ['/equipe/annonces', 'Annonces', 'send', false],
-    // Administration : réservée au rôle admin.
-    ...(isAdmin ? ([
-      ['/equipe/suppressions', s.pendingDeletion.length ? `Suppressions (${s.pendingDeletion.length})` : 'Suppressions', 'trash', false],
-      ['/equipe/tarifs', 'Tarifs et entrepôts', 'sliders', false],
-      ['/equipe/membres', 'Membres', 'users', false],
-      ['/equipe/voyageurs', 'Voyageurs', 'user', false],
+  type NavItem = [string, string, Parameters<typeof Icon>[0]['name'], boolean];
+  const navGroups: { label: string; items: NavItem[] }[] = [
+    { label: 'TRAVAIL QUOTIDIEN', items: [
+      ['/equipe', 'Tableau de bord', 'grid', true], ['/equipe/propositions', 'Propositions', 'inbox', false],
+      ['/equipe/fiches', 'Fiches', 'list', false], ['/equipe/recherches', 'Recherches des voyageurs', 'search', false],
+      ['/equipe/historique', 'Historique des décisions', 'history', false],
+    ] as NavItem[] },
+    { label: 'FRET', items: [
+      ['/fret', 'Espace fret', 'truck', false], ['/equipe/expeditions', 'Expéditions', 'ship', false],
+    ] as NavItem[] },
+    { label: 'RÉPERTOIRE', items: isAdmin ? [
+      ['/equipe/villes', 'Villes', 'pin', false], ['/equipe/categories', 'Catégories', 'grid', false],
+      ['/equipe/produits', 'Produits et services', 'list', false], ['/equipe/tarifs', 'Tarifs et entrepôts', 'sliders', false],
+    ] as NavItem[] : [] },
+    { label: 'COMMUNAUTÉ', items: [
+      ...(isAdmin ? ([['/equipe/voyageurs', 'Voyageurs', 'user', false], ['/equipe/membres', 'Membres de l’équipe', 'users', false], ['/equipe/avis', 'Avis', 'star', false]] as NavItem[]) : []),
+      ['/equipe/annonces', 'Annonces', 'send', false],
+    ] as NavItem[] },
+    { label: 'ADMINISTRATION', items: isAdmin ? [
+      ['/equipe/suppressions', s.pendingDeletion.length ? `Suppressions à valider (${s.pendingDeletion.length})` : 'Suppressions à valider', 'trash', false],
       ['/equipe/corbeille', 'Corbeille', 'trash', false],
-      ['/equipe/avis', 'Avis', 'star', false],
-      ['/equipe/villes', 'Villes', 'pin', false],
-      ['/equipe/categories', 'Catégories', 'grid', false],
-      ['/equipe/produits', 'Produits et services', 'list', false],
-    ] as [string, string, Parameters<typeof Icon>[0]['name'], boolean][]) : []),
-    ...(isPrimaryAdmin ? ([['/equipe/modules', 'Gestion des modules', 'sliders', false]] as [string, string, Parameters<typeof Icon>[0]['name'], boolean][]) : []),
-  ];
+      ...(isPrimaryAdmin ? ([['/equipe/modules', 'Gestion des modules', 'sliders', false]] as NavItem[]) : []),
+    ] as NavItem[] : [] },
+  ].filter((group) => group.items.length > 0);
   useEffect(() => { setOpen(false); }, [loc.pathname]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -82,7 +86,10 @@ export function AdminLayout() {
       <aside id="admin-menu">
         <div className="stack" style={{ gap: 8 }}><Logo height={44} /><span className="admin-tag">{tr("GUIDE · ÉQUIPE")}</span></div>
         <nav aria-label={tr("Navigation équipe")}>
-          {items.map(([to, l, i, end]) => <NavLink key={to} to={to} end={end} title={tr(l)} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={i} /><span className="lbl">{tr(l)}</span></NavLink>)}
+          {navGroups.map((group) => <div className="nav-section" key={group.label}>
+            <div className="nav-section-title lbl">{tr(group.label)}</div>
+            {group.items.map(([to, l, i, end]) => <NavLink key={to} to={to} end={end} title={tr(l)} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={i} /><span className="lbl">{tr(l)}</span></NavLink>)}
+          </div>)}
         </nav>
         <button type="button" className="collapse-btn" aria-pressed={collapsed} aria-label={tr(collapsed ? 'Agrandir le menu' : 'Réduire le menu')} title={tr(collapsed ? 'Agrandir le menu' : 'Réduire le menu')} onClick={toggle}><Icon name={collapsed ? 'chevR' : 'chevL'} size={20} /><span className="lbl">{tr("Réduire le menu")}</span></button>
         <div className="me">

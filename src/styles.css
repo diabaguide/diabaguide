@@ -275,7 +275,9 @@ details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 
 /* Espace équipe (ordinateur) */
 .admin { display: flex; min-height: 100vh; background: var(--bg); }
 .admin aside { position: sticky; top: 0; height: 100vh; overflow-y: auto; width: 264px; flex-shrink: 0; transition: width .2s; background: var(--primary); color: #fff; display: flex; flex-direction: column; gap: 24px; padding: 24px 16px; }
-.admin aside nav { display: flex; flex-direction: column; gap: 6px; }
+.admin aside nav { display: flex; flex-direction: column; gap: 16px; }
+.nav-section { display: flex; flex-direction: column; gap: 6px; }
+.nav-section-title { padding: 4px 14px 2px; color: var(--gold-fill); font-size: 11px; font-weight: 800; letter-spacing: .12em; }
 .admin aside nav a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; text-decoration: none; color: #fff; font-weight: 500; border-inline-start: 4px solid transparent; }
 .admin aside nav a.active { background: rgba(255, 255, 255, .16); font-weight: 700; border-inline-start-color: var(--gold-fill); }
 .admin .me { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px 6px; border-top: 1px solid rgba(255, 255, 255, .25); }
@@ -304,6 +306,8 @@ details.qr summary { display: flex; align-items: center; gap: 10px; min-height: 
 .admin .collapse-btn:hover { background: rgba(255, 255, 255, .1); }
 .admin.collapsed aside { width: 84px; align-items: center; padding-inline: 10px; }
 .admin.collapsed aside .lbl, .admin.collapsed aside .admin-tag { display: none; }
+.admin.collapsed aside nav { gap: 10px; }
+.admin.collapsed aside .nav-section { gap: 6px; }
 .admin.collapsed aside .logo-pill { display: none; }
 .admin.collapsed aside nav a, .admin.collapsed .collapse-btn { justify-content: center; padding: 0; width: 48px; }
 .admin.collapsed .me { flex-direction: column; padding-inline: 0; }
