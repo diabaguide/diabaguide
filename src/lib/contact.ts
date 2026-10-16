@@ -34,7 +34,9 @@ const decimales = (n: number) => (String(n).split('.')[1] ?? '').length;
 const COORDS_PAR_DEFAUT: [number, number][] = [[23.13, 113.27]];
 
 /** Coordonnées utilisables : présentes, assez précises (4 décimales) et différentes des valeurs par défaut. */
-export function coordsFiables(p: { lat: number; lng: number }): boolean {
+export function coordsFiables(p: { lat: number; lng: number; coordsVerified?: boolean }): boolean {
+  // Colonne coords_verified (supabase/630) : si elle existe et vaut faux, la position n'a pas été relevée sur place.
+  if (p.coordsVerified === false) return false;
   if (!Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return false;
   if (p.lat === 0 && p.lng === 0) return false;
   if (COORDS_PAR_DEFAUT.some(([a, b]) => p.lat === a && p.lng === b)) return false;
@@ -42,7 +44,10 @@ export function coordsFiables(p: { lat: number; lng: number }): boolean {
 }
 
 /** Mention de transparence : fiche liée à Diaba, ou mise en avant par l'équipe. */
-export function etiquetteFiche(p: { name: string; featured?: boolean }): 'Service Diaba' | 'Partenaire' | null {
+export function etiquetteFiche(p: { name: string; featured?: boolean; partnerLabel?: string }): 'Service Diaba' | 'Partenaire' | null {
+  // Le choix de l'équipe prime sur la détection automatique.
+  if (p.partnerLabel === 'partenaire') return 'Partenaire';
+  if (p.partnerLabel === 'service_diaba') return 'Service Diaba';
   if (/\bdiaba\b/i.test(p.name)) return 'Service Diaba';
   return p.featured ? 'Partenaire' : null;
 }

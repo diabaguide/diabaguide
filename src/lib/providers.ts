@@ -43,6 +43,9 @@ interface ProviderRow {
   price_night?: number | null;
   halal_status?: Provider['halalStatus'] | null;
   cuisine_type?: Provider['cuisineType'] | null;
+  review_status?: Provider['reviewStatus'] | null;
+  coords_verified?: boolean | null;
+  partner_label?: Provider['partnerLabel'] | null;
 }
 
 const undef = <T,>(v: T | null | undefined): T | undefined => (v == null ? undefined : v);
@@ -90,6 +93,9 @@ function rowToProvider(r: ProviderRow): Provider {
     priceNight: undef(r.price_night),
     halalStatus: undef(r.halal_status),
     cuisineType: undef(r.cuisine_type),
+    reviewStatus: undef(r.review_status),
+    coordsVerified: undef(r.coords_verified),
+    partnerLabel: undef(r.partner_label),
   };
 }
 
@@ -143,6 +149,10 @@ function providerToRow(p: Provider) {
     ...(p.priceNight ? { price_night: p.priceNight } : {}),
     ...(p.halalStatus ? { halal_status: p.halalStatus } : {}),
     ...(p.cuisineType ? { cuisine_type: p.cuisineType } : {}),
+    // supabase/630 : idem, seulement si la colonne existe (valeur connue).
+    ...(p.reviewStatus ? { review_status: p.reviewStatus } : {}),
+    ...(p.coordsVerified !== undefined ? { coords_verified: p.coordsVerified } : {}),
+    ...(p.partnerLabel ? { partner_label: p.partnerLabel } : {}),
   };
 }
 
@@ -258,3 +268,17 @@ async function publishRpc(id: string, published: boolean): Promise<{ error?: str
 }
 export const publishProviders = (id: string) => publishRpc(id, true);
 export const unpublishProviders = (id: string) => publishRpc(id, false);
+
+/* Note interne de l'équipe (supabase/630_fiche_workflow.sql) : jamais visible des voyageurs. Tolérant si la table n'existe pas encore. */
+export async function fetchProviderNote(id: string): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.from('provider_notes').select('note').eq('provider_id', id).maybeSingle();
+  if (error) return null;
+  return (data as { note: string } | null)?.note ?? '';
+}
+export async function saveProviderNote(id: string, note: string): Promise<{ error?: string }> {
+  if (!supabase) return { error: 'Supabase n\'est pas configuré.' };
+  const { data: u } = await supabase.auth.getUser();
+  const { error } = await supabase.from('provider_notes').upsert({ provider_id: id, note, updated_by: u.user?.id ?? null, updated_at: new Date().toISOString() });
+  return error ? { error: error.message } : {};
+}

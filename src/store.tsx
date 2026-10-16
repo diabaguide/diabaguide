@@ -9,6 +9,7 @@ import { fetchTaxonomies } from './lib/taxonomies';
 import { cancelProviderDeletion, deleteProvider, fetchProviders, requestProviderDeletion, saveProvider as saveProviderRow } from './lib/providers';
 import { fetchMyRating, rateProvider } from './lib/ratings';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { statutVisible } from './lib/completude';
 import { isTeamRole, signOut, userFromSession, ACCOUNT_NOTICE_KEY, type AccountStatus, type Role } from './lib/auth';
 import { logSessionEvent, clesDeSessionEnMemoire } from './lib/sessionLog';
 import {
@@ -169,7 +170,7 @@ function reducer(s: State, a: Action): State {
       };
       return { ...s, proposals: s.proposals.map(upd), decisions: [dec, ...s.decisions] };
     }
-    case 'setProviders': return { ...s, providers: a.v.filter((x) => !x.deletionRequestedAt && !x.deletedAt && !x.unpublishedAt), hiddenProviders: a.v.filter((x) => x.unpublishedAt && !x.deletionRequestedAt && !x.deletedAt), pendingDeletion: a.v.filter((x) => x.deletionRequestedAt && !x.deletedAt), trashedProviders: a.v.filter((x) => x.deletedAt) };
+    case 'setProviders': return { ...s, providers: a.v.filter((x) => !x.deletionRequestedAt && !x.deletedAt && !x.unpublishedAt && statutVisible(x.reviewStatus)), hiddenProviders: a.v.filter((x) => (x.unpublishedAt || !statutVisible(x.reviewStatus)) && !x.deletionRequestedAt && !x.deletedAt), pendingDeletion: a.v.filter((x) => x.deletionRequestedAt && !x.deletedAt), trashedProviders: a.v.filter((x) => x.deletedAt) };
     case 'localProvider': return { ...s, providers: s.providers.some((x) => x.id === a.p.id) ? s.providers.map((x) => (x.id === a.p.id ? a.p : x)) : [a.p, ...s.providers] };
     case 'localDeletion': {
       const t = s.providers.find((x) => x.id === a.id);

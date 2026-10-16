@@ -98,6 +98,9 @@ export interface Provider {
   priceNight?: number;      // prix indicatif d'une nuit, en ¥
   halalStatus?: 'confirmed' | 'unverified' | 'no';
   cuisineType?: 'africaine' | 'chinoise' | 'arabe' | 'autre';
+  reviewStatus?: 'draft' | 'review' | 'published';   // supabase/630_fiche_workflow.sql
+  coordsVerified?: boolean;                          // position relevée sur place
+  partnerLabel?: 'service_diaba' | 'partenaire';     // étiquette choisie par l'équipe
   freight?: Freight[];
   goods?: string;
   senegal?: string;
