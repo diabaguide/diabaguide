@@ -124,6 +124,7 @@ export function Members() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [report, setReport] = useState<BulkResult[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkRoleTarget, setBulkRoleTarget] = useState<Exclude<Role, 'traveler'>>('team');
 
   const reload = useCallback(async () => {
     const [m, i] = await Promise.all([fetchMembers(), fetchInvitations()]);
@@ -163,6 +164,23 @@ export function Members() {
     });
     setBulkBusy(false); setReport(result); setSelected(new Set());
     await logBulk(status === 'suspended' ? 'members.suspend' : 'members.reactivate', 'member', result);
+    await reload();
+  };
+  const bulkRole = async () => {
+    const ids = [...selected];
+    const label = ROLE_LABEL[bulkRoleTarget].toLowerCase();
+    if (!window.confirm(t('Attribuer le rôle {0} à {1} compte(s) ?', { 0: label, 1: ids.length }))) return;
+    setBulkBusy(true); setErr(null); setOk(null);
+    const result = await runBulk(ids, (id) => setMemberRole(id, bulkRoleTarget), {
+      skip: (id) => {
+        const motif = memberSkip(id);
+        if (motif) return motif;
+        const m = members.find((x) => x.id === id);
+        return m?.role === bulkRoleTarget ? 'Rôle déjà attribué.' : null;
+      },
+    });
+    setBulkBusy(false); setReport(result); setSelected(new Set());
+    await logBulk('members.role', 'member', result);
     await reload();
   };
   const bulkRevoke = async () => {
@@ -401,8 +419,12 @@ export function Members() {
         <BulkBar count={selected.size} onClear={() => setSelected(new Set())}>
           <Button kind="s" icon="x" full={false} disabled={bulkBusy} onClick={() => void bulkStatus('suspended')}>{tr("Désactiver")}</Button>
           <Button kind="s" icon="check" full={false} disabled={bulkBusy} onClick={() => void bulkStatus('active')}>{tr("Réactiver")}</Button>
+          <select aria-label={tr("Nouveau rôle pour la sélection")} value={bulkRoleTarget} disabled={bulkBusy} onChange={(e) => setBulkRoleTarget(e.target.value as Exclude<Role, 'traveler'>)}>
+            <option value="team">{tr("Équipe")}</option><option value="livreur">{tr("Livreur")}</option><option value="admin">{tr("Administrateur")}</option>
+          </select>
+          <Button kind="s" icon="users" full={false} disabled={bulkBusy} onClick={() => void bulkRole()}>{tr("Changer le rôle")}</Button>
           <Button kind="s" icon="x" full={false} disabled={bulkBusy} onClick={() => void bulkRevoke()}>{tr("Retirer l’accès")}</Button>
-          <Button kind="d" icon="trash" full={false} disabled={bulkBusy} onClick={() => void bulkTrash()}>{tr("Mettre à la corbeille")}</Button>
+          <Button kind="d" icon="trash" full={false} disabled={bulkBusy} onClick={() => void bulkTrash()}>{tr("Supprimer (corbeille 30 jours)")}</Button>
         </BulkBar>
 
         {openMember && (
