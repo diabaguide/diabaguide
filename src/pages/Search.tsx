@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { catIcon, catLabel, citiesWithPublicEntries, isFreight, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
+import { catIcon, catLabel, citiesWithPublicEntries, directoryCategories, isFreight, isPublicDirectoryProvider, tagLabel, type Cat, type City, type Freight, type Provider } from '../data';
 import { distanceKm, fmtKm, getPos } from '../geo';
 import { useOnline, useStore } from '../store';
 import { useModules } from '../lib/modules';
@@ -11,6 +11,7 @@ import { sansAccent } from '../lib/texte';
 import { appliquerFiltres, niveauPrix, optionsFiltres, symbolesPrix } from '../lib/filtresFiche';
 import { rankProviders, suggestAlternatives, type ScoreCtx } from '../lib/searchScore';
 import { logUsage } from '../lib/usage';
+import { langueVoix } from '../lib/voixPartage';
 import { afficherTriNotes, aUnContact, coordsFiables, etiquetteFiche, lienTel } from '../lib/contact';
 
 /* Termes déjà signalés pendant cette visite : on n'enregistre pas deux fois la
@@ -123,7 +124,7 @@ function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provide
 }
 
 export function Search() {
-  const { tr } = useI18n();
+  const { tr, lang } = useI18n();
   const { q, sp, setSp } = useQuery();
   const { s } = useStore();
   const { settings } = useModules();
@@ -135,6 +136,8 @@ export function Search() {
   // La saisie vit dans un état local ; l'URL n'est mise à jour qu'après une courte pause.
   // Piloter le champ directement par l'URL faisait perdre des lettres en frappe rapide.
   const [text, setText] = useState(q.q);
+  const [listening, setListening] = useState(false);
+  const [voiceError, setVoiceError] = useState('');
   const lastSent = useRef(q.q);
   useEffect(() => { if (q.q !== lastSent.current) { lastSent.current = q.q; setText(q.q); } }, [q.q]);
   useEffect(() => {
@@ -142,9 +145,24 @@ export function Search() {
     const t = setTimeout(() => { lastSent.current = text; set('q', text || null); }, 250);
     return () => clearTimeout(t);
   }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
+  const dicter = () => {
+    type Reconnaissance = { lang: string; interimResults: boolean; maxAlternatives: number; start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onerror: ((e: { error: string }) => void) | null; onend: (() => void) | null };
+    type Constructeur = new () => Reconnaissance;
+    // Web Speech API : Chromium expose parfois webkitSpeechRecognition, sans réseau Diaba supplémentaire.
+    const Ctor = typeof window === 'undefined' ? undefined : (window as unknown as { SpeechRecognition?: Constructeur; webkitSpeechRecognition?: Constructeur }).SpeechRecognition
+      ?? (window as unknown as { webkitSpeechRecognition?: Constructeur }).webkitSpeechRecognition;
+    if (!Ctor) { setVoiceError('La recherche vocale n’est pas disponible sur ce navigateur.'); return; }
+    const r = new Ctor();
+    r.lang = langueVoix(lang); r.interimResults = false; r.maxAlternatives = 1;
+    r.onresult = (e) => { const v = e.results[0]?.[0]?.transcript?.trim() ?? ''; if (v) { setText(v); setVoiceError(''); } };
+    r.onerror = (e) => setVoiceError(e.error === 'not-allowed' ? 'Autorisez le micro pour utiliser la recherche vocale.' : 'Recherche vocale indisponible. Réessayez ou tapez votre recherche.');
+    r.onend = () => setListening(false);
+    setListening(true); setVoiceError('');
+    try { r.start(); } catch { setListening(false); setVoiceError('Recherche vocale indisponible.'); }
+  };
   const key = sp.toString();
   const scoreCtx = useMemo<ScoreCtx>(() => ({
-    categories: s.categories.map((c) => ({ id: c.id, label: c.label, labelCn: c.labelCn })),
+    categories: directoryCategories(s.categories).map((c) => ({ id: c.id, label: c.label, labelCn: c.labelCn })),
     tags: s.productTags.map((t) => ({ id: t.id, label: t.label, labelCn: t.labelCn })),
   }), [s.categories, s.productTags]);
   const list = useMemo(() => filterProviders(q, s.providers, scoreCtx), [key, s.providers, scoreCtx]);
@@ -249,7 +267,11 @@ export function Search() {
           <span className="search-box grow">
             <Icon name="search" size={18} sw={2} />
             <input id="q" type="search" value={text} placeholder={tr("Quel produit ou service cherchez-vous ?")} onChange={(e) => setText(e.target.value)} />
+            <button type="button" className="iconbtn" aria-label={tr(listening ? 'Écoute en cours' : 'Recherche vocale')} title={tr('Recherche vocale')} onClick={dicter} disabled={listening}>
+              <Icon name="mic" size={20} />
+            </button>
           </span>
+          {voiceError && <span role="status" className="small muted" style={{ alignSelf: 'center' }}>{tr(voiceError)}</span>}
         </div>
         <div className="row search-tools m-only">
           {/* Ville : un sélecteur natif posé sur la puce, quand il y a le choix. */}
@@ -267,7 +289,7 @@ export function Search() {
           <button type="button" className={`chip ${!q.cat ? 'on' : ''}`} aria-pressed={!q.cat} onClick={() => patch({ cat: null, fret: null })}>
             <Icon name="grid" size={16} sw={2} />{tr("Tout")}
           </button>
-          {s.categories.filter((c) => c.active).map((c) => (
+          {directoryCategories(s.categories).filter((c) => c.active).map((c) => (
             <button key={c.id} type="button" className={`chip ${q.cat === c.id ? 'on' : ''}`} aria-pressed={q.cat === c.id}
               onClick={() => patch({ cat: q.cat === c.id ? null : c.id, fret: null })}>
               <Icon name={catIcon(c.id)} size={16} sw={2} />{tr(c.label)}
@@ -307,7 +329,7 @@ function FilterPanel({ q, patch, onReset }: { q: ReturnType<typeof useQuery>['q'
         <button type="button" className="link" onClick={onReset}>{tr("Réinitialiser")}</button>
       </div>
       <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Catégorie")}</h3>
-        {radios('pcat', q.cat ?? '', [{ v: '', l: 'Toutes' }, ...s.categories.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => patch({ cat: v || null, fret: null }))}
+        {radios('pcat', q.cat ?? '', [{ v: '', l: 'Toutes' }, ...directoryCategories(s.categories).filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => patch({ cat: v || null, fret: null }))}
       </section>
       <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Ville")}</h3>
         {radios('pville', cityValue, cityOptions.map((c) => ({ v: c.id as string, l: c.name })), (v) => patch({ ville: v }))}
@@ -436,7 +458,7 @@ export function Filters() {
       <div className="main" style={{ gap: 20 }}>
         <Field id="prod" label={tr("Produit ou service")} value={f.q} onChange={(v) => setF({ ...f, q: v })} />
         <section className="stack"><h2 style={{ fontSize: 17 }}>{tr("Catégorie")}</h2>
-          {tr(radios<string>('cat', f.cat ?? '', [{ v: '', l: 'Toutes' }, ...s.categories.filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => setF({ ...f, cat: (v || null) as Cat | null })))}
+          {tr(radios<string>('cat', f.cat ?? '', [{ v: '', l: 'Toutes' }, ...directoryCategories(s.categories).filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => setF({ ...f, cat: (v || null) as Cat | null })))}
         </section>
         <section className="stack">{wide && <h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>}
           {wide

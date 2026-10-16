@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { catLabel, cityName, type Cat, type City, type Proposal, type Status } from '../data';
+import { catLabel, cityName, directoryCategories, type Cat, type City, type Proposal, type Status } from '../data';
 import { emptyProposal, useStore } from '../store';
 import { compressImage } from '../lib/image';
 import { lienAmap, lirePosition } from '../lib/amap';
@@ -122,7 +122,7 @@ export function Wizard() {
       <div className="main" style={{ gap: 16, paddingTop: 14 }}>
         <div className="small muted">{tr("Quelques infos suffisent : l’équipe Diaba complète le reste. ")}<span className="req">*</span> {tr(" = obligatoire.")}</div>
         <section className="stack"><h2 style={{ fontSize: 16 }}>{tr("Catégorie ")}<span className="req" aria-hidden="true">*</span></h2>
-          {s.categories.filter((c) => c.active).map((c) => <RadioCard key={c.id} name="cat" label={tr(c.label)} icon={c.icon} checked={p.cat === c.id} onChange={() => set({ cat: c.id as Cat })} />)}
+          {directoryCategories(s.categories).filter((c) => c.active).map((c) => <RadioCard key={c.id} name="cat" label={tr(c.label)} icon={c.icon} checked={p.cat === c.id} onChange={() => set({ cat: c.id as Cat })} />)}
         </section>
         <Field id="nom" label={tr("Nom du prestataire")} value={p.name} onChange={(v) => set({ name: v })} req hint={tr("Tel qu’écrit sur l’enseigne ou la carte, en chinois ou en lettres latines.")} error={tr(tried ? errs.name : null)} />
         <Select id="ville" label={tr("Ville")} value={p.city} onChange={(v) => set({ city: v as City })} options={s.cities.filter((c) => c.active).map((c) => ({ v: c.id, l: c.name }))} />

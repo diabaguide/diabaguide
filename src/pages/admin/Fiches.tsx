@@ -1,7 +1,7 @@
 import { useI18n } from '../../i18n';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { catLabel, cityName, type Cat, type City, type Freight, type Proposal, type Provider } from '../../data';
+import { catLabel, cityName, directoryCategories, isPublicDirectoryProvider, type Cat, type City, type Freight, type Proposal, type Provider } from '../../data';
 import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
 import { fetchProviderNote, newProviderId, saveProviderNote, validateProvider } from '../../lib/providers';
@@ -43,7 +43,7 @@ export function FichesList() {
   const [incompletes, setIncompletes] = useState(false);
   const isAdmin = s.user?.role === 'admin';
   const { sort, toggle } = useSort<'name' | 'cat' | 'city' | 'verified'>({ k: 'name', dir: 1 });
-  const match = (p: Provider) => (!city || p.city === city) && (!cat || p.cat === cat)
+  const match = (p: Provider) => isPublicDirectoryProvider(p) && (!city || p.city === city) && (!cat || p.cat === cat)
     && (!incompletes || completude(p).manquants.length > 0)
     && contient(`${p.name} ${p.cn} ${p.tel ?? ''} ${p.wechat ?? ''}`, q);
   const rows = useMemo(() => [...s.providers, ...s.hiddenProviders].filter(match).sort((a, b) => {
@@ -90,7 +90,7 @@ export function FichesList() {
       <div className="admin-body">
         <div className="filters sticky">
           <Select id="fv" label={tr("Ville")} value={city} onChange={setCity} options={[{ v: '', l: 'Toutes' }, ...s.cities.map((c) => ({ v: c.id as City, l: c.name }))]} />
-          <Select id="fc" label={tr("Catégorie")} value={cat} onChange={setCat} options={[{ v: '', l: 'Toutes' }, ...s.categories.map((c) => ({ v: c.id as Cat, l: c.label }))]} />
+          <Select id="fc" label={tr("Catégorie")} value={cat} onChange={setCat} options={[{ v: '', l: 'Toutes' }, ...directoryCategories(s.categories).map((c) => ({ v: c.id as Cat, l: c.label }))]} />
           <div className="grow"><Field id="fq" label={tr("Recherche")} type="search" value={q} onChange={setQ} placeholder={tr("Nom, téléphone, WeChat…")} /></div>
           <label className="check"><input type="checkbox" checked={incompletes} onChange={(e) => setIncompletes(e.target.checked)} /><span>{tr("Fiches incomplètes")}</span></label>
           {filtered && <Button kind="s" icon="x" full={false} onClick={() => { setCity(''); setCat(''); setQ(''); setIncompletes(false); }}>{tr("Réinitialiser")}</Button>}
@@ -152,7 +152,7 @@ export function FichesList() {
         <BulkReport report={report} names={names} />
         {isAdmin && (
           <BulkBar count={selected.size} onClear={() => setSelected(new Set())}>
-            <Select id="bc" label={tr("Catégorie")} value={bulkCat} onChange={setBulkCat} options={[{ v: '', l: 'Choisir…' }, ...s.categories.map((c) => ({ v: c.id, l: c.label }))]} />
+            <Select id="bc" label={tr("Catégorie")} value={bulkCat} onChange={setBulkCat} options={[{ v: '', l: 'Choisir…' }, ...directoryCategories(s.categories).map((c) => ({ v: c.id, l: c.label }))]} />
             <Button kind="s" icon="check" full={false} disabled={bulkBusy} onClick={() => void bulkPublish(true)}>{tr("Publier")}</Button>
             <Button kind="s" icon="x" full={false} disabled={bulkBusy} onClick={() => void bulkPublish(false)}>{tr("Dépublier")}</Button>
             <Button kind="s" icon="check" full={false} disabled={bulkBusy || !bulkCat} onClick={() => void bulkCategory()}>{tr("Changer la catégorie")}</Button>
@@ -180,7 +180,7 @@ export function FicheEdit() {
   const firstCity = s.cities.find((c) => c.active && c.id === s.city) ?? s.cities.find((c) => c.active) ?? s.cities[0];
   // Catégorie proposée : la première dans l'ordre défini en base (colonne sort),
   // et non la première par ordre alphabétique, ordre d'affichage des listes.
-  const firstCat = [...s.categories].filter((c) => c.active).sort((a, b) => a.sort - b.sort)[0] ?? s.categories[0];
+  const firstCat = directoryCategories(s.categories).filter((c) => c.active).sort((a, b) => a.sort - b.sort)[0] ?? s.categories[0];
   // « Créer la fiche avec ces informations » depuis une proposition : les champs sont préremplis.
   const depuis = (useLocation().state as { depuis?: Proposal } | null)?.depuis;
   const [p, setP] = useState<Provider | null>(() => existing ?? (isNew ? {
@@ -264,7 +264,7 @@ export function FicheEdit() {
           <Section title="Informations" icon="edit">
             {tried && vErr && <div role="alert" className="notice err"><Icon name="alert" size={20} sw={2} /><span>{tr(vErr)}</span></div>}
             <div className="form2">
-              <Select id="cat" label={tr("Catégorie")} req value={p.cat} onChange={(v) => set({ cat: v as Cat, productTags: [] })} options={s.categories.filter((c) => c.active || c.id === p.cat).map((c) => ({ v: c.id as Cat, l: c.label }))} />
+              <Select id="cat" label={tr("Catégorie")} req value={p.cat} onChange={(v) => set({ cat: v as Cat, productTags: [] })} options={directoryCategories(s.categories).filter((c) => c.active || c.id === p.cat).map((c) => ({ v: c.id as Cat, l: c.label }))} />
               <Select id="city" label={tr("Ville")} req value={p.city} onChange={(v) => set({ city: v as City })} options={s.cities.filter((c) => c.active || c.id === p.city).map((c) => ({ v: c.id as City, l: c.name }))} />
             </div>
             <div className="form2">{txt('name', 'Nom commercial', { req: true })}{txt('cn', 'Nom en chinois', { req: true })}</div>

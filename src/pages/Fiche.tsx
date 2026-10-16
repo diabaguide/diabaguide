@@ -6,6 +6,7 @@ import { useProviderById, useStore } from '../store';
 import { Button, DemoNote, FicheLabel, Icon, KV, Photo, RadioCard, Screen, Section, StoredPhoto, Tag, TopBar, Verified } from '../ui';
 import { APPS_ITINERAIRE, lienItineraire, lireAppItineraire, memoriserAppItineraire, type AppItineraire } from '../lib/itineraire';
 import { logUsage } from '../lib/usage';
+import { lienPartageWhatsApp, lireTexte, peutLire } from '../lib/voixPartage';
 import { libelleHalal, niveauPrix, statutHalal, statutOuverture, symbolesPrix } from '../lib/filtresFiche';
 import { aUnContact, coordsFiables, etiquetteFiche, formatTelChine, lienTel } from '../lib/contact';
 import { saveReport } from '../lib/reports';
@@ -62,7 +63,7 @@ function Specific({ p }: { p: Provider }) {
 }
 
 export function Fiche() {
-  const { tr } = useI18n();
+  const { tr, lang } = useI18n();
   const p = useProvider();
   const { s, d, api } = useStore();
   const { settings } = useModules();
@@ -79,6 +80,15 @@ export function Fiche() {
     if (navigator.share) { try { await navigator.share({ title: p.name, url }); return; } catch { /* annulé */ } }
     await copy(url);
     setMsg('Lien copié. La personne qui le reçoit devra se connecter pour consulter la fiche.');
+  };
+  const lireFiche = () => {
+    const prix = niveauPrix(p);
+    const ouvert = statutOuverture(p.hours)?.texte;
+    const texte = [p.name, catLabel(p.cat), prix ? symbolesPrix(prix) : '', ouvert ?? '', p.hours ?? ''].filter(Boolean).join('. ');
+    if (!lireTexte(texte, lang)) setMsg('La lecture audio n’est pas disponible sur cet appareil.');
+  };
+  const partagerWhatsApp = () => {
+    window.open(lienPartageWhatsApp(p, `${location.origin}/adresses/${p.id}`), '_blank', 'noopener,noreferrer');
   };
   const envoyerLaPosition = async () => {
     const r = await envoyerPosition({ name: p.name, cn: p.cn, addrCn: p.addrCn, lat: p.lat, lng: p.lng });
@@ -171,6 +181,8 @@ export function Fiche() {
           <button type="button" className={`fiche-ibtn ${dl ? 'on' : ''}`} aria-pressed={dl} aria-label={tr(dl ? 'Disponible hors connexion' : 'Rendre disponible hors connexion')}
             onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Cette fiche est maintenant disponible hors connexion, sans qu’aucun fichier ne soit enregistré sur l’appareil.'); }}><Icon name={dl ? 'check' : 'download'} size={20} />{tr("Hors-ligne")}</button>
           <button type="button" className="fiche-ibtn" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
+          <button type="button" className="fiche-ibtn" onClick={partagerWhatsApp}><Icon name="chat" size={20} />{tr("Partager sur WhatsApp")}</button>
+          {peutLire() && <button type="button" className="fiche-ibtn" onClick={lireFiche}><Icon name="speaker" size={20} />{tr("Écouter la fiche")}</button>}
           {positionValide(p) && coordsFiables(p) && <button type="button" className="fiche-ibtn" onClick={() => void envoyerLaPosition()}><Icon name="pin" size={20} />{tr("Voir sur la carte")}</button>}
           {settings.shopping && <Suspense fallback={null}><AddToListButton providerId={p.id} providerName={p.name} variant="icon" /></Suspense>}
           {settings.contributions && <Link to={`/adresses/${p.id}/signaler`} className="fiche-ibtn"><Icon name="edit" size={20} />{tr("Corriger")}</Link>}

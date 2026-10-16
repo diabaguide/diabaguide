@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { citiesWithPublicEntries, cityName, type City } from '../data';
+import { citiesWithPublicEntries, cityName, directoryCategories, type City } from '../data';
 import { districtPos, requestPosition, setPos } from '../geo';
 import { useStore } from '../store';
 import { useModules, type ModuleKey } from '../lib/modules';
@@ -50,6 +50,36 @@ function CitySwitch() {
         </button>
       ))}
     </div>
+  );
+}
+
+/* Trois besoins voyageurs, illustrés d'abord : l'action peut être choisie sans lire la recherche ni un long menu. */
+function NeedsTiles() {
+  const { tr, t } = useI18n();
+  const { s } = useStore();
+  const needs = [
+    { cat: 'gros', label: 'Acheter en gros', cn: '批发', img: '/wholesale.svg', alt: 'Ballots et cartons' },
+    { cat: 'hotel', label: 'Dormir', cn: '酒店', img: '/sleep.svg', alt: 'Lit' },
+    { cat: 'resto', label: 'Manger', cn: '餐厅', img: '/eat.svg', alt: 'Assiette' },
+  ];
+  const other = directoryCategories(s.categories).filter((c) => c.active && !needs.some((n) => n.cat === c.id));
+  return (
+    <section aria-label={tr('Trois besoins principaux')}>
+      <h2 className="display" style={{ fontSize: 21, marginBottom: 12 }}>{tr('Que cherchez-vous ?')}</h2>
+      <div className="needtiles">
+        {needs.map((n) => {
+          const count = s.providers.filter((p) => p.city === s.city && p.cat === n.cat).length;
+          return <Link key={n.cat} to={`/recherche?cat=${n.cat}&ville=${s.city}`} className="needtile">
+            <img src={n.img} alt={tr(n.alt)} />
+            <span className="needtile-copy"><strong>{tr(n.label)}</strong><small className="zh">{n.cn}</small><small>{t('{0} lieu(x)', { 0: count })}</small></span>
+          </Link>;
+        })}
+      </div>
+      {other.length > 0 && <div className="other-services">
+        <span className="small muted">{tr('Autres services')}</span>
+        <div className="chips">{other.map((c) => <Link key={c.id} className="chip" to={`/recherche?cat=${c.id}&ville=${s.city}`}><Icon name={c.icon} size={17} />{tr(c.label)}</Link>)}</div>
+      </div>}
+    </section>
   );
 }
 
@@ -127,9 +157,9 @@ export function Home() {
       <main className="main" style={{ gap: 22, paddingTop: 20 }}>
         <div className="home-intro">
           <p className="eyebrow">{tr("Votre guide du voyageur")}</p>
-          <h1 className="display">{tr("Trouvez les bonnes adresses, simplement.")}</h1>
-          <p>{tr("Marchés, hôtels et restaurants : trouvez les bonnes adresses et leurs services.")}</p>
+          <h1 className="display">{tr("Marchés de gros, hôtels et restaurants vérifiés en Chine. Montrez l’adresse au chauffeur en un geste.")}</h1>
         </div>
+        <NeedsTiles />
         {settings.announcements && <Suspense fallback={null}><AnnoncesDiaba /></Suspense>}
         <QuickActions />
         {!s.installDismissed && (
@@ -147,21 +177,6 @@ export function Home() {
             <button type="button" className="iconbtn" style={{ border: 0, background: 'transparent', color: 'var(--muted)' }} aria-label={tr("Fermer la proposition d’installation")} onClick={() => d({ t: 'dismissInstall' })}><Icon name="x" size={20} /></button>
           </div>
         )}
-        <section aria-label={tr("Catégories")}>
-          <h2 className="display" style={{ fontSize: 19, marginBottom: 12 }}>{tr("Que cherchez-vous ?")}</h2>
-          <div className="cattiles">
-            {s.categories.filter((c) => c.active).map((c, i, arr) => {
-              const n = s.providers.filter((p) => p.cat === c.id && p.city === s.city).length;
-              return (
-                <Link key={c.id} to={`/recherche?cat=${c.id}&ville=${s.city}`} className={`cattile ${arr.length % 2 === 1 && i === arr.length - 1 ? 'wide' : ''}`}>
-                  <span className="ico"><Icon name={c.icon} size={24} /></span>
-                  <span>{tr(c.label)}</span>
-                  <span className="cattile-sub">{c.labelCn && <span className="zh">{c.labelCn} · </span>}{t('{0} lieu(x)', { 0: n })}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
         <section className="stack cards-grid">
           <h2 className="display" style={{ fontSize: 19 }}>{tr("Sélection Diaba · ")}{tr(cityName(s.city))}</h2>
           {selection.map((p) => <ResultCard key={p.id} p={p} />)}

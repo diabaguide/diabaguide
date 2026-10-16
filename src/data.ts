@@ -113,7 +113,11 @@ export interface Provider {
 }
 
 export const CITY_DIRECTORY_CATEGORIES: Cat[] = ['gros', 'hotel', 'resto'];
-export const isPublicDirectoryProvider = (p: Provider) => CITY_DIRECTORY_CATEGORIES.includes(p.cat);
+/** Catégories qui sont encore des adresses à découvrir. Les données fret
+ * historiques restent conservées, mais ne sont plus proposées comme fiches. */
+export const isDirectoryCategory = (cat: string) => (CITY_DIRECTORY_CATEGORIES as readonly string[]).includes(cat);
+export const directoryCategories = <T extends { id: string }>(categories: T[]) => categories.filter((c) => isDirectoryCategory(c.id));
+export const isPublicDirectoryProvider = (p: Pick<Provider, 'cat'>) => isDirectoryCategory(p.cat);
 export const citiesWithPublicEntries = (cities: CityRef[], providers: Provider[]) =>
   cities.filter((c) => c.active && providers.some((p) => p.city === c.id && isPublicDirectoryProvider(p)));
 export const publicEntryCount = (city: City, providers: Provider[]) =>
