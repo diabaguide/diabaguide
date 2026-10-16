@@ -130,6 +130,6 @@ test('l’enregistrement d’une fiche n’envoie les nouvelles colonnes que si 
   const prov = await read('src/lib/providers.ts');
   const i = prov.indexOf('function providerToRow');
   const bloc = prov.slice(i, prov.indexOf('/** Identifiant lisible', i));
-  assert.match(bloc, /\.\.\.\(p\.priceLevel/);
-  assert.match(bloc, /\.\.\.\(p\.halalStatus/);
+  assert.match(bloc, /includeFicheFilters && p\.priceLevel/);
+  assert.match(bloc, /includeFicheFilters && p\.halalStatus/);
 });
