@@ -2749,6 +2749,11 @@
     "zh": "搜索提案",
     "ar": "البحث في الاقتراحات"
   },
+  "Rechercher dans les fiches": {
+    "en": "Search listings",
+    "zh": "搜索地点条目",
+    "ar": "البحث في العناوين"
+  },
   "Actions groupées": {
     "en": "Bulk actions",
     "zh": "批量操作",

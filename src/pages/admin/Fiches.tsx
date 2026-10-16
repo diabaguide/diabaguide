@@ -1,6 +1,6 @@
 import { useI18n } from '../../i18n';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { catLabel, cityName, directoryCategories, isPublicDirectoryProvider, type Cat, type City, type Freight, type Proposal, type Provider } from '../../data';
 import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
@@ -33,15 +33,17 @@ export function FichesList() {
   const { s, api } = useStore();
   const wide = useWide();
   const nav = useNavigate();
+  const [params] = useSearchParams();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [report, setReport] = useState<BulkResult[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkCat, setBulkCat] = useState('');
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(params.get('q') ?? '');
   const [city, setCity] = useState<'' | City>('');
   const [cat, setCat] = useState<'' | Cat>('');
   const [incompletes, setIncompletes] = useState(false);
   const isAdmin = s.user?.role === 'admin';
+  useEffect(() => { setQ(params.get('q') ?? ''); }, [params]);
   const { sort, toggle } = useSort<'name' | 'cat' | 'city' | 'verified'>({ k: 'name', dir: 1 });
   const match = (p: Provider) => isPublicDirectoryProvider(p) && (!city || p.city === city) && (!cat || p.cat === cat)
     && (!incompletes || completude(p).manquants.length > 0)

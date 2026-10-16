@@ -41,6 +41,7 @@ export function AdminLayout() {
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [open, setOpen] = useState(false);
   const [gq, setGq] = useState('');
+  const [searchScope, setSearchScope] = useState<'propositions' | 'fiches'>('propositions');
   const searchRef = useRef<HTMLInputElement>(null);
   const isAdmin = s.user?.role === 'admin';
   const isPrimaryAdmin = isAdmin && s.user?.isPrimaryAdmin === true;
@@ -80,7 +81,11 @@ export function AdminLayout() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
   const toggle = () => setCollapsed((c) => { try { localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1'); } catch { /* stockage indisponible */ } return !c; });
-  const submitSearch = (e: FormEvent) => { e.preventDefault(); nav(`/equipe/propositions${gq.trim() ? `?q=${encodeURIComponent(gq.trim())}` : ''}`); };
+  const submitSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const route = searchScope === 'fiches' ? '/equipe/fiches' : '/equipe/propositions';
+    nav(`${route}${gq.trim() ? `?q=${encodeURIComponent(gq.trim())}` : ''}`);
+  };
   return (
     <div className={`admin${collapsed ? ' collapsed' : ''}${open ? ' open' : ''}`}>
       <aside id="admin-menu">
@@ -105,9 +110,13 @@ export function AdminLayout() {
       <div className="admin-main">
         <div className="admin-top">
           <button type="button" className="iconbtn menu-btn" aria-label={tr("Menu")} aria-expanded={open} aria-controls="admin-menu" onClick={() => setOpen(true)}><Icon name="menu" size={22} /></button>
-          <form role="search" className="admin-search" onSubmit={submitSearch}>
+          <form role="search" className="admin-search admin-global-search" onSubmit={submitSearch}>
             <Icon name="search" size={18} />
-            <input ref={searchRef} type="search" value={gq} onChange={(e) => setGq(e.target.value)} aria-label={tr("Rechercher dans les propositions")} placeholder={tr("Rechercher dans les propositions")} />
+            <select aria-label={tr("Recherche")} value={searchScope} onChange={(e) => setSearchScope(e.target.value as 'propositions' | 'fiches')}>
+              <option value="propositions">{tr("Propositions")}</option>
+              <option value="fiches">{tr("Fiches")}</option>
+            </select>
+            <input ref={searchRef} type="search" value={gq} onChange={(e) => setGq(e.target.value)} aria-label={tr(searchScope === 'fiches' ? "Rechercher dans les fiches" : "Rechercher dans les propositions")} placeholder={tr(searchScope === 'fiches' ? "Nom, téléphone, WeChat…" : "Rechercher dans les propositions")} />
             <kbd aria-hidden="true">/</kbd>
           </form>
         </div>
