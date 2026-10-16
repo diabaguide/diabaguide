@@ -268,17 +268,21 @@ export function FicheEdit() {
               <Select id="city" label={tr("Ville")} req value={p.city} onChange={(v) => set({ city: v as City })} options={s.cities.filter((c) => c.active || c.id === p.city).map((c) => ({ v: c.id as City, l: c.name }))} />
             </div>
             <div className="form2">{txt('name', 'Nom commercial', { req: true })}{txt('cn', 'Nom en chinois', { req: true })}</div>
-            <div className="form2">{txt('district', 'Quartier ou district', { req: true })}{txt('metro', 'Station de métro proche')}</div>
-            <div className="form2">{txt('addrCn', 'Adresse en chinois')}{txt('addrFr', 'Adresse en français')}</div>
-            <div className="form2">{txt('entree', 'Entrée et accès')}{txt('reperes', 'Repères visuels')}</div>
+            <div className="form2">{txt('district', 'Quartier ou district', { req: true })}{txt('addrCn', 'Adresse en chinois')}</div>
             <div className="form2">{txt('tel', 'Téléphone')}{txt('wechat', 'Identifiant WeChat')}</div>
-            <TextArea id="desc" label={tr("Description")} rows={3} value={p.desc} onChange={(v) => set({ desc: v })} />
+            <details className="card" style={{ padding: 12 }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 700 }}>{tr("Informations complémentaires")}</summary>
+              <div className="stack" style={{ marginTop: 12 }}>
+                <div className="form2">{txt('metro', 'Station de métro proche')}{txt('addrFr', 'Adresse en français')}</div>
+                <div className="form2">{txt('entree', 'Entrée et accès')}{txt('reperes', 'Repères visuels')}</div>
+                <TextArea id="desc" label={tr("Description courte (facultative)")} rows={2} value={p.desc} onChange={(v) => set({ desc: v })} />
+              </div>
+            </details>
           </Section>
           <Section title="Détails de la catégorie" icon="list">
-            {has('moq') && txt('moq', 'Minimum de commande')}
+            {has('moq') && <Select id="moq" label={tr("Mode de vente")} value={p.moq ?? ''} onChange={(v) => set({ moq: v || undefined })}
+              options={[{ v: '', l: 'À vérifier' }, { v: 'Gros uniquement', l: 'Gros uniquement' }, { v: 'Gros et détail', l: 'Gros et détail' }, { v: 'À l’unité', l: 'À l’unité' }, { v: 'Par lot ou carton', l: 'Par lot ou carton' }]} />}
             {has('hours') && txt('hours', 'Horaires')}
-            {has('cuisine') && txt('cuisine', 'Cuisine')}
-            {has('halal') && txt('halal', 'Halal')}
             {(p.cat === 'hotel' || p.cat === 'resto') && (
               <div className="form2">
                 <Select id="priceLevel" label={tr("Gamme de prix")} value={String(p.priceLevel ?? '')}
@@ -289,21 +293,19 @@ export function FicheEdit() {
               </div>
             )}
             {p.cat === 'resto' && (
-              <div className="form2">
-                <Select id="halalStatus" label={tr("Statut halal")} value={p.halalStatus ?? ''}
-                  onChange={(v) => set({ halalStatus: (v || undefined) as Provider['halalStatus'] })}
-                  options={[{ v: '', l: 'Non précisé' }, { v: 'confirmed', l: 'Halal confirmé par Diaba' }, { v: 'unverified', l: 'Non vérifié' }, { v: 'no', l: 'Non halal' }]} />
+              <div className="stack" style={{ gap: 10 }}>
+                <div className="notice ok"><Icon name="check" size={20} /><span>{tr("Cuisine halal · Halal")}</span></div>
                 <Select id="cuisineType" label={tr("Type de cuisine")} value={p.cuisineType ?? ''}
                   onChange={(v) => set({ cuisineType: (v || undefined) as Provider['cuisineType'] })}
-                  options={[{ v: '', l: 'Non précisé' }, { v: 'africaine', l: 'Africaine' }, { v: 'chinoise', l: 'Chinoise' }, { v: 'arabe', l: 'Arabe' }, { v: 'autre', l: 'Autre' }]} />
+                  options={[{ v: '', l: 'À vérifier' }, { v: 'africaine', l: 'Africaine' }, { v: 'chinoise', l: 'Chinoise' }, { v: 'arabe', l: 'Arabe' }, { v: 'autre', l: 'Autre' }]} />
               </div>
             )}
             {has('freight') && <Select id="freight" label={tr("Type de fret")} value={freight} onChange={(v) => set({ freight: (v ? v.split('+') : []) as Freight[] })}
               options={[{ v: '', l: 'Non précisé' }, { v: 'air', l: 'Aérien' }, { v: 'sea', l: 'Maritime' }, { v: 'air+sea', l: 'Aérien et maritime' }]} />}
             {has('goods') && txt('goods', 'Marchandises acceptées')}
             {has('senegal') && txt('senegal', 'Destinations en Afrique')}
-            <TextArea id="prod" label={tr("Autres produits ou services (un par ligne)")} rows={3} value={(p.products ?? []).join('\n')}
-              onChange={(v) => set({ products: v.split('\n').map((x) => x.trim()).filter(Boolean) })} />
+            {p.cat === 'gros' && <TextArea id="prod" label={tr("Autre produit (facultatif)")} rows={2} value={(p.products ?? []).join('\n')}
+              onChange={(v) => set({ products: v.split('\n').map((x) => x.trim()).filter(Boolean) })} />}
             {tags.length > 0 && (
               <fieldset className="stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
                 <legend style={{ fontWeight: 600, marginBottom: 6 }}>{tr(cat?.tagsLabel ?? 'Produits et services')}</legend>

@@ -122,7 +122,8 @@ test('les écrans appliquent les filtres, la ligne d’infos clés et la barre d
   assert.match(prov, /price_level/);
   assert.match(prov, /halal_status/);
   assert.match(admin, /priceLevel/);
-  assert.match(admin, /halalStatus/);
+  assert.match(admin, /Cuisine halal/);
+  assert.match(admin, /cuisineType/);
 });
 
 test('l’enregistrement d’une fiche n’envoie les nouvelles colonnes que si elles sont renseignées', async () => {
