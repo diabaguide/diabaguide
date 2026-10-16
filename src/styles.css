@@ -537,6 +537,7 @@ body { -webkit-font-smoothing: antialiased; }
   .d-only { display: inline; }
   .phone.has-nav .screen.wide .main { padding-inline: 40px; gap: 32px !important; }
   .phone.has-nav .screen.wide .hero { padding: 36px 40px 60px; }
+  .phone.has-nav .screen.wide .home-hero-brand { display: none; }
   .phone.has-nav .screen.wide .home-overview { display: grid; grid-template-columns: minmax(300px, .78fr) minmax(0, 1.45fr); gap: 48px; align-items: end; padding: 12px 0 4px; }
   .phone.has-nav .screen.wide .home-intro { gap: 12px; padding-bottom: 4px; }
   .phone.has-nav .screen.wide .home-intro h1 { max-width: 12ch; font-size: clamp(38px, 3.4vw, 52px); line-height: 1.03; }
