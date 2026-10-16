@@ -283,7 +283,7 @@ export function Travelers() {
         <BulkBar count={selected.size} onClear={() => setSelected(new Set())}>
           <Button kind="s" icon="x" full={false} disabled={bulkBusy} onClick={() => void bulkStatus('suspended')}>{tr("Désactiver")}</Button>
           <Button kind="s" icon="check" full={false} disabled={bulkBusy} onClick={() => void bulkStatus('active')}>{tr("Réactiver")}</Button>
-          <Button kind="d" icon="trash" full={false} disabled={bulkBusy} onClick={() => void bulkTrash()}>{tr("Mettre à la corbeille")}</Button>
+          <Button kind="d" icon="trash" full={false} disabled={bulkBusy} onClick={() => void bulkTrash()}>{tr("Supprimer (corbeille 30 jours)")}</Button>
         </BulkBar>
 
         {open && <TravelerSheet m={open} onClose={() => setOpen(null)} onSaved={saved} />}
