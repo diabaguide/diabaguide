@@ -34,7 +34,8 @@ const checks = [
   ['navigation principale limitée à cinq destinations', () => (navBlock.match(/\n  \{ to: /g) ?? []).length === 5],
   ['navigation contient Mes achats', () => navBlock.includes("to: '/liste-achats', label: 'Mes achats'")],
   ['navigation contient Profil', () => navBlock.includes("to: '/profil', label: 'Profil'")],
-  ['accueil contient les actions prioritaires', () => ['Trouver une adresse', 'Préparer mes achats', 'Suivre un envoi', 'Près de moi'].every((v) => files.home.includes(v))],
+  ['accueil contient les actions prioritaires', () => ['Trouver une adresse', 'Préparer mes achats', 'Près de moi'].every((v) => files.home.includes(v)) && !files.home.includes('Suivre un envoi')],
+  ['le suivi des envois reste dans la navigation principale', () => navBlock.includes("to: '/mes-envois', label: 'Mes envois'")],
   ['navigation accessible au clavier', () => files.styles.includes('.bottomnav a:focus-visible')],
   ['mise en page des petits écrans', () => files.styles.includes('@media (max-width: 390px)')],
   ['cachet du hero replacé hors du texte descriptif sur mobile', () => {

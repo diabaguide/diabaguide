@@ -3,7 +3,8 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { catIcon, catLabel, category, cityName, tagLabel, type Provider } from '../data';
 import { useProviderById, useStore } from '../store';
-import { Button, DemoNote, Icon, KV, Photo, RadioCard, Screen, Section, StoredPhoto, Tag, TopBar, Verified } from '../ui';
+import { Button, DemoNote, FicheLabel, Icon, KV, Photo, RadioCard, Screen, Section, StoredPhoto, Tag, TopBar, Verified } from '../ui';
+import { aUnContact, coordsFiables, etiquetteFiche, formatTelChine, lienTel } from '../lib/contact';
 import { saveReport } from '../lib/reports';
 import { useModules } from '../lib/modules';
 import { envoyerPosition, positionValide } from '../lib/position';
@@ -14,8 +15,7 @@ import { ReviewsSection } from './Reviews';
 async function copy(text: string) {
   try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
 }
-const tel = (p: Provider) => 'tel:' + (p.tel ?? '').replace(/\s/g, '');
-const ctaLabel = (p: Provider) => category(p.cat)?.ctaLabel ?? 'Contacter';
+const tel = (p: Provider) => lienTel(p.tel);
 
 function useProvider(): Provider | null {
   const { id } = useParams();
@@ -33,25 +33,27 @@ function Specific({ p }: { p: Provider }) {
   const listed = [...(p.productTags ?? []).map(tagLabel), ...(p.products ?? []), ...(p.services ?? [])]
     .sort((x, y) => x.localeCompare(y, 'fr', { sensitivity: 'base' }));
   const has = (f: string) => fields.includes(f as never);
+  const rien = !listed.length && !(has('moq') && p.moq) && !(has('cuisine') && p.cuisine) && !(has('hours') && p.hours)
+    && !(has('halal') && p.halal) && !(has('freight') && p.freight?.length) && !(has('goods') && p.goods) && !(has('senegal') && p.senegal);
+  if (rien) return null;
 
   return (
     <Section title={tr(c?.tagsLabel ?? 'Détails')} icon={catIcon(p.cat)}>
       {listed.length
         ? <ul className="list-clean">{listed.map((x) => <li key={x}><Icon name="check" size={18} sw={2.4} />{tr(x)}</li>)}</ul>
-        : <KV k={tr(c?.tagsLabel ?? 'Détails')} />}
+        : null}
       {has('moq') && <KV k={tr("Minimum de commande")}>{p.moq}</KV>}
       {has('cuisine') && <KV k={tr("Type de cuisine")}>{p.cuisine}</KV>}
       {has('hours') && <KV k={tr("Horaires")}>{p.hours}</KV>}
-      {has('halal') && <KV k={tr("Mention halal")}>{tr(p.halal)}</KV>}
-      {has('freight') && (
+      {has('halal') && <KV k={tr("Halal")}>{p.halal ? tr(p.halal) : undefined}</KV>}
+      {has('freight') && !!p.freight?.length && (
         <div className="row wrap">
           {p.freight?.includes('air') && <Tag tone="ok" icon="plane">{tr("Fret aérien")}</Tag>}
           {p.freight?.includes('sea') && <Tag tone="ok" icon="ship">{tr("Fret maritime")}</Tag>}
-          {!p.freight?.length && <span className="np">{tr("Non renseigné")}</span>}
         </div>
       )}
       {has('goods') && <KV k={tr("Marchandises acceptées")}>{p.goods}</KV>}
-      {has('senegal') && <KV k={tr("Desserte du Sénégal")}>{tr(p.senegal)}</KV>}
+      {has('senegal') && <KV k={tr("Desserte du Sénégal")}>{p.senegal ? tr(p.senegal) : undefined}</KV>}
     </Section>
   );
 }
@@ -111,6 +113,7 @@ export function Fiche() {
             <Verified date={p.verified} />
           </div>
           <h1 className="display" style={{ fontSize: 31, lineHeight: 1.1 }}>{p.name}</h1>
+          <FicheLabel label={etiquetteFiche(p)} />
           <div className="zh" style={{ fontSize: 19, fontWeight: 500 }}>{p.cn}</div>
           <p>{p.desc}</p>
           <DemoNote />
@@ -129,13 +132,13 @@ export function Fiche() {
         <div className="stack" style={{ order: 7 }}>
         <Specific p={p} />
         </div>
-        <div style={{ order: 8 }}>
+        {(p.entree || p.reperes || p.metro) && <div style={{ order: 8 }}>
         <Section title={tr("Accès")} icon="route" collapsible>
           <KV k={tr("Entrée exacte")}>{p.entree}</KV>
           <KV k={tr("Repères utiles")}>{p.reperes}</KV>
-          {p.metro ? <div className="notice"><Icon name="train" size={22} /><div><div className="small muted" style={{ fontWeight: 700 }}>{tr("Métro et gare")}</div>{p.metro}</div></div> : <KV k={tr("Métro et gare")} />}
+          {p.metro ? <div className="notice"><Icon name="train" size={22} /><div><div className="small muted" style={{ fontWeight: 700 }}>{tr("Métro et gare")}</div>{p.metro}</div></div> : null}
         </Section>
-        </div>
+        </div> }
         <div style={{ order: 10 }}>
         <Section title={tr("Avis des voyageurs")} icon="star" collapsible>
           <ReviewsSection providerId={p.id} />
@@ -146,13 +149,16 @@ export function Fiche() {
         {/* Deux actions principales (appeler / montrer au chauffeur) + itinéraire. */}
         <div className="stack" style={{ order: 3 }}>
           <div className="fiche-primary">
+            {/* Pas de bouton de contact qui mène à une page vide : sans téléphone ni WeChat,
+                « Montrer au chauffeur » devient l'action principale. */}
+            <Button to={`/adresses/${p.id}/chauffeur`} kind="g" icon="truck">{tr("Montrer au chauffeur")}</Button>
             {p.tel
               ? <Button href={tel(p)} icon="phone">{tr("Appeler")}</Button>
-              : <Button to={`/adresses/${p.id}/contact`} icon="chat">{tr(ctaLabel(p))}</Button>}
-            <Button to={`/adresses/${p.id}/chauffeur`} kind="g" icon="truck">{tr("Montrer au chauffeur")}</Button>
+              : p.wechat ? <Button to={`/adresses/${p.id}/contact`} icon="chat">{tr("WeChat")}</Button> : null}
           </div>
-          {/* Itinéraire depuis les coordonnées réelles (l'adresse peut être fictive en démo). */}
-          <Button kind="s" icon="route" href={`https://www.openstreetmap.org/directions?to=${p.lat}%2C${p.lng}`}>{tr("Ouvrir l’itinéraire")}</Button>
+          {!aUnContact(p) && <p className="small muted" role="status">{tr("Contact non disponible — montrez l’adresse au chauffeur.")}</p>}
+          {/* Itinéraire : seulement si les coordonnées sont fiables (jamais les valeurs par défaut). */}
+          {coordsFiables(p) && <Button kind="s" icon="route" href={`https://www.openstreetmap.org/directions?to=${p.lat}%2C${p.lng}`}>{tr("Ouvrir l’itinéraire")}</Button>}
         </div>
         {/* Actions secondaires : une rangée d'icônes compactes. */}
         <div className="fiche-actions" style={{ order: 4 }}>
@@ -161,15 +167,15 @@ export function Fiche() {
           <button type="button" className={`fiche-ibtn ${dl ? 'on' : ''}`} aria-pressed={dl} aria-label={tr(dl ? 'Disponible hors connexion' : 'Rendre disponible hors connexion')}
             onClick={() => { d({ t: 'dl', id: p.id }); setMsg(dl ? 'Fiche retirée de la consultation hors connexion.' : 'Cette fiche est maintenant disponible hors connexion, sans qu’aucun fichier ne soit enregistré sur l’appareil.'); }}><Icon name={dl ? 'check' : 'download'} size={20} />{tr("Hors-ligne")}</button>
           <button type="button" className="fiche-ibtn" onClick={share}><Icon name="share" size={20} />{tr("Partager")}</button>
-          {positionValide(p) && <button type="button" className="fiche-ibtn" onClick={() => void envoyerLaPosition()}><Icon name="pin" size={20} />{tr("Position")}</button>}
+          {positionValide(p) && coordsFiables(p) && <button type="button" className="fiche-ibtn" onClick={() => void envoyerLaPosition()}><Icon name="pin" size={20} />{tr("Position")}</button>}
           {settings.shopping && <Suspense fallback={null}><AddToListButton providerId={p.id} providerName={p.name} variant="icon" /></Suspense>}
           {settings.contributions && <Link to={`/adresses/${p.id}/signaler`} className="fiche-ibtn"><Icon name="edit" size={20} />{tr("Corriger")}</Link>}
         </div>
         {msg && <div style={{ order: 5 }}><div role="status" className="notice ok"><Icon name="check" size={20} sw={2.4} /><span>{tr(msg)}</span></div></div>}
-        <div style={{ order: 9 }}>
+        {aUnContact(p) && <div style={{ order: 9 }}>
         <Section title={tr("Coordonnées")} icon="chat" collapsible>
           <div className="row" style={{ justifyContent: 'space-between' }}>
-            <KV k={tr("Téléphone")}>{p.tel}</KV>
+            <KV k={tr("Téléphone")}>{p.tel ? formatTelChine(p.tel) : undefined}</KV>
             {p.tel && <Button href={tel(p)} icon="phone" full={false}>{tr("Appeler")}</Button>}
           </div>
           <div style={{ height: 1, background: 'var(--line)' }} />
@@ -183,7 +189,7 @@ export function Fiche() {
             </details>
           )}
         </Section>
-        </div>
+        </div> }
         <div style={{ order: 11 }}>
         <div className="row" style={{ justifyContent: 'center' }}>
           {settings.contributions && <Link className="link" style={{ color: 'var(--danger)' }} to={`/adresses/${p.id}/signaler`}><Icon name="flag" size={18} />{tr(" Signaler un problème")}</Link>}
@@ -272,22 +278,23 @@ export function Contact() {
   if (!p) return <Navigate to="/recherche" replace />;
   return (
     <Screen>
-      <TopBar title={tr(p.cat === 'hotel' ? 'Contacter pour réserver' : ctaLabel(p))} back={`/adresses/${p.id}`} />
+      <TopBar title={tr(p.tel ? 'Appeler' : p.wechat ? 'WeChat' : 'Contact')} back={`/adresses/${p.id}`} />
       <div className="main">
         <div className="card row"><Photo label={tr("Photo")} h={64} w={64} round={12} /><div><div style={{ fontWeight: 700, fontSize: 17 }}>{p.name}</div><div className="small muted zh">{p.cn}</div><Verified /></div></div>
         <div className="notice"><Icon name="info" size={22} /><div style={{ fontWeight: 500 }}>{tr("Appelez ou contactez directement ce prestataire pour connaître ses disponibilités et ses conditions.")}</div></div>
-        <Section title={tr("Téléphone")} icon="phone">
-          {p.tel ? <><div style={{ fontSize: 22, fontWeight: 700 }}>{p.tel}</div><Button href={tel(p)} icon="phone">{tr("Appeler")}</Button></> : <KV k={tr("Téléphone")} />}
-        </Section>
-        <Section title={tr("WeChat")} icon="chat">
+        {!aUnContact(p) && <div className="notice"><Icon name="info" size={22} /><div style={{ fontWeight: 500 }}>{tr("Contact non disponible — montrez l’adresse au chauffeur.")}</div></div>}
+        {!!p.tel && <Section title={tr("Téléphone")} icon="phone">
+          {p.tel ? <><div style={{ fontSize: 22, fontWeight: 700 }}>{formatTelChine(p.tel)}</div><Button href={tel(p)} icon="phone">{tr("Appeler")}</Button></> : null}
+        </Section> }
+        {!!p.wechat && <Section title={tr("WeChat")} icon="chat">
           {p.wechat ? (
             <>
               <div style={{ fontSize: 20, fontWeight: 700 }}>{p.wechat}</div>
               <Button kind="s" icon="copy" onClick={async () => setOk(await copy(p.wechat!))}>{tr(ok ? 'Identifiant copié' : 'Copier l’identifiant')}</Button>
               <details className="qr"><summary><Icon name="qr" size={20} />{tr("Afficher le QR code")}</summary><div className="row" style={{ justifyContent: 'center', padding: '6px 0 16px' }}><Photo label={tr("QR code WeChat")} h={160} w={160} round={12} /></div></details>
             </>
-          ) : <KV k={tr("Identifiant WeChat")} />}
-        </Section>
+          ) : null}
+        </Section> }
         <div className="row small muted" style={{ alignItems: 'flex-start' }}><Icon name="lock" size={18} /><span>{tr("Diaba Guide ne gère ni réservation, ni commande, ni paiement. Tout se règle directement avec le prestataire.")}</span></div>
       </div>
     </Screen>
