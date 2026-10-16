@@ -33,7 +33,6 @@ export const STATIC_CATEGORIES: Category[] = [
   { id: 'gros', label: 'Marchés', labelCn: '批发', icon: 'box', ctaLabel: 'Contacter le fournisseur', tagsLabel: 'Produits proposés', fields: ['moq', 'hours'], isFreight: false, active: true, sort: 1 },
   { id: 'hotel', label: 'Hôtels', labelCn: '酒店', icon: 'bed', ctaLabel: 'Contacter pour réserver', tagsLabel: 'Services', fields: [], isFreight: false, active: true, sort: 2 },
   { id: 'resto', label: 'Restaurants', labelCn: '餐厅', icon: 'utensils', ctaLabel: 'Contacter le restaurant', tagsLabel: 'Spécialités', fields: ['cuisine', 'hours', 'halal'], isFreight: false, active: true, sort: 3 },
-  { id: 'transitaire', label: 'Transitaires', labelCn: '货代', icon: 'ship', ctaLabel: 'Contacter le transitaire', tagsLabel: 'Services', fields: ['freight', 'goods', 'senegal'], isFreight: true, active: false, sort: 5 },
 ];
 export const STATIC_CITIES: CityRef[] = [
   { id: 'guangzhou', name: 'Guangzhou', nameCn: '广州', lat: 23.13, lng: 113.27, active: true, sort: 1 },
@@ -174,17 +173,7 @@ export const PROVIDERS: Provider[] = [
     cuisine: 'Chinoise, nouilles tirées à la main', hours: '10 h 30 – 22 h 00', halal: 'Indiquée par l’établissement, à confirmer sur place',
     photoPaths: ["https://picsum.photos/seed/diaba-alnour-1/640/480","https://picsum.photos/seed/diaba-alnour-2/640/480"],
   },
-  {
-    id: 'sinodakar', name: 'Sino-Dakar Cargo', cn: '中达国际货运代理有限公司', cat: 'transitaire', city: 'guangzhou', district: 'Baiyun',
-    lat: 23.155, lng: 113.29, verified: '10 sept. 2026',
-    desc: 'Transitaire spécialisé dans l’envoi de marchandises depuis Guangzhou vers l’Afrique de l’Ouest.',
-    addrCn: '广东省广州市白云区示例路120号 B座 508室', addrFr: '120, route de l’Exemple (adresse fictive), tour B, bureau 508, district de Baiyun, Guangzhou',
-    entree: 'Tour B, entrée côté ouest. Prendre l’ascenseur jusqu’au 5e étage.', reperes: 'Face à un entrepôt de colis, près du carrefour principal.',
-    metro: 'Ligne 3 · Station proche (exemple) · Sortie D, puis 8 min à pied',
-    tel: '+86 133 0000 0000', wechat: 'sinodakar_demo',
-    freight: ['air', 'sea'], goods: 'Textiles, pièces détachées, appareils électroménagers', senegal: 'Dakar : port et aéroport',
-    photoPaths: ["https://picsum.photos/seed/diaba-sinodakar-1/640/480","https://picsum.photos/seed/diaba-sinodakar-2/640/480"],
-  },
+
   {
     id: 'huaqiang', name: 'Huaqiang Digital Parts', cn: '华强数码配件', cat: 'gros', city: 'shenzhen', district: 'Futian',
     lat: 22.545, lng: 114.085, featured: true, verified: '9 sept. 2026',
@@ -256,7 +245,6 @@ export const SEED_PROPOSALS: Proposal[] = [
   P({ id: 'p1', name: 'Huaqiang Digital Parts', cn: '华强数码配件', cat: 'gros', city: 'shenzhen', status: 'Brouillon', date: 'Enregistré le 20 sept.',
       loc: 'Huaqiangbei, marché Yuanwang, 2e étage', products: 'Coques de téléphone, câbles, chargeurs, écouteurs.', tel: '+86 130 0000 0000', wechat: 'huaqiang_parts_demo', addrCn: '福田区华强北路 远望数码城 2楼', photos: 2, cardFront: true, photoPaths: ["https://picsum.photos/seed/diaba-p1-1/640/480","https://picsum.photos/seed/diaba-p1-2/640/480"] }),
   P({ id: 'p2', name: 'Tianhe Sample Hotel', cn: '天河示例酒店', cat: 'hotel', city: 'guangzhou', status: 'Soumise', date: 'Envoyée le 19 sept.', loc: 'Tianhe, près de la gare Est' }),
-  P({ id: 'p3', name: 'Nanshan Cargo Express', cn: '南山快运', cat: 'transport', city: 'shenzhen', status: 'En vérification', date: 'Envoyée le 18 sept.', loc: 'Nanshan' }),
   P({ id: 'p4', name: 'Yuexiu Halal Kitchen', cn: '越秀清真小厨', cat: 'resto', city: 'guangzhou', status: 'Complément demandé', date: 'Envoyée le 16 sept.', loc: 'Yuexiu',
       feedback: 'Merci pour votre proposition. Pour la publier, il nous manque : un numéro de téléphone joignable et une photo de la devanture ou de l’enseigne.' }),
   P({ id: 'p5', name: 'Liwan Lace House', cn: '荔湾蕾丝行', cat: 'gros', city: 'guangzhou', status: 'Publiée', date: 'Publiée le 15 sept.', loc: 'Liwan',
@@ -276,6 +264,5 @@ export const SEED_DECISIONS: Decision[] = [
 ];
 
 export const TEAM_QUEUE_EXTRA: Proposal[] = [
-  P({ id: 't1', name: 'Panyu Sea Freight', cn: '番禺海运代理', cat: 'transitaire', city: 'guangzhou', status: 'Soumise', date: '20 sept.', author: 'A. Ndiaye' }),
   P({ id: 't2', name: 'Futian Phone Cases', cn: '福田手机壳批发', cat: 'gros', city: 'shenzhen', status: 'En vérification', date: '17 sept.', author: 'M. Sow' }),
 ];

@@ -17,11 +17,22 @@ test('seules les trois catégories d’adresses sont dans les listes', () => {
   assert.equal(isPublicDirectoryProvider({ cat: 'resto' }), true);
 });
 
-test('les écrans de listes excluent transporteurs et transitaires sans supprimer les données', async () => {
+test('les écrans et les données de repli ne réintroduisent pas les catégories retirées', async () => {
   for (const p of ['src/pages/Home.tsx', 'src/pages/Search.tsx', 'src/pages/Contribute.tsx', 'src/pages/admin/Fiches.tsx', 'src/pages/admin/Admin.tsx']) {
     const text = await read(p);
     assert.match(text, /directoryCategories|isPublicDirectoryProvider/, p);
   }
   const providers = await read('src/lib/providers.ts');
   assert.doesNotMatch(providers, /delete\(.*transport|delete\(.*transitaire/i);
+  const fallback = await read('src/data.ts');
+  assert.doesNotMatch(fallback, /id: 'transitaire'/);
+  assert.doesNotMatch(fallback, /cat: 'transport'|cat: 'transitaire'/);
+});
+
+test('la migration supprime fiches, propositions et catégories retirées', async () => {
+  const sql = await read('supabase/650_remove_retired_address_data.sql');
+  assert.match(sql, /delete from public\.providers[\s\S]*cat in \('transport', 'transitaire'\)/);
+  assert.match(sql, /delete from public\.proposals[\s\S]*cat in \('transport', 'transitaire'\)/);
+  assert.match(sql, /delete from public\.categories[\s\S]*id in \('transport', 'transitaire'\)/);
+  assert.match(sql, /begin;[\s\S]*commit;/);
 });
