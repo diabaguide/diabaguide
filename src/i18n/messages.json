@@ -374,6 +374,21 @@
     "zh": "城市",
     "ar": "المدينة"
   },
+  "Toutes les villes": {
+    "en": "All cities",
+    "zh": "所有城市",
+    "ar": "كل المدن"
+  },
+  "Pagination des résultats": {
+    "en": "Results pagination",
+    "zh": "结果分页",
+    "ar": "ترقيم النتائج"
+  },
+  "Page {0} sur {1}": {
+    "en": "Page {0} of {1}",
+    "zh": "第 {0} 页，共 {1} 页",
+    "ar": "الصفحة {0} من {1}"
+  },
   "Guide": {
     "en": "Guide",
     "zh": "指南",

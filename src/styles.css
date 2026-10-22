@@ -531,6 +531,8 @@ body { -webkit-font-smoothing: antialiased; }
   .filter-apply { position: sticky; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 3; box-shadow: 0 -8px 18px rgba(15, 26, 48, .08); }
 }
 .search-layout { display: contents; }
+.results-pagination { display: flex; align-items: center; justify-content: center; gap: 12px; padding-block: 8px; }
+.results-pagination .chip:disabled { opacity: .45; cursor: not-allowed; }
 .search-filters, .search-map { display: none; }
 .fiche-col { display: contents; }
 .fiche-side { display: contents; }

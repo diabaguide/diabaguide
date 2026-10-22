@@ -13,6 +13,7 @@ import { rankProviders, suggestAlternatives, type ScoreCtx } from '../lib/search
 import { logUsage } from '../lib/usage';
 import { langueVoix } from '../lib/voixPartage';
 import { afficherTriNotes, aUnContact, coordsFiables, etiquetteFiche, lienTel } from '../lib/contact';
+import { paginateResults } from '../lib/searchPagination';
 
 /* Termes déjà signalés pendant cette visite : on n'enregistre pas deux fois la
    même recherche quand le voyageur va et vient entre les résultats. */
@@ -68,10 +69,9 @@ export function ResultCard({ p, meta }: { p: Provider; meta?: string }) {
 /* Paramètres de recherche dans l’URL : la requête est conservée en revenant d’une fiche. */
 export function useQuery() {
   const [sp, setSp] = useSearchParams();
-  const { s } = useStore();
   const q = {
     q: sp.get('q') ?? '',
-    city: (sp.get('ville') as City) || s.city,
+    city: (sp.get('ville') as City | null) ?? null,
     cat: (sp.get('cat') as Cat | null) || null,
     fret: (sp.get('fret') as Freight | 'both' | null) || null,
     prox: sp.get('prox') || null, // rayon en km, ou « 0 » = toute la ville
@@ -83,6 +83,7 @@ export function useQuery() {
     cuisine: sp.get('cuisine') || null,
     prod: sp.get('prod') || null,
     tri: (['note', 'verif'].includes(sp.get('tri') ?? '') ? sp.get('tri') : null) as Tri | null,
+    page: Math.max(1, Number(sp.get('page')) || 1),
   };
   return { q, sp, setSp };
 }
@@ -104,7 +105,7 @@ const dateVerif = (v: string): number => {
 function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provider[], ctx: ScoreCtx) {
   const pos = getPos();
   const term = q.q.trim();
-  let list = providers.filter((p) => p.city === q.city).map((p) => ({ p, km: pos && coordsFiables(p) ? distanceKm(pos, p) : null }));
+  let list = providers.filter((p) => q.city ? p.city === q.city : true).map((p) => ({ p, km: pos && coordsFiables(p) ? distanceKm(pos, p) : null }));
   if (q.cat) list = list.filter((x) => x.p.cat === q.cat);
   // Pertinence : catégorie > produits > nom > description, mots entiers, synonymes (supprime les faux positifs).
   if (term) {
@@ -124,7 +125,7 @@ function filterProviders(q: ReturnType<typeof useQuery>['q'], providers: Provide
 }
 
 export function Search() {
-  const { tr, lang } = useI18n();
+  const { tr, t, lang } = useI18n();
   const { q, sp, setSp } = useQuery();
   const { s } = useStore();
   const { settings } = useModules();
@@ -166,6 +167,8 @@ export function Search() {
     tags: s.productTags.map((t) => ({ id: t.id, label: t.label, labelCn: t.labelCn })),
   }), [s.categories, s.productTags]);
   const list = useMemo(() => filterProviders(q, s.providers, scoreCtx), [key, s.providers, scoreCtx]);
+  const pagination = paginateResults(list, q.page);
+  const pageList = pagination.items;
 
   /* Journal des recherches (supabase/190_search_logs.sql) : on enregistre le terme
      et le nombre d'adresses trouvées, une fois qu'il s'est stabilisé — assez
@@ -189,10 +192,20 @@ export function Search() {
      Filtres ne compte que ce qui ne s'y voit pas (proximité, mode de fret). */
   const nFilters = [q.fret, q.prox, q.prix, q.metro, q.halal, q.cuisine, q.prod].filter(Boolean).length;
   const cityOptions = citiesWithPublicEntries(s.cities, s.providers);
-  const cityValue = cityOptions.some((c) => c.id === q.city) ? q.city : (cityOptions[0]?.id ?? q.city);
-  const cityLabel = s.cities.find((c) => c.id === q.city)?.name ?? q.city;
-  const set = (k: string, v: string | null) => { const n = new URLSearchParams(sp); v ? n.set(k, v) : n.delete(k); setSp(n, { replace: true }); };
-  const patch = (o: Record<string, string | null>) => { const n = new URLSearchParams(sp); for (const [k, v] of Object.entries(o)) { if (v) n.set(k, v); else n.delete(k); } setSp(n, { replace: true }); };
+  const cityValue = cityOptions.some((c) => c.id === q.city) ? q.city ?? '' : '';
+  const cityLabel = q.city ? s.cities.find((c) => c.id === q.city)?.name ?? q.city : 'Toutes les villes';
+  const set = (k: string, v: string | null) => {
+    const n = new URLSearchParams(sp);
+    if (v) n.set(k, v); else n.delete(k);
+    if (k !== 'page') n.delete('page');
+    setSp(n, { replace: true });
+  };
+  const patch = (o: Record<string, string | null>) => {
+    const n = new URLSearchParams(sp);
+    for (const [k, v] of Object.entries(o)) { if (v) n.set(k, v); else n.delete(k); }
+    if (!('page' in o)) n.delete('page');
+    setSp(n, { replace: true });
+  };
 
   const body = () => {
     if (!online) {
@@ -248,10 +261,17 @@ export function Search() {
             {settings.contributions && <Button to="/contributions/nouvelle/1" icon="plus">{tr("Proposer une adresse")}</Button>}
           </div>
         ) : (
-          list.map(({ p, km }) => (
+          pageList.map(({ p, km }) => (
             <ResultCard key={p.id} p={p}
               meta={[km !== null ? fmtKm(km) : null, p.verified ? `Vérifiée le ${p.verified}` : null].filter(Boolean).join(' · ')} />
           ))
+        )}
+        {list.length > 0 && pagination.pageCount > 1 && (
+          <nav className="results-pagination" aria-label={tr("Pagination des résultats")}>
+            <button type="button" className="chip" disabled={pagination.page === 1} onClick={() => set('page', String(pagination.page - 1))}>{tr("Précédent")}</button>
+            <span className="small muted">{t('Page {0} sur {1}', { 0: pagination.page, 1: pagination.pageCount })}</span>
+            <button type="button" className="chip" disabled={pagination.page === pagination.pageCount} onClick={() => set('page', String(pagination.page + 1))}>{tr("Suivant")}</button>
+          </nav>
         )}
         <DemoNote />
       </>
@@ -278,7 +298,8 @@ export function Search() {
           {cityOptions.length > 1 ? (
             <label className="chip city-pick">
               <Icon name="pin" size={16} sw={2} />{tr(cityLabel)}<span className="city-chev"><Icon name="chevR" size={14} sw={2.2} /></span>
-              <select aria-label={tr("Changer de ville")} value={cityValue} onChange={(e) => patch({ ville: e.target.value })}>
+              <select aria-label={tr("Changer de ville")} value={cityValue} onChange={(e) => patch({ ville: e.target.value || null })}>
+                <option value="">{tr("Toutes les villes")}</option>
                 {cityOptions.map((c) => <option key={c.id} value={c.id}>{tr(c.name)}</option>)}
               </select>
             </label>
@@ -296,12 +317,12 @@ export function Search() {
             </button>
           ))}
         </div>
-        <ContextFilters q={q} patch={patch} base={s.providers.filter((p) => p.city === q.city && p.cat === q.cat)} />
+        <ContextFilters q={q} patch={patch} base={s.providers.filter((p) => (!q.city || p.city === q.city) && p.cat === q.cat)} />
       </header>
       <div className="search-layout">
         <aside className="search-filters" aria-label={tr("Filtres")}><FilterPanel q={q} patch={patch} onReset={() => setSp(new URLSearchParams(), { replace: true })} /></aside>
         <main className="main">{tr(body())}</main>
-        <aside className="search-map">{online && !loading && list.some((x) => coordsFiables(x.p)) && <MapView list={list.filter((x) => coordsFiables(x.p))} sel={sel} setSel={setSel} />}</aside>
+        <aside className="search-map">{online && !loading && pageList.some((x) => coordsFiables(x.p)) && <MapView list={pageList.filter((x) => coordsFiables(x.p))} sel={sel} setSel={setSel} />}</aside>
       </div>
     </Screen>
   );
@@ -312,7 +333,7 @@ function FilterPanel({ q, patch, onReset }: { q: ReturnType<typeof useQuery>['q'
   const { tr } = useI18n();
   const { s } = useStore();
   const cityOptions = citiesWithPublicEntries(s.cities, s.providers);
-  const cityValue = cityOptions.some((c) => c.id === q.city) ? q.city : (cityOptions[0]?.id ?? q.city);
+  const cityValue = cityOptions.some((c) => c.id === q.city) ? q.city ?? '' : '';
   const radios = (name: string, val: string, opts: { v: string; l: string }[], on: (v: string) => void) => (
     <div className="chips">
       {opts.map((o) => (
@@ -332,7 +353,7 @@ function FilterPanel({ q, patch, onReset }: { q: ReturnType<typeof useQuery>['q'
         {radios('pcat', q.cat ?? '', [{ v: '', l: 'Toutes' }, ...directoryCategories(s.categories).filter((c) => c.active).map((c) => ({ v: c.id as string, l: c.label }))], (v) => patch({ cat: v || null, fret: null }))}
       </section>
       <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Ville")}</h3>
-        {radios('pville', cityValue, cityOptions.map((c) => ({ v: c.id as string, l: c.name })), (v) => patch({ ville: v }))}
+        {radios('pville', cityValue, [{ v: '', l: 'Toutes les villes' }, ...cityOptions.map((c) => ({ v: c.id as string, l: c.name }))], (v) => patch({ ville: v || null }))}
       </section>
       <section className="stack"><h3 style={{ fontSize: 16 }}>{tr("Proximité")}</h3>
         {radios('pprox', q.prox ?? '0', [{ v: '2', l: 'Moins de 2 km' }, { v: '5', l: 'Moins de 5 km' }, { v: '10', l: 'Moins de 10 km' }, { v: '0', l: 'Toute la ville' }], (v) => patch({ prox: v === '0' ? null : v }))}
@@ -427,13 +448,13 @@ export function Filters() {
   const nav = useNavigate();
   const wide = useWide();
   const cityOptions = citiesWithPublicEntries(s.cities, s.providers);
-  const [f, setF] = useState({ q: q.q, cat: q.cat, city: q.city, prox: q.prox ?? '0', fret: q.fret ?? 'both' });
-  const cityValue = cityOptions.some((c) => c.id === f.city) ? f.city : (cityOptions[0]?.id ?? f.city);
+  const [f, setF] = useState({ q: q.q, cat: q.cat, city: q.city ?? '', prox: q.prox ?? '0', fret: q.fret ?? 'both' });
+  const cityValue = cityOptions.some((c) => c.id === f.city) ? f.city : '';
   const apply = () => {
     const n = new URLSearchParams();
     if (f.q) n.set('q', f.q);
     if (f.cat) n.set('cat', f.cat);
-    n.set('ville', cityValue);
+    if (cityValue) n.set('ville', cityValue);
     if (f.prox !== '0') n.set('prox', f.prox);
     if (f.cat && isFreight(f.cat) && f.fret !== 'both') n.set('fret', f.fret);
     if (sp.get('view')) n.set('view', sp.get('view')!);
@@ -462,9 +483,9 @@ export function Filters() {
         </section>
         <section className="stack">{wide && <h2 style={{ fontSize: 17 }}>{tr("Ville")}</h2>}
           {wide
-            ? tr(radios<City>('ville', cityValue, cityOptions.map((c) => ({ v: c.id, l: c.name })), (v) => setF({ ...f, city: v })))
-            : <Select<City> id="filter-city" label="Ville" value={cityValue}
-                options={cityOptions.map((c) => ({ v: c.id, l: c.name }))}
+            ? tr(radios<string>('ville', cityValue, [{ v: '', l: 'Toutes les villes' }, ...cityOptions.map((c) => ({ v: c.id, l: c.name }))], (v) => setF({ ...f, city: v })))
+            : <Select<string> id="filter-city" label="Ville" value={cityValue}
+                options={[{ v: '', l: 'Toutes les villes' }, ...cityOptions.map((c) => ({ v: c.id, l: c.name }))]}
                 onChange={(v) => setF({ ...f, city: v })} />}
         </section>
         <section className="stack"><h2 style={{ fontSize: 17 }}>{tr("Proximité")}</h2>
