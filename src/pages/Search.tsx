@@ -169,6 +169,8 @@ export function Search() {
   const list = useMemo(() => filterProviders(q, s.providers, scoreCtx), [key, s.providers, scoreCtx]);
   const pagination = paginateResults(list, q.page);
   const pageList = pagination.items;
+  const mapList = pageList.filter((x) => coordsFiables(x.p));
+  const showMap = online && !loading && mapList.length > 0;
 
   /* Journal des recherches (supabase/190_search_logs.sql) : on enregistre le terme
      et le nombre d'adresses trouvées, une fois qu'il s'est stabilisé — assez
@@ -261,10 +263,12 @@ export function Search() {
             {settings.contributions && <Button to="/contributions/nouvelle/1" icon="plus">{tr("Proposer une adresse")}</Button>}
           </div>
         ) : (
-          pageList.map(({ p, km }) => (
-            <ResultCard key={p.id} p={p}
-              meta={[km !== null ? fmtKm(km) : null, p.verified ? `Vérifiée le ${p.verified}` : null].filter(Boolean).join(' · ')} />
-          ))
+          <div className="search-results">
+            {pageList.map(({ p, km }) => (
+              <ResultCard key={p.id} p={p}
+                meta={[km !== null ? fmtKm(km) : null, p.verified ? `Vérifiée le ${p.verified}` : null].filter(Boolean).join(' · ')} />
+            ))}
+          </div>
         )}
         {list.length > 0 && pagination.pageCount > 1 && (
           <nav className="results-pagination" aria-label={tr("Pagination des résultats")}>
@@ -319,10 +323,10 @@ export function Search() {
         </div>
         <ContextFilters q={q} patch={patch} base={s.providers.filter((p) => (!q.city || p.city === q.city) && p.cat === q.cat)} />
       </header>
-      <div className="search-layout">
+      <div className={`search-layout${showMap ? ' has-map' : ''}`}>
         <aside className="search-filters" aria-label={tr("Filtres")}><FilterPanel q={q} patch={patch} onReset={() => setSp(new URLSearchParams(), { replace: true })} /></aside>
         <main className="main">{tr(body())}</main>
-        <aside className="search-map">{online && !loading && pageList.some((x) => coordsFiables(x.p)) && <MapView list={pageList.filter((x) => coordsFiables(x.p))} sel={sel} setSel={setSel} />}</aside>
+        <aside className="search-map">{showMap && <MapView list={mapList} sel={sel} setSel={setSel} />}</aside>
       </div>
     </Screen>
   );
