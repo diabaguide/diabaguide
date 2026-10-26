@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } 
 import { catLabel, cityName, directoryCategories, isPublicDirectoryProvider, type Cat, type City, type Freight, type Proposal, type Provider } from '../../data';
 import { useStore } from '../../store';
 import { contient } from '../../lib/texte';
+import { addProductCategory, normalizeProductCategory, PRODUCT_CATEGORY_SUGGESTIONS } from '../../lib/productCategories';
 import { fetchProviderNote, newProviderId, saveProviderNote, validateProvider } from '../../lib/providers';
 import { aRever, completude, manquantsPourStatut, STATUTS, type Statut } from '../../lib/completude';
 import { evaluerPosition, lirePositionGps } from '../../lib/positionSaisie';
@@ -228,6 +229,8 @@ export function FicheEdit() {
   const [reason, setReason] = useState('');
   const [note, setNote] = useState('');
   const [noteLue, setNoteLue] = useState(false);
+  const [productCategoryDraft, setProductCategoryDraft] = useState('');
+  const [productCategoryError, setProductCategoryError] = useState<string | null>(null);
   const [gps, setGps] = useState<{ busy: boolean; msg: string; ok?: boolean }>({ busy: false, msg: '' });
   const [apercu, setApercu] = useState(false);
   const noteId = existing?.id;
@@ -240,10 +243,27 @@ export function FicheEdit() {
   if (!p) return <Navigate to="/equipe/fiches" replace />;
 
   const set = (patch: Partial<Provider>) => { setP({ ...p, ...patch }); setSaved(false); };
+  const selectedProductCategories = [
+    ...(p.productTags ?? []).map((id) => ({ key: `tag:${id}`, label: s.productTags.find((tag) => tag.id === id)?.label ?? id, tagId: id })),
+    ...(p.products ?? []).map((label, index) => ({ key: `product:${index}:${label}`, label, productIndex: index })),
+  ];
+  const visibleProductSuggestions = PRODUCT_CATEGORY_SUGGESTIONS
+    .filter((label) => !selectedProductCategories.some((selected) => normalizeProductCategory(selected.label) === normalizeProductCategory(label)))
+    .filter((label) => !productCategoryDraft.trim() || normalizeProductCategory(label).includes(normalizeProductCategory(productCategoryDraft)))
+    .slice(0, 6);
+  const addMarketProductCategory = (raw: string) => {
+    const result = addProductCategory(selectedProductCategories.map((item) => item.label), raw);
+    if (result.error) { setProductCategoryError(result.error); return; }
+    set({ products: [...(p.products ?? []), result.values[result.values.length - 1]] });
+    setProductCategoryDraft(''); setProductCategoryError(null);
+  };
+  const removeMarketProductCategory = (item: (typeof selectedProductCategories)[number]) => {
+    if ('tagId' in item) set({ productTags: (p.productTags ?? []).filter((id) => id !== item.tagId) });
+    else set({ products: (p.products ?? []).filter((_, index) => index !== item.productIndex) });
+  };
   const cat = s.categories.find((c) => c.id === p.cat);
   const has = (f: string) => !!cat?.fields.includes(f as never);
   const vErr = validateProvider(p);
-  const tags = s.productTags.filter((t) => t.categoryId === p.cat && t.active);
   const freight = (p.freight ?? []).slice().sort().join('+');
 
   const save = async () => {
@@ -335,19 +355,32 @@ export function FicheEdit() {
               options={[{ v: '', l: 'Non précisé' }, { v: 'air', l: 'Aérien' }, { v: 'sea', l: 'Maritime' }, { v: 'air+sea', l: 'Aérien et maritime' }]} />}
             {has('goods') && txt('goods', 'Marchandises acceptées')}
             {has('senegal') && txt('senegal', 'Destinations en Afrique')}
-            {p.cat === 'gros' && <TextArea id="prod" label={tr("Autre produit (facultatif)")} rows={2} value={(p.products ?? []).join('\n')}
-              onChange={(v) => set({ products: v.split('\n').map((x) => x.trim()).filter(Boolean) })} />}
-            {tags.length > 0 && (
-              <fieldset className="stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
-                <legend style={{ fontWeight: 600, marginBottom: 6 }}>{tr(cat?.tagsLabel ?? 'Produits et services')}</legend>
-                {tags.map((t) => (
-                  <label key={t.id} className="check">
-                    <input type="checkbox" checked={(p.productTags ?? []).includes(t.id)}
-                      onChange={(e) => set({ productTags: e.target.checked ? [...(p.productTags ?? []), t.id] : (p.productTags ?? []).filter((x) => x !== t.id) })} />
-                    <span>{tr(t.label)}</span>
-                  </label>
-                ))}
-              </fieldset>
+            {p.cat === 'gros' && (
+              <div className="stack" style={{ gap: 10 }}>
+                <div style={{ fontWeight: 600 }}>{tr("Catégories de produits")}</div>
+                <div className="small muted">{tr("Choisissez une suggestion ou saisissez une catégorie. Vérifiez l’orthographe avant de l’ajouter.")}</div>
+                {selectedProductCategories.length > 0 && (
+                  <div className="row" aria-label={tr("Catégories sélectionnées")} style={{ flexWrap: 'wrap', gap: 8 }}>
+                    {selectedProductCategories.map((item) => (
+                      <span key={item.key} className="chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {tr(item.label)}
+                        <button type="button" className="linklike" aria-label={`${tr("Retirer")} ${tr(item.label)}`} onClick={() => removeMarketProductCategory(item)}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <Field id="market-product-category" label="Rechercher ou saisir une catégorie" value={productCategoryDraft}
+                  onChange={(value) => { setProductCategoryDraft(value); setProductCategoryError(null); }}
+                  placeholder="Ex. textile, électronique, maison" maxLength={80} error={productCategoryError} />
+                {visibleProductSuggestions.length > 0 && (
+                  <div className="row" aria-label={tr("Suggestions de catégories")} style={{ flexWrap: 'wrap', gap: 8 }}>
+                    {visibleProductSuggestions.map((label) => (
+                      <button key={label} type="button" className="chip" onClick={() => addMarketProductCategory(label)}>{tr(label)}</button>
+                    ))}
+                  </div>
+                )}
+                {productCategoryDraft.trim() && <Button kind="s" icon="plus" onClick={() => addMarketProductCategory(productCategoryDraft)}>{tr("Ajouter cette catégorie")}</Button>}
+              </div>
             )}
           </Section>
           <Section title="Photos" icon="camera">
